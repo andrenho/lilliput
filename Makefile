@@ -7,6 +7,9 @@ OBJS := main.o
 # compilation options
 #
 CPPFLAGS = -std=c11 -DVERSION=\"$(VERSION)\"
+ifdef FORCE_COLOR
+  CPPFLAGS = -fdiagnostics-color=always
+endif
 
 #
 # add cflags/libraries

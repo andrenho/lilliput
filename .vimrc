@@ -12,7 +12,7 @@ nnoremap <Leader>b :make! debug<cr>
 nnoremap <Leader>B :make! debug FORCE_COLOR=1<cr>
 nnoremap <Leader>L :make! debug CXX=clang++<cr>
 nnoremap <Leader>C :make! clean<cr>
-nnoremap <Leader>r :!clear && ./newhope<cr>
+nnoremap <Leader>r :!clear && ./lilliput<cr>
 nnoremap <Leader>G :!git commit -a && git push<CR>
 
 " open all files
