@@ -27,7 +27,7 @@ b 1   " open initial buffer
 "map <Leader>c   :b src/components.hh<CR>
 "map <Leader>g   :b src/gamedata.hh<CR>
 "map <Leader>p   :b src/physics.cc<CR>
-map <Leader>m   :b src/main.cc<CR>
+map <Leader>m   :b src/main.c<CR>
 "map <Leader>u   :b src/uidebug.cc<CR>
 map <Leader>M   :b Makefile<CR>
 map <Leader>V   :b .vimrc<CR>

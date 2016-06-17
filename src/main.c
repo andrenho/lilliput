@@ -1,7 +1,12 @@
 #include <stdio.h>
 
-int main()
+#include "config.h"
+
+int 
+main(int argc, char** argv)
 {
-    printf("Hello.\n");
+    Config* config = config_init(argc, argv);
+
+    config_free(config);
     return 0;
 }

@@ -1,7 +1,7 @@
 VERSION = 0.0.1
 
 VPATH := src
-OBJS := main.o
+OBJS := main.o config.o
 
 #
 # compilation options
