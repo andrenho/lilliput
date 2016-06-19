@@ -123,7 +123,7 @@ config_init(int argc, char** argv)
     Config* config = calloc(sizeof(Config), 1);
     config->memory_kb = 1024;
     config->rom_files = NULL;
-    config->zoom = 3;
+    config->zoom = 2;
 
     parse_options(config, argc, argv);
 
