@@ -11,6 +11,7 @@ set foldmethod=marker
 set makeprg=clear\ \&\&\ make
 nnoremap <Leader>b :make! debug<cr>
 nnoremap <Leader>B :make! debug FORCE_COLOR=1<cr>
+nnoremap <Leader>T :!clear && make debug && ./lilliput -T<cr>
 nnoremap <Leader>L :make! debug CXX=clang++<cr>
 nnoremap <Leader>C :make! clean<cr>
 nnoremap <Leader>r :!clear && ./lilliput<cr>
