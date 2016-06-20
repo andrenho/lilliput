@@ -25,7 +25,7 @@ b 1   " open initial buffer
 
 " open specific buffers
 map <Leader>c   :b src/config.h<CR>
-"map <Leader>g   :b src/gamedata.hh<CR>
+map <Leader>h   :b src/chars.c<CR>
 "map <Leader>p   :b src/physics.cc<CR>
 map <Leader>m   :b src/main.c<CR>
 map <Leader>v   :b src/video.c<CR>

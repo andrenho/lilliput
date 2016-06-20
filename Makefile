@@ -1,7 +1,7 @@
 VERSION = 0.0.1
 
 VPATH := src
-OBJS := main.o config.o video.o
+OBJS := main.o config.o video.o chars.o
 
 #
 # compilation options
@@ -64,6 +64,17 @@ profile: lilliput
 	@sed -e 's/.*://' -e 's/\\$$//' < $*.d.tmp | fmt -1 | \
 	  sed -e 's/^ *//' -e 's/$$/:/' >> $*.d
 	@rm -f $*.d.tmp
+
+# 
+# other dependencies
+#
+data/font.bmp: data/font.png
+	convert $< -depth 1 -monochrome $@
+
+src/font.h: data/font.bmp
+	xxd -i $< > $@
+
+src/chars.c: src/font.h
 
 #
 # link

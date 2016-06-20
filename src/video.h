@@ -18,6 +18,7 @@ void video_draw();
 // guest commands
 void video_clrscr(uint8_t idx);
 void video_setbordercolor(uint8_t idx);
+void video_setchar(char c, uint16_t x, uint16_t y, uint8_t idx_fg, uint8_t idx_bg);
 void video_drawpoint(uint16_t x, uint16_t y, uint8_t idx);
 
 #endif

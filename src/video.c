@@ -1,14 +1,16 @@
 #include "video.h"
 
+#include <assert.h>
 #include <stdio.h>
 #include <syslog.h>
 
 #include <SDL2/SDL.h>
 
+#include "chars.h"
+
 #define WIDTH  348
 #define HEIGHT 261
 #define BORDER  10
-
 
 static int              zoom   = 1;
 static SDL_Window*      window = NULL;
@@ -69,6 +71,8 @@ void video_init(Config* config)
 
     syslog(LOG_DEBUG, "Video initialized.");
 
+    chars_init((void*)ren);
+
     SDL_SetRenderDrawColor(ren, 0, 0, 0, 0xFF);
     SDL_RenderClear(ren);
 }
@@ -76,6 +80,7 @@ void video_init(Config* config)
 
 void video_destroy()
 {
+    chars_destroy();
     SDL_DestroyRenderer(ren);
     SDL_DestroyWindow(window);
     SDL_Quit();
@@ -136,6 +141,19 @@ void video_setbordercolor(uint8_t idx)
         { (BORDER + WIDTH) * zoom, BORDER * zoom, BORDER * zoom, HEIGHT * zoom },   // right
     };
     SDL_RenderFillRects(ren, rects, 4);
+}
+
+
+void 
+video_setchar(char c, uint16_t x, uint16_t y, uint8_t idx_fg, uint8_t idx_bg)
+{
+    SDL_Texture* tx = (SDL_Texture*)chars_get(c,
+            palette[idx_fg].r, palette[idx_fg].g, palette[idx_fg].b, 
+            palette[idx_bg].r, palette[idx_bg].g, palette[idx_bg].b);
+    assert(tx);
+    SDL_RenderCopy(ren, tx, NULL, &(SDL_Rect) { 
+            (BORDER + (x * CHAR_W)) * zoom, (BORDER + (y * CHAR_H)) * zoom,
+            CHAR_W * zoom, CHAR_H * zoom });
 }
 
 
