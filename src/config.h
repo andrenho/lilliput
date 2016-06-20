@@ -10,7 +10,7 @@ typedef enum {
 
 typedef struct Config {
     uint32_t    memory_kb;
-    char**      rom_files;
+    char*       rom_file;
     int         zoom;
     VideoOutput video_output;
     bool        test_only;
