@@ -5,6 +5,8 @@
 #include "video.h"
 #include "memory.h"
 #include "rom.h"
+#include "cpu.h"
+#include "debugger.h"
 
 int 
 main(int argc, char** argv)
@@ -28,21 +30,25 @@ main(int argc, char** argv)
         memory_addmap(0xF8001000, rom_size(), rom_get, NULL);
     }
     cpu_init();
+    video_init(config);
+    if(config->debugger) {
+        debugger_init();
+    }
 
-    if(config->test_only) {
-        memory_test();
-        cpu_test();
-    } else {
-        // main loop
-        video_init(config);
-        while(video_active()) {
-            video_doevents();
-            video_draw();
+    // main loop
+    while(video_active()) {
+        video_doevents();
+        video_draw();
+        if(config->debugger) {
+            debugger_serve();
         }
-        video_destroy();
     }
 
     // free everything
+    if(config->debugger) {
+        debugger_destroy();
+    }
+    video_destroy();
     cpu_destroy();
     if(config->rom_file) {
         rom_destroy();

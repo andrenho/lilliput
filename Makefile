@@ -1,7 +1,7 @@
 VERSION = 0.0.1
 
 VPATH := src
-OBJS := main.o config.o video.o chars.o memory.o rom.o cpu.o
+OBJS := main.o config.o video.o chars.o memory.o rom.o cpu.o debugger.o
 
 #
 # compilation options
@@ -98,10 +98,10 @@ cloc:
 	cloc Makefile src/*.h src/*.c
 
 check-leaks: debug
-	valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes --suppressions=build/lilliput.supp ./lilliput
+	valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes --suppressions=build/lilliput.supp ./lilliput -D
 
 gen-suppressions: debug
-	valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes --error-limit=no --gen-suppressions=all --log-file=build/lilliput.supp ./lilliput
+	valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes --error-limit=no --gen-suppressions=all --log-file=build/lilliput.supp ./lilliput -D
 	sed -i -e '/^==.*$$/d' build/lilliput.supp
 
 clean:

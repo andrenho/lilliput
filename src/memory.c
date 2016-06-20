@@ -38,6 +38,9 @@ memory_init(Config* config)
 void
 memory_destroy()
 {
+    if(areas) {
+        free(areas);
+    }
     free(ram);
 }
 
