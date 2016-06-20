@@ -37,6 +37,12 @@ chars_init(void* data)
 void 
 chars_destroy()
 {
+    for(size_t i = 0; i < char_list_n; ++i) {
+        SDL_DestroyTexture(char_list[i].texture);
+    }
+    if(char_list) {
+        free(char_list);
+    }
     SDL_FreeSurface(main_sf);
     syslog(LOG_DEBUG, "Font image destroyed.");
 }
@@ -92,7 +98,7 @@ char_build(uint64_t idx, char c, uint8_t fg_r, uint8_t fg_g, uint8_t fg_b, uint8
 
     // draw foreground
     SDL_Point pts[CHAR_W * CHAR_H];
-    int n;
+    int n = 0;
 
     int sx = (c / 16) * CHAR_W;
     int sy = (c % 16) * CHAR_H;
@@ -110,7 +116,7 @@ char_build(uint64_t idx, char c, uint8_t fg_r, uint8_t fg_g, uint8_t fg_b, uint8
     SDL_SetRenderTarget(ren, NULL);
 
     // add to array
-    char_list = realloc(char_list, char_list_n * sizeof(CharRecord));
+    char_list = realloc(char_list, (char_list_n+1) * sizeof(CharRecord));
     char_list[char_list_n] = (CharRecord) { idx, (void*)tx };
     ++char_list_n;
     qsort(char_list, char_list_n, sizeof(CharRecord), compf);

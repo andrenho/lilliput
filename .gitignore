@@ -36,3 +36,5 @@ lilliput
 *.d
 .*.swp
 .*.swo
+data/font.bmp
+src/font.h

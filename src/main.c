@@ -24,8 +24,8 @@ main(int argc, char** argv)
 
     video_setchar('A', 0, 0, 11, 0);
     video_setchar('b', 1, 0, 11, 0);
-    /*video_setchar('c', 2, 0, 11, 0);
-    video_setchar('b', 0, 1, 11, 0);*/
+    video_setchar('c', 2, 0, 11, 0);
+    video_setchar('b', 0, 1, 11, 0);
 
     // main loop
     while(video_active()) {
