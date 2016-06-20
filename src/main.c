@@ -3,6 +3,7 @@
 
 #include "config.h"
 #include "video.h"
+#include "memory.h"
 
 int 
 main(int argc, char** argv)
@@ -19,17 +20,23 @@ main(int argc, char** argv)
     Config* config = config_init(argc, argv);
     config_log(config);
 
-    // initialize video
-    video_init(config);
+    // initialize things
+    memory_init(config);
 
-    // main loop
-    while(video_active()) {
-        video_doevents();
-        video_draw();
+    if(config->test_only) {
+        memory_test();
+    } else {
+        // main loop
+        video_init(config);
+        while(video_active()) {
+            video_doevents();
+            video_draw();
+        }
+        video_destroy();
     }
 
     // free everything
-    video_destroy();
+    memory_destroy();
     config_free(config);
     closelog();
     return 0;

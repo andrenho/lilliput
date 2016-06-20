@@ -1,6 +1,7 @@
 #ifndef CONFIG_H_
 #define CONFIG_H_
 
+#include <stdbool.h>
 #include <stdint.h>
 
 typedef enum {
@@ -12,6 +13,7 @@ typedef struct Config {
     char**      rom_files;
     int         zoom;
     VideoOutput video_output;
+    bool        test_only;
 } Config;
 
 Config* config_init(int argc, char** argv);

@@ -69,7 +69,7 @@ parse_options(Config* config, int argc, char** argv)
             { 0, 0, 0, 0 },
         };
 
-        c = getopt_long(argc, argv, "vhm:z:", long_options, &option_index);
+        c = getopt_long(argc, argv, "vhm:z:T", long_options, &option_index);
         if(c == -1)
             break;
 
@@ -87,6 +87,10 @@ parse_options(Config* config, int argc, char** argv)
 
             case 'z':
                 config->zoom = (int)to_num(optarg, "zoom level");
+                break;
+
+            case 'T':  // hidden option
+                config->test_only = true;
                 break;
 
             case 'v':
@@ -124,6 +128,7 @@ config_init(int argc, char** argv)
     config->memory_kb = 1024;
     config->rom_files = NULL;
     config->zoom = 2;
+    config->test_only = false;
 
     parse_options(config, argc, argv);
 
