@@ -24,10 +24,11 @@ args .vimrc
 b 1   " open initial buffer
 
 " open specific buffers
-map <Leader>c   :b src/config.h<CR>
+map <Leader>C   :b src/config.h<CR>
 map <Leader>h   :b src/chars.c<CR>
 "map <Leader>p   :b src/physics.cc<CR>
-map <Leader>m   :b src/main.c<CR>
+map <Leader>x   :b src/main.c<CR>
+map <Leader>m   :b src/memory.c<CR>
 map <Leader>v   :b src/video.c<CR>
 map <Leader>M   :b Makefile<CR>
 map <Leader>V   :b .vimrc<CR>
