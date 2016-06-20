@@ -8,8 +8,8 @@
 
 #include "chars.h"
 
-#define WIDTH  348
-#define HEIGHT 261
+#define WIDTH  318
+#define HEIGHT 234
 #define BORDER  10
 
 static int              zoom   = 1;
@@ -24,6 +24,7 @@ static bool             active = true;
 typedef struct { uint8_t r, g, b; } Color;
 
 // this palette is based on the one defined in <http://androidarts.com/palette/16pal.htm>
+// TODO - change this palette?
 static Color palette[256] = {
     {   0,   0,   0 },
     { 157, 157, 157 },
@@ -125,7 +126,7 @@ void video_draw()
 void video_clrscr(uint8_t idx)
 {
     SDL_SetRenderDrawColor(ren, palette[idx].r, palette[idx].g, palette[idx].b, 0xFF);
-    SDL_RenderDrawRect(ren, &(SDL_Rect) { 
+    SDL_RenderFillRect(ren, &(SDL_Rect) { 
         BORDER * zoom, BORDER * zoom, WIDTH * zoom, HEIGHT * zoom 
     });
 }
