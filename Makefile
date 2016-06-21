@@ -94,6 +94,9 @@ uninstall:
 #
 # other rules
 #
+test: debug
+	ruby test/test.rb
+
 cloc:
 	cloc Makefile src/*.h src/*.c
 
