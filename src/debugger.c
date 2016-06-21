@@ -12,12 +12,14 @@
 #include <sys/socket.h>
 
 #include "memory.h"
+#include "video.h"
 
 #define PORT 5999
 
 static void dsend(const char* fmt, ...) __attribute__ ((format (printf, 1, 2)));
 static void debugger_parse(char* str);
 static void debugger_parse_memory(char* par[10]);
+static void debugger_parse_video(char* par[10]);
 
 static int sockfd, newfd = -1;
 
@@ -169,20 +171,28 @@ debugger_parse(char* str)
     }
 
     if(strcmp(cmd, "h") == 0) {
-        dsend("m r ADDR           read byte from memory address");
-        dsend("m r16 ADDR         read word from memory address");
-        dsend("m r32 ADDR         read dword from memory address");
-        dsend("m w ADDR DATA      write byte from memory address");
-        dsend("m w16 ADDR DATA    write word from memory address");
-        dsend("m w32 ADDR DATA    write dword from memory address");
-        dsend("m l ADD1 ADDR2     list memory data from ADDR1 to ADDR2");
-        dsend("m offset [ADDR]    read/write memory offset register");
+        dsend("m r ADDR              read byte from memory address");
+        dsend("m r16 ADDR            read word from memory address");
+        dsend("m r32 ADDR            read dword from memory address");
+        dsend("m w ADDR DATA         write byte from memory address");
+        dsend("m w16 ADDR DATA       write word from memory address");
+        dsend("m w32 ADDR DATA       write dword from memory address");
+        dsend("m l ADD1 ADDR2        list memory data from ADDR1 to ADDR2");
+        dsend("m offset [ADDR]       read/write memory offset register");
         dsend("----");
-        dsend("d                  disconnect");
-        dsend("q                  quit emulator");
+        dsend("v clr COLOR           video clear screen");
+        dsend("v border COLOR        video set border to COLOR");
+        dsend("v ch CHAR X Y BG FG   video write char in screen");
+        dsend("v px X Y COLOR        video draw pixel");
+        dsend("----");
+        dsend("d                     disconnect");
+        dsend("q                     quit emulator");
 
     } else if(strcmp(cmd, "m") == 0) {
         debugger_parse_memory(par);
+
+    } else if(strcmp(cmd, "v") == 0) {
+        debugger_parse_video(par);
 
     } else if(strcmp(cmd, "d") == 0) {
         shutdown(newfd, 2);
@@ -258,8 +268,43 @@ debugger_parse_memory(char* par[10])
         } else {
             dsend("- Syntax error.");
         }
+    } else {
+        dsend("- Syntax error.");
     }
 }
 
+
+static void 
+debugger_parse_video(char* par[10])
+{
+    if(strcmp(par[0], "clr") == 0) {
+        EXPECT(par, 3);
+        video_clrscr((uint8_t)strtoll(par[1], NULL, 0));
+    } else if(strcmp(par[0], "border") == 0) {
+        EXPECT(par, 3);
+        video_setbordercolor((uint8_t)strtoll(par[1], NULL, 0));
+    } else if(strcmp(par[0], "ch") == 0) {
+        EXPECT(par, 7);
+        char c;
+        if(strlen(par[1]) > 1) {
+            c = (uint8_t)strtoll(par[1], NULL, 0);
+        } else {
+            c = par[1][0];
+        }
+        video_setchar(c, 
+                (uint16_t)strtoll(par[2], NULL, 0), 
+                (uint16_t)strtoll(par[3], NULL, 0),
+                (uint8_t)strtoll(par[4], NULL, 0), 
+                (uint8_t)strtoll(par[5], NULL, 0));
+    } else if(strcmp(par[0], "px") == 0) {
+        EXPECT(par, 5);
+        video_drawpoint(
+                (uint16_t)strtoll(par[1], NULL, 0), 
+                (uint16_t)strtoll(par[2], NULL, 0),
+                (uint8_t)strtoll(par[3], NULL, 0));
+    } else {
+        dsend("- Syntax error.");
+    }
+}
 
 #undef EXPECT
