@@ -162,6 +162,22 @@ my_set(uint32_t pos, uint8_t data)
 }
 
 
+uint32_t
+memory_offset()
+{
+    return offset;
+}
+
+
+uint32_t
+memory_set_offset(uint32_t offset_)
+{
+    uint32_t v = offset;
+    offset = offset_;
+    return v;
+}
+
+
 // {{{ TESTS
 
 #include "test.h"
