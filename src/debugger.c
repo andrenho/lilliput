@@ -18,6 +18,8 @@
 
 static void debugger_accept();
 static void debugger_recv();
+static void debugger_respond();
+
 static void dsend(const char* fmt, ...) __attribute__ ((format (printf, 1, 2)));
 static void debugger_parse(char* str);
 static void debugger_parse_memory(char* par[10]);
@@ -88,6 +90,7 @@ debugger_serve()
         debugger_accept();
     } else {
         debugger_recv();
+        debugger_respond();
     }
 }
 
@@ -110,11 +113,9 @@ debugger_accept()
     } else {
         fcntl(newfd, F_SETFL, O_NONBLOCK);
         syslog(LOG_DEBUG, "Debugger connection established.");
-        const char* welcome = "Welcome do lilliput debugger. Please type 'h' for help.\n";
+        const char* welcome = "Welcome do lilliput debugger. Please type 'h' for help.\n+";
         send(newfd, welcome, strlen(welcome), 0);
         syslog(LOG_DEBUG, "send: %s", welcome);
-        send(newfd, "? ", 2, 0);
-        syslog(LOG_DEBUG, "send: ? ");
     }
 }
 
@@ -125,31 +126,12 @@ debugger_accept()
 static void
 debugger_recv()
 {
-    // read data
     size_t pos = strlen(buffer);
     ssize_t n = recv(newfd, &buffer[pos], sizeof buffer - pos, 0);
-    buffer[pos+n] = '\0';
 
     if(n > 0) {
+        buffer[pos+(size_t)n] = '\0';   // add a null terminator to the end
         syslog(LOG_DEBUG, "recv: %s", buffer);
-
-        char* enter = NULL;
-        do {
-            enter = strstr(buffer, "\n");
-            if(enter) {
-                char* str = strndup(buffer, (enter - buffer));
-                size_t ne = strlen(enter);
-                memmove(buffer, enter+1, ne-1);
-                buffer[ne-1] = '\0';
-                if(str[0] != '\0') {
-                    if(str[strlen(str)-1] == '\r') {
-                        str[strlen(str)-1] = '\0';
-                    }
-                    debugger_parse(str);
-                }
-                free(str);
-            }
-        } while(enter);
     } else if(n == 0) {
         syslog(LOG_DEBUG, "Debugger connection closed.");
         newfd = -1;
@@ -181,18 +163,36 @@ dsend(const char* fmt, ...)
 
 // {{{ PARSE DATA
 
-#define EXPECT(par, c) {        \
-    int n = 11;                 \
-    for(int i=0; i<10; ++i) {   \
-        if(par[i] == NULL) {    \
-            n = i+1;            \
-            break;              \
-        }                       \
-    }                           \
-    if(n != c) {                \
-        dsend("- Invalid number of arguments (excpected %d)", c); \
-        return;                 \
-    }                           \
+static long int 
+find_enter(char* s)
+{
+    char *a = strchr(s, '\r'),
+         *b = strchr(s, '\n'),
+         *c = a < b ? a : b;
+    if(a == NULL && b == NULL) {
+        return -1;
+    } else {
+        return c - s;
+    }
+}
+
+
+static void
+debugger_respond()
+{
+    long int enter;
+    while((enter = find_enter(buffer)) != -1) {
+        // parse block
+        char str[enter+1];
+        strncpy(str, buffer, (size_t)enter);
+        str[enter] = '\0';
+        debugger_parse(str);
+        send(newfd, "+", 1, 0); syslog(LOG_DEBUG, "send: +");
+        // remove block from buffer
+        while(buffer[enter] == '\r' || buffer[enter] == '\n')
+            ++enter;
+        memmove(buffer, &buffer[enter], strlen(&buffer[enter])+1);
+    }
 }
 
 
@@ -251,9 +251,21 @@ debugger_parse(char* str)
     } else {
         dsend("- Syntax error.");
     }
+}
 
-    send(newfd, "? ", 2, 0);
-    syslog(LOG_DEBUG, "send: ? ");
+
+#define EXPECT(par, c) {        \
+    int n = 11;                 \
+    for(int i=0; i<10; ++i) {   \
+        if(par[i] == NULL) {    \
+            n = i+1;            \
+            break;              \
+        }                       \
+    }                           \
+    if(n != c) {                \
+        dsend("- Invalid number of arguments (excpected %d)", c); \
+        return;                 \
+    }                           \
 }
 
 
