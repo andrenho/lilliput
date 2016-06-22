@@ -275,17 +275,17 @@ debugger_parse_memory(char* par[10])
     if(strcmp(par[0], "r") == 0) {
         EXPECT(par, 3);
         uint32_t offset = memory_set_offset(0);
-        dsend("%02X", memory_get((uint32_t)strtoll(par[1], NULL, 0)));
+        dsend("0x%02X", memory_get((uint32_t)strtoll(par[1], NULL, 0)));
         memory_set_offset(offset);
     } else if(strcmp(par[0], "r16") == 0) {
         EXPECT(par, 3);
         uint32_t offset = memory_set_offset(0);
-        dsend("%04X", memory_get16((uint32_t)strtoll(par[1], NULL, 0)));
+        dsend("0x%04X", memory_get16((uint32_t)strtoll(par[1], NULL, 0)));
         memory_set_offset(offset);
     } else if(strcmp(par[0], "r32") == 0) {
         EXPECT(par, 3);
         uint32_t offset = memory_set_offset(0);
-        dsend("%08X", memory_get32((uint32_t)strtoll(par[1], NULL, 0)));
+        dsend("0x%08X", memory_get32((uint32_t)strtoll(par[1], NULL, 0)));
         memory_set_offset(offset);
     } else if(strcmp(par[0], "w") == 0) {
         EXPECT(par, 4);
@@ -312,7 +312,7 @@ debugger_parse_memory(char* par[10])
         char* str = malloc((b - a) * 3 + 1);
         uint32_t offset = memory_set_offset(0);
         for(uint32_t addr = a; addr <= b; ++addr) {
-            sprintf(&str[i], "%02X ", memory_get(addr));
+            sprintf(&str[i], "0x%02X ", memory_get(addr));
             i += 3;
         }
         memory_set_offset(offset);
@@ -320,7 +320,7 @@ debugger_parse_memory(char* par[10])
         free(str);
     } else if(strcmp(par[0], "offset") == 0) {
         if(par[1] == NULL) {
-            dsend("%08X", memory_offset());
+            dsend("0x%08X", memory_offset());
         } else if(par[2] == NULL) {
             memory_set_offset((uint32_t)strtoll(par[1], NULL, 0));
         } else {
