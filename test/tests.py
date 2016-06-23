@@ -60,6 +60,8 @@ class Connection:
 
 #-----------------------------------------------------------------------------------------------
 
+# {{{ MEMORY TESTS
+
 class MemoryTest(unittest.TestCase):
 
     def testByte(self):
@@ -77,7 +79,11 @@ class MemoryTest(unittest.TestCase):
         conn.send('reset', 'm offset 0x1234')
         self.assertEqual(conn.get_i('m offset'), 0x1234)
 
+# }}}
+
 #-----------------------------------------------------------------------------------------------
+
+# {{{ CPU TESTS
 
 class CPUTest(unittest.TestCase):
 
@@ -97,6 +103,8 @@ class CPUTest(unittest.TestCase):
         conn.exec('mov a, b')
         self.assertEqual(conn.get_i('c r a'), 0x42)
         self.assertEqual(conn.get_i('c r pc'), 3)
+
+# }}}
 
 #-----------------------------------------------------------------------------------------------
 
