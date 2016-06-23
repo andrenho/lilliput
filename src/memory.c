@@ -38,6 +38,9 @@ memory_init(Config* config)
 void
 memory_destroy()
 {
+    if(areas) {
+        free(areas);
+    }
     free(ram);
 }
 
@@ -159,32 +162,17 @@ my_set(uint32_t pos, uint8_t data)
 }
 
 
-// {{{ TESTS
-
-#include "test.h"
-
-void
-memory_test()
+uint32_t
+memory_offset()
 {
-    syslog(LOG_NOTICE, "[MEMORY]");
-
-    memory_set(0x12, 0xAF);
-    TEST(memory_get(0x12), 0xAF);
-
-    memory_set32(0x0, 0x12345678);
-    TEST(memory_get(0x0), 0x78);
-    TEST(memory_get(0x1), 0x56);
-    TEST(memory_get(0x2), 0x34);
-    TEST(memory_get(0x3), 0x12);
-
-    memory_set32(SYSTEM_AREA, 0x1000);
-    TEST(offset, 0x1000);
-    TEST(memory_get32(SYSTEM_AREA), 0x1000);
-
-    memory_set(0x12, 0xFF);
-    TEST(ram[0x12], 0xAF);
-    TEST(ram[0x1012], 0xFF);
-    TEST(memory_get(0x12), 0xFF);
+    return offset;
 }
 
-// }}}
+
+uint32_t
+memory_set_offset(uint32_t offset_)
+{
+    uint32_t v = offset;
+    offset = offset_;
+    return v;
+}
