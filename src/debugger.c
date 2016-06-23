@@ -11,6 +11,7 @@
 #include <syslog.h>
 #include <sys/socket.h>
 
+#include "cpu.h"
 #include "memory.h"
 #include "video.h"
 
@@ -352,13 +353,30 @@ debugger_parse_memory(char* par[10])
 static void 
 debugger_parse_cpu(char* par[10])
 {
+    const char* reg_names[] = { 
+        "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "fp", "sp", "pc", "fl"
+    };
+
     if(par[0] == '\0') {
         dsend("- Invalid number of arguments.");
         return;
     }
 
     if(strcmp(par[0], "r") == 0) {
-        // TODO
+        if(!par[1] || par[4]) {
+            dsend("- Invalid number of arguments (expected 2 or 3)");
+        }
+        for(uint8_t i=0; i<16; ++i) {
+            if(strcmp(par[1], reg_names[i]) == 0) {
+                if(!par[2]) {
+                    dsend("0x%08X", cpu_register(i));
+                } else {
+                    cpu_setregister(i, (uint32_t)strtoll(par[2], NULL, 0));
+                }
+                return;
+            }
+        }
+        dsend("- Invalid register");
     } else if(strcmp(par[0], "f") == 0) {
         // TODO
     } else {

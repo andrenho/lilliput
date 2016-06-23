@@ -49,21 +49,33 @@ uint32_t reg[16] = { 0 };
 
 // }}}
 
-void cpu_init()
+void
+cpu_init()
 {
 }
 
 
-void cpu_destroy()
+void
+cpu_destroy()
 {
 }
 
 
-uint32_t cpu_register(uint8_t n)
+uint32_t
+cpu_register(uint8_t n)
 {
     assert(n < 16);
     return reg[n];
 }
+
+
+void 
+cpu_setregister(uint8_t n, uint32_t v)
+{
+    assert(n < 16);
+    reg[n] = v;
+}
+
 
 // {{{ STEP
 
