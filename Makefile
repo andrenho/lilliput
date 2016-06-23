@@ -98,7 +98,7 @@ test: debug
 	@python3 test/tests.py
 
 cloc:
-	cloc Makefile src/*.h src/*.c
+	cloc Makefile src/*.h src/*.c test/*.py
 
 check-leaks: debug
 	valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes --suppressions=build/lilliput.supp ./lilliput -D

@@ -6,6 +6,10 @@ from time import sleep
 conn = None
 
 # {{{ CPU PARSE OPCODE
+
+def parse_cpu_code(code):
+    return ()
+
 # }}}
 
 #-----------------------------------------------------------------------------------------------
@@ -39,6 +43,13 @@ class Connection:
         else:
             self.socket.recv(2)
         return int(r, 16)
+
+    def exec(self, code):
+        b = parse_cpu_code(code)
+        i = 0
+        for bt in b:
+            self.send('m w ' + str(i) + ' ' + str(bt))
+        self.send('c s')
 
     def disconnect(self):
         self.socket.sendall(bytes('q\n', 'latin1'))
@@ -85,6 +96,7 @@ class CPUTest(unittest.TestCase):
         conn.send('reset', 'c r b 0x42')
         conn.exec('mov a, b')
         self.assertEqual(conn.get_i('c r a'), 0x42)
+        self.assertEqual(conn.get_i('c r pc'), 3)
 
 #-----------------------------------------------------------------------------------------------
 
