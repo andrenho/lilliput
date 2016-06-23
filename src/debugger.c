@@ -167,13 +167,18 @@ static long int
 find_enter(char* s)
 {
     char *a = strchr(s, '\r'),
-         *b = strchr(s, '\n'),
-         *c = a < b ? a : b;
-    if(a == NULL && b == NULL) {
+         *b = strchr(s, '\n');
+    char *c;
+    if(a && !b)
+        c = a;
+    else if(b && !a)
+        c = b;
+    else if(a && b)
+        c = (a < b) ? a : b;
+    else
         return -1;
-    } else {
-        return c - s;
-    }
+
+    return c - s;
 }
 
 
@@ -272,6 +277,11 @@ debugger_parse(char* str)
 static void 
 debugger_parse_memory(char* par[10])
 {
+    if(par[0] == '\0') {
+        dsend("- Invalid number of arguments.");
+        return;
+    }
+
     if(strcmp(par[0], "r") == 0) {
         EXPECT(par, 3);
         uint32_t offset = memory_set_offset(0);

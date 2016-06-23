@@ -95,7 +95,7 @@ uninstall:
 # other rules
 #
 test: debug
-	ruby test/test.rb
+	@python3 test/tests.py
 
 cloc:
 	cloc Makefile src/*.h src/*.c
