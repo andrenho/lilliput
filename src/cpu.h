@@ -1,11 +1,13 @@
 #ifndef CPU_H_
 #define CPU_H_
 
+#include <stdint.h>
+
 void cpu_init();
 void cpu_destroy();
 
-void cpu_step();
+uint32_t cpu_register(uint8_t n);
 
-void cpu_test();
+void cpu_step();
 
 #endif

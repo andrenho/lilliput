@@ -24,6 +24,7 @@ static void dsend(const char* fmt, ...) __attribute__ ((format (printf, 1, 2)));
 static void debugger_parse(char* str);
 static void debugger_parse_memory(char* par[10]);
 static void debugger_parse_video(char* par[10]);
+static void debugger_parse_cpu(char* par[10]);
 
 static int sockfd, newfd = -1;
 
@@ -230,6 +231,9 @@ debugger_parse(char* str)
         dsend("m l ADD1 ADDR2        list memory data from ADDR1 to ADDR2");
         dsend("m offset [ADDR]       read/write memory offset register");
         dsend("----");
+        dsend("c r REG [VALUE]       read/write register");
+        dsend("c f FLAG [VALUE]      read/write register flag");
+        dsend("----");
         dsend("v clr COLOR           video clear screen");
         dsend("v border COLOR        video set border to COLOR");
         dsend("v ch CHAR X Y BG FG   video write char in screen");
@@ -240,6 +244,9 @@ debugger_parse(char* str)
 
     } else if(strcmp(cmd, "m") == 0) {
         debugger_parse_memory(par);
+
+    } else if(strcmp(cmd, "c") == 0) {
+        debugger_parse_cpu(par);
 
     } else if(strcmp(cmd, "v") == 0) {
         debugger_parse_video(par);
@@ -343,8 +350,31 @@ debugger_parse_memory(char* par[10])
 
 
 static void 
+debugger_parse_cpu(char* par[10])
+{
+    if(par[0] == '\0') {
+        dsend("- Invalid number of arguments.");
+        return;
+    }
+
+    if(strcmp(par[0], "r") == 0) {
+        // TODO
+    } else if(strcmp(par[0], "f") == 0) {
+        // TODO
+    } else {
+        dsend("- Syntax error.");
+    }
+}
+
+
+static void 
 debugger_parse_video(char* par[10])
 {
+    if(par[0] == '\0') {
+        dsend("- Invalid number of arguments.");
+        return;
+    }
+
     if(strcmp(par[0], "clr") == 0) {
         EXPECT(par, 3);
         video_clrscr((uint8_t)strtoll(par[1], NULL, 0));

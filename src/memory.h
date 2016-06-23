@@ -26,6 +26,4 @@ void     memory_set32(uint32_t pos, uint32_t data);
 uint32_t memory_offset();
 uint32_t memory_set_offset(uint32_t offset);
 
-void     memory_test();
-
 #endif

@@ -1,5 +1,6 @@
 #include "cpu.h"
 
+#include <assert.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <inttypes.h>
@@ -57,6 +58,12 @@ void cpu_destroy()
 {
 }
 
+
+uint32_t cpu_register(uint8_t n)
+{
+    assert(n < 16);
+    return reg[n];
+}
 
 // {{{ STEP
 
