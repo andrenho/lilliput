@@ -11,6 +11,7 @@
 #include <syslog.h>
 #include <sys/socket.h>
 
+#include "computer.h"
 #include "cpu.h"
 #include "memory.h"
 #include "video.h"
@@ -234,6 +235,7 @@ debugger_parse(char* str)
         dsend("----");
         dsend("c r REG [VALUE]       read/write register");
         dsend("c f FLAG [VALUE]      read/write register flag");
+        dsend("c s                   cpu step");
         dsend("----");
         dsend("v clr COLOR           video clear screen");
         dsend("v border COLOR        video set border to COLOR");
@@ -357,7 +359,7 @@ debugger_parse_cpu(char* par[10])
         "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "fp", "sp", "pc", "fl"
     };
 
-    const char* reg_names[] = { 
+    const char* reg_flags[] = { 
         "y", "v", "z", "s", "gt", "lt", "p", "t", 
     };
 
@@ -382,7 +384,24 @@ debugger_parse_cpu(char* par[10])
         }
         dsend("- Invalid register");
     } else if(strcmp(par[0], "f") == 0) {
-        // TODO
+        if(!par[1] || par[4]) {
+            dsend("- Invalid number of arguments (expected 2 or 3)");
+        }
+        uint32_t fl = cpu_register(15);
+        for(uint8_t i=0; i<16; ++i) {
+            if(strcmp(par[1], reg_flags[i]) == 0) {
+                if(!par[2]) {
+                    dsend("%d", (fl >> i) & 1);
+                } else {
+                    fl |= (uint32_t)(1 << i);
+                    cpu_setregister(15, fl);
+                }
+                return;
+            }
+        }
+        dsend("- Invalid flag");
+    } else if(strcmp(par[0], "s") == 0) {
+        computer_step();
     } else {
         dsend("- Syntax error.");
     }

@@ -3,6 +3,7 @@ import socket
 import subprocess
 from time import sleep
 
+conn = None
 
 class Connection:
 
@@ -38,8 +39,6 @@ class Connection:
 
 #-----------------------------------------------------------------------------------------------
 
-conn = None
-
 class MemoryTest(unittest.TestCase):
 
     def testByte(self):
@@ -59,8 +58,25 @@ class MemoryTest(unittest.TestCase):
 
 #-----------------------------------------------------------------------------------------------
 
+class CPUTest(unittest.TestCase):
+
+    def testRegisters(self):
+        conn.send("c r b 0xAF")
+        self.assertEqual(conn.get_i('c r a'), 0x00)
+        self.assertEqual(conn.get_i('c r b'), 0xAF)
+
+    def testFlags(self):
+        conn.send("c f z 1");
+        self.assertEqual(conn.get_i('c f y'), 0)
+        self.assertEqual(conn.get_i('c f z'), 1)
+        self.assertEqual(conn.get_i('c r fl'), 0b100)
+
+
+#-----------------------------------------------------------------------------------------------
+
 if __name__ == '__main__':
     conn = Connection()
     conn.connect()
     unittest.TextTestRunner(verbosity=2).run(unittest.TestLoader().loadTestsFromTestCase(MemoryTest))
+    unittest.TextTestRunner(verbosity=2).run(unittest.TestLoader().loadTestsFromTestCase(CPUTest))
     conn.disconnect()

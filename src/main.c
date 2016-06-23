@@ -2,10 +2,7 @@
 #include <syslog.h>
 
 #include "config.h"
-#include "video.h"
-#include "memory.h"
-#include "rom.h"
-#include "cpu.h"
+#include "computer.h"
 #include "debugger.h"
 
 int 
@@ -26,21 +23,14 @@ main(int argc, char** argv)
     config_log(config);
 
     // initialize things
-    memory_init(config);
-    if(config->rom_file) {
-        rom_init(config->rom_file);
-        memory_addmap(0xF8001000, rom_size(), rom_get, NULL);
-    }
-    cpu_init();
-    video_init(config);
+    computer_init(config);
     if(config->debugger) {
         debugger_init();
     }
 
     // main loop
-    while(video_active()) {
-        video_doevents();
-        video_draw();
+    while(computer_active()) {
+        computer_videoupdate();
         if(config->debugger) {
             debugger_serve();
         }
@@ -50,12 +40,7 @@ main(int argc, char** argv)
     if(config->debugger) {
         debugger_destroy();
     }
-    video_destroy();
-    cpu_destroy();
-    if(config->rom_file) {
-        rom_destroy();
-    }
-    memory_destroy();
+    computer_destroy();
     config_free(config);
     closelog();
     return 0;
