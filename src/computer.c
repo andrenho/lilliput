@@ -1,6 +1,7 @@
 #include "computer.h"
 
 #include <stdlib.h>
+#include <syslog.h>
 
 #include "video.h"
 #include "memory.h"
@@ -54,4 +55,14 @@ computer_videoupdate()
 {
     video_doevents();
     video_draw();
+}
+
+
+void
+computer_reset()
+{
+    memory_reset();
+    cpu_reset();
+    video_reset();
+    syslog(LOG_DEBUG, "Computer reset.");
 }

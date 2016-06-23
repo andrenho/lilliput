@@ -5,6 +5,13 @@ from time import sleep
 
 conn = None
 
+# {{{ CPU PARSE OPCODE
+# }}}
+
+#-----------------------------------------------------------------------------------------------
+
+# {{{ CONNECTION
+
 class Connection:
 
     def connect(self):
@@ -19,9 +26,10 @@ class Connection:
             break
         self.socket.recv(1024)  # welcome message
 
-    def send(self, data):
-        self.socket.sendall(bytes(data + '\n', 'latin1'))
-        self.socket.recv(100)  # ignore prompt
+    def send(self, *data):
+        for d in data:
+            self.socket.sendall(bytes(d + '\n', 'latin1'))
+            self.socket.recv(100)  # ignore prompt
 
     def get_i(self, data):
         self.socket.sendall(bytes(data + '\n', 'latin1'))
@@ -37,23 +45,25 @@ class Connection:
         self.socket.recv(100)
         self.process.wait(10)
 
+# }}}
+
 #-----------------------------------------------------------------------------------------------
 
 class MemoryTest(unittest.TestCase):
 
     def testByte(self):
-        conn.send('m w 0 0xAF')
+        conn.send('reset', 'm w 0 0xAF')
         self.assertEqual(conn.get_i('m r 0'), 0xAF)
 
     def testMultibyte(self):
-        conn.send('m w32 0x0 0x12345678')
+        conn.send('reset', 'm w32 0x0 0x12345678')
         self.assertEqual(conn.get_i('m r 0x0'), 0x78)
         self.assertEqual(conn.get_i('m r 0x1'), 0x56)
         self.assertEqual(conn.get_i('m r 0x2'), 0x34)
         self.assertEqual(conn.get_i('m r 0x3'), 0x12)
 
     def testOffset(self):
-        conn.send('m offset 0x1234')
+        conn.send('reset', 'm offset 0x1234')
         self.assertEqual(conn.get_i('m offset'), 0x1234)
 
 #-----------------------------------------------------------------------------------------------
@@ -61,16 +71,20 @@ class MemoryTest(unittest.TestCase):
 class CPUTest(unittest.TestCase):
 
     def testRegisters(self):
-        conn.send("c r b 0xAF")
+        conn.send('reset', 'c r b 0xAF')
         self.assertEqual(conn.get_i('c r a'), 0x00)
         self.assertEqual(conn.get_i('c r b'), 0xAF)
 
     def testFlags(self):
-        conn.send("c f z 1");
+        conn.send('reset', 'c f z 1');
         self.assertEqual(conn.get_i('c f y'), 0)
         self.assertEqual(conn.get_i('c f z'), 1)
         self.assertEqual(conn.get_i('c r fl'), 0b100)
 
+    def testMOV(self):
+        conn.send('reset', 'c r b 0x42')
+        conn.exec('mov a, b')
+        self.assertEqual(conn.get_i('c r a'), 0x42)
 
 #-----------------------------------------------------------------------------------------------
 

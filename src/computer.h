@@ -10,5 +10,6 @@ void computer_destroy();
 bool computer_active();
 void computer_step();
 void computer_videoupdate();
+void computer_reset();
 
 #endif

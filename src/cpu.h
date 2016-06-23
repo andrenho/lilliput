@@ -10,5 +10,6 @@ uint32_t cpu_register(uint8_t n);
 void     cpu_setregister(uint8_t n, uint32_t v);
 
 void cpu_step();
+void cpu_reset();
 
 #endif

@@ -9,6 +9,7 @@
 // constructor / destructor
 void video_init(Config* config);
 void video_destroy();
+void video_reset();
 
 // host commands
 bool video_active();

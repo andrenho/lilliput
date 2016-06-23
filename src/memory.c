@@ -3,6 +3,7 @@
 #include <assert.h>
 #include <inttypes.h>
 #include <stdlib.h>
+#include <string.h>
 #include <syslog.h>
 
 typedef struct {
@@ -42,6 +43,13 @@ memory_destroy()
         free(areas);
     }
     free(ram);
+}
+
+
+void 
+memory_reset()
+{
+    memset(ram, 0, ram_sz);
 }
 
 

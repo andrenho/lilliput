@@ -48,7 +48,8 @@ static Color palette[256] = {
 // CONSTRUCTOR / DESTRUCTOR
 //
 
-void video_init(Config* config)
+void
+video_init(Config* config)
 {
     zoom = config->zoom;
 
@@ -79,7 +80,8 @@ void video_init(Config* config)
 }
 
 
-void video_destroy()
+void
+video_destroy()
 {
     chars_destroy();
     SDL_DestroyRenderer(ren);
@@ -89,18 +91,26 @@ void video_destroy()
 }
 
 
+void 
+video_reset()
+{
+    SDL_SetRenderDrawColor(ren, 0, 0, 0, 0xFF);
+    SDL_RenderClear(ren);
+}
 
 // 
 // HOST COMMANDS
 //
 
-bool video_active()
+bool
+video_active()
 {
     return active;
 }
 
 
-void video_doevents()
+void
+video_doevents()
 {
     SDL_Event e;
     while(SDL_PollEvent(&e)) {
@@ -123,7 +133,8 @@ void video_draw()
 // GUEST COMMANDS
 //
 
-void video_clrscr(uint8_t idx)
+void
+video_clrscr(uint8_t idx)
 {
     SDL_SetRenderDrawColor(ren, palette[idx].r, palette[idx].g, palette[idx].b, 0xFF);
     SDL_RenderFillRect(ren, &(SDL_Rect) { 
@@ -132,7 +143,8 @@ void video_clrscr(uint8_t idx)
 }
 
 
-void video_setbordercolor(uint8_t idx)
+void
+video_setbordercolor(uint8_t idx)
 {
     SDL_SetRenderDrawColor(ren, palette[idx].r, palette[idx].g, palette[idx].b, 0xFF);
     const SDL_Rect rects[4] = {
@@ -158,7 +170,8 @@ video_setchar(char c, uint16_t x, uint16_t y, uint8_t idx_fg, uint8_t idx_bg)
 }
 
 
-void video_drawpoint(uint16_t x, uint16_t y, uint8_t idx)
+void
+video_drawpoint(uint16_t x, uint16_t y, uint8_t idx)
 {
     SDL_SetRenderDrawColor(ren, palette[idx].r, palette[idx].g, palette[idx].b, 0xFF);
     SDL_RenderFillRect(ren, &(SDL_Rect) { 

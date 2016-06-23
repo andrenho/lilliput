@@ -13,6 +13,8 @@ typedef void    (*set_t)(uint32_t, uint8_t);
 void memory_init(Config* config);
 void memory_destroy();
 
+void memory_reset();
+
 uint32_t memory_addmap(uint32_t pos, uint32_t sz, get_t get, set_t set);
 
 uint8_t memory_get(uint32_t pos);

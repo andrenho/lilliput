@@ -242,6 +242,7 @@ debugger_parse(char* str)
         dsend("v ch CHAR X Y BG FG   video write char in screen");
         dsend("v px X Y COLOR        video draw pixel");
         dsend("----");
+        dsend("reset                 reset computer");
         dsend("d                     disconnect");
         dsend("q                     quit emulator");
 
@@ -253,6 +254,9 @@ debugger_parse(char* str)
 
     } else if(strcmp(cmd, "v") == 0) {
         debugger_parse_video(par);
+
+    } else if(strcmp(cmd, "reset") == 0) {
+        computer_reset();
 
     } else if(strcmp(cmd, "d") == 0) {
         shutdown(newfd, 2);

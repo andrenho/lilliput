@@ -1331,3 +1331,12 @@ void cpu_step()
 }
 
 // }}}
+
+
+void
+cpu_reset()
+{
+    for(size_t i=0; i<16; ++i) {
+        reg[i] = 0;
+    }
+}
