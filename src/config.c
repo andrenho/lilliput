@@ -66,12 +66,13 @@ parse_options(Config* config, int argc, char** argv)
             { "memory",   required_argument, 0, 'm' },
             { "zoom",     required_argument, 0, 'z' },
             { "debugger", no_argument,       0, 'D' },
+            { "quiet",    no_argument,       0, 'q' },
             { "version",  no_argument,       0, 'v' },
             { "help",     no_argument,       0, 'h' },
             { 0, 0, 0, 0 },
         };
 
-        c = getopt_long(argc, argv, "vhm:z:D", long_options, &option_index);
+        c = getopt_long(argc, argv, "vhm:z:Dq", long_options, &option_index);
         if(c == -1)
             break;
 
@@ -93,6 +94,10 @@ parse_options(Config* config, int argc, char** argv)
 
             case 'D':
                 config->debugger = true;
+                break;
+
+            case 'q':
+                config->quiet = true;
                 break;
 
             case 'v':
@@ -128,6 +133,7 @@ config_init(int argc, char** argv)
     config->rom_file = NULL;
     config->zoom = 2;
     config->debugger = false;
+    config->quiet = false;
 
     parse_options(config, argc, argv);
 

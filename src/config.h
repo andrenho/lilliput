@@ -14,6 +14,7 @@ typedef struct Config {
     int         zoom;
     VideoOutput video_output;
     bool        debugger;
+    bool        quiet;
 } Config;
 
 Config* config_init(int argc, char** argv);

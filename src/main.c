@@ -21,6 +21,8 @@ main(int argc, char** argv)
 
     // read config file
     Config* config = config_init(argc, argv);
+    if(config->quiet)
+        setlogmask(LOG_UPTO(LOG_ERR));
     config_log(config);
 
     // initialize things

@@ -7,7 +7,7 @@ from time import sleep
 class Connection:
 
     def connect(self):
-        self.process = subprocess.Popen(["./lilliput", "-D"])
+        self.process = subprocess.Popen(["./lilliput", "-D", "-q"])
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         while True:
             try:
