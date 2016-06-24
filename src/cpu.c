@@ -38,14 +38,15 @@ uint32_t reg[16] = { 0 };
 #define P  ((FL >> 6) & 1)
 #define T  ((FL >> 7) & 1)
 
-#define SET_Y(v)  (FL |= 1)
-#define SET_V(v)  (FL |= 1 << 2)
-#define SET_Z(v)  (FL |= 1 << 3)
-#define SET_S(v)  (FL |= 1 << 4)
-#define SET_GT(v) (FL |= 1 << 5)
-#define SET_LT(v) (FL |= 1 << 6)
-#define SET_P(v)  (FL |= 1 << 7)
-#define SET_T(v)  (FL |= 1 << 8)
+#define SET_FLAG(n, v)   { if(v) FL |= (1 << n); else FL &= ~(1 << n); }
+#define SET_Y(v)  SET_FLAG(0, v)
+#define SET_V(v)  SET_FLAG(1, v)
+#define SET_Z(v)  SET_FLAG(2, v)
+#define SET_S(v)  SET_FLAG(3, v)
+#define SET_GT(v) SET_FLAG(4, v)
+#define SET_LT(v) SET_FLAG(5, v)
+#define SET_P(v)  SET_FLAG(6, v)
+#define SET_T(v)  SET_FLAG(7, v)
 
 // }}}
 
@@ -84,7 +85,7 @@ affect_flags(uint32_t value)
 {
     SET_Z((value & 0xFFFFFFFF) == 0);
     SET_P((value % 2) == 0);
-    SET_S(value >> 31);
+    SET_S((value >> 31) & 1);
     SET_V(0);
     SET_Y(0);
     SET_GT(0);

@@ -251,8 +251,10 @@ class Connection:
             self.socket.recv(2)
         return int(r, 16)
 
-    def exec(self, code):
-        b = parse_cpu_code(code)
+    def exec(self, *code):
+        self.send('reset')
+        self.send(*code[:-1])
+        b = parse_cpu_code(code[-1])
         i = 0
         for bt in b:
             self.send('m w ' + str(i) + ' ' + str(bt))
@@ -295,35 +297,44 @@ class MemoryTest(unittest.TestCase):
 
 class CPUTest(unittest.TestCase):
 
+    def assertE(self, cmd, expected):
+        self.assertEqual(conn.get_i(cmd), expected)
+
     def testRegisters(self):
         conn.send('reset', 'c r b 0xAF')
-        self.assertEqual(conn.get_i('c r a'), 0x00)
-        self.assertEqual(conn.get_i('c r b'), 0xAF)
+        self.assertE('c r a', 0x00)
+        self.assertE('c r b', 0xAF)
 
     def testFlags(self):
         conn.send('reset', 'c f z 1');
-        self.assertEqual(conn.get_i('c f y'), 0)
-        self.assertEqual(conn.get_i('c f z'), 1)
-        self.assertEqual(conn.get_i('c r fl'), 0b100)
+        self.assertE('c f y', 0)
+        self.assertE('c f z', 1)
+        self.assertE('c r fl', 0b100)
 
     def testMOV(self):
-        conn.send('reset', 'c r b 0x42')
-        conn.exec('mov a, b')
-        self.assertEqual(conn.get_i('c r a'), 0x42)
-        self.assertEqual(conn.get_i('c r pc'), 2)
+        conn.exec('c r b 0x42', 'mov a, b')
+        self.assertE('c r a', 0x42)
+        self.assertE('c r pc', 2)
 
-        conn.send('reset')
         conn.exec('mov a, 0x34')
-        self.assertEqual(conn.get_i('c r a'), 0x34)
+        self.assertE('c r a', 0x34)
 
-        conn.send('reset')
         conn.exec('mov a, 0x1234')
-        self.assertEqual(conn.get_i('m r 0'), 3)
-        self.assertEqual(conn.get_i('c r a'), 0x1234)
+        self.assertE('m r 0', 3)
+        self.assertE('c r a', 0x1234)
 
-        conn.send('reset')
         conn.exec('mov a, 0xFABC1234')
-        self.assertEqual(conn.get_i('c r a'), 0xFABC1234)
+        self.assertE('c r a', 0xFABC1234)
+
+        conn.exec('mov a, 0')
+        self.assertE('c f z', 1)
+        self.assertE('c f p', 1)
+        self.assertE('c f s', 0)
+
+        conn.exec('mov a, 0xF0000001')
+        self.assertE('c f z', 0)
+        self.assertE('c f p', 0)
+        self.assertE('c f s', 1)
 
 # }}}
 
