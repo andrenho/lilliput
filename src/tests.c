@@ -72,242 +72,241 @@ test_memory()
 
 // {{{ opcode execution
 
+typedef enum { NONE, REG, V8, V16, V32, INDREG, INDV32 } ParType;
+
+static struct {
+    uint8_t opcode;
+    const char *name;
+    ParType par1, par2;
+} opcodes[] = {
+    // opcode list {{{
+    // movement
+    { 0x01, "mov",  REG, REG    },
+    { 0x02, "mov",  REG, V8     },
+    { 0x03, "mov",  REG, V16    },
+    { 0x04, "mov",  REG, V32    },
+    { 0x05, "movb", REG, INDREG },
+    { 0x06, "movb", REG, INDV32 },
+    { 0x07, "movw", REG, INDREG },
+    { 0x08, "movw", REG, INDV32 },
+    { 0x09, "movd", REG, INDREG },
+    { 0x0A, "movd", REG, INDV32 },
+
+    { 0x0B, "movb", INDREG, REG    },
+    { 0x0C, "movb", INDREG, V8     },
+    { 0x0D, "movb", INDREG, INDREG },
+    { 0x0E, "movb", INDREG, INDV32 },
+    { 0x0F, "movw", INDREG, REG    },
+    { 0x1A, "movw", INDREG, V16    },
+    { 0x1B, "movw", INDREG, INDREG },
+    { 0x1C, "movw", INDREG, INDV32 },
+    { 0x1D, "movd", INDREG, REG    },
+    { 0x1E, "movd", INDREG, V32    },
+    { 0x1F, "movd", INDREG, INDREG },
+    { 0x20, "movd", INDREG, INDV32 },
+
+    { 0x21, "movb", INDV32, REG    },
+    { 0x22, "movb", INDV32, V8     },
+    { 0x23, "movb", INDV32, INDREG },
+    { 0x24, "movb", INDV32, INDV32 },
+    { 0x25, "movw", INDV32, REG    },
+    { 0x26, "movw", INDV32, V16    },
+    { 0x27, "movw", INDV32, INDREG },
+    { 0x28, "movw", INDV32, INDV32 },
+    { 0x29, "movd", INDV32, REG    },
+    { 0x2A, "movd", INDV32, V32    },
+    { 0x2B, "movd", INDV32, INDREG },
+    { 0x2C, "movd", INDV32, INDV32 },
+
+    { 0x8A, "swap", REG, REG },
+
+    // logic
+    { 0x2D, "or",  REG, REG  },
+    { 0x2E, "or",  REG, V8   },
+    { 0x2F, "or",  REG, V16  },
+    { 0x30, "or",  REG, V32  },
+    { 0x31, "xor", REG, REG  },
+    { 0x32, "xor", REG, V8   },
+    { 0x33, "xor", REG, V16  },
+    { 0x34, "xor", REG, V32  },
+    { 0x35, "and", REG, REG  },
+    { 0x36, "and", REG, V8   },
+    { 0x37, "and", REG, V16  },
+    { 0x38, "and", REG, V32  },
+    { 0x39, "shl", REG, REG  },
+    { 0x3A, "shl", REG, V8   },
+    { 0x3D, "shr", REG, REG  },
+    { 0x3E, "shr", REG, V8   },
+    { 0x41, "not", REG, NONE },
+
+    // arithmetic
+    { 0x42, "add",  REG, REG  },
+    { 0x43, "add",  REG, V8   },
+    { 0x44, "add",  REG, V16  },
+    { 0x45, "add",  REG, V32  },
+    { 0x46, "sub",  REG, REG  },
+    { 0x47, "sub",  REG, V8   },
+    { 0x48, "sub",  REG, V16  },
+    { 0x49, "sub",  REG, V32  },
+    { 0x4A, "cmp",  REG, REG  },
+    { 0x4B, "cmp",  REG, V8   },
+    { 0x4C, "cmp",  REG, V16  },
+    { 0x4D, "cmp",  REG, V32  },
+    { 0x8B, "cmp",  REG, NONE },
+    { 0x4E, "mul",  REG, REG  },
+    { 0x4F, "mul",  REG, V8   },
+    { 0x50, "mul",  REG, V16  },
+    { 0x51, "mul",  REG, V32  },
+    { 0x52, "idiv", REG, REG  },
+    { 0x53, "idiv", REG, V8   },
+    { 0x54, "idiv", REG, V16  },
+    { 0x55, "idiv", REG, V32  },
+    { 0x56, "mod",  REG, REG  },
+    { 0x57, "mod",  REG, V8   },
+    { 0x58, "mod",  REG, V16  },
+    { 0x59, "mod",  REG, V32  },
+    { 0x5A, "inc",  REG, NONE },
+    { 0x5B, "dec",  REG, NONE },
+
+    // jumps
+    { 0x5C, "bz",   REG,  NONE },
+    { 0x5D, "bz",   V32,  NONE },
+    { 0x5C, "beq",  REG,  NONE },
+    { 0x5D, "beq",  V32,  NONE },
+    { 0x5E, "bnz",  REG,  NONE },
+    { 0x5F, "bnz",  V32,  NONE },
+    { 0x60, "bneg", REG,  NONE },
+    { 0x61, "bneg", V32,  NONE },
+    { 0x62, "bpos", REG,  NONE },
+    { 0x63, "bpos", V32,  NONE },
+    { 0x64, "bgt",  REG,  NONE },
+    { 0x65, "bgt",  V32,  NONE },
+    { 0x66, "bgte", REG,  NONE },
+    { 0x67, "bgte", V32,  NONE },
+    { 0x68, "blt",  REG,  NONE },
+    { 0x69, "blt",  V32,  NONE },
+    { 0x6A, "blte", REG,  NONE },
+    { 0x6B, "blte", V32,  NONE },
+    { 0x6C, "bv",   REG,  NONE },
+    { 0x6D, "bv",   V32,  NONE },
+    { 0x6E, "bnv",  REG,  NONE },
+    { 0x6F, "bnv",  V32,  NONE },
+    { 0x70, "jmp",  REG,  NONE },
+    { 0x71, "jmp",  V32,  NONE },
+    { 0x72, "jsr",  REG,  NONE },
+    { 0x73, "jsr",  V32,  NONE },
+    { 0x74, "ret",  NONE, NONE },
+    { 0x75, "sys",  REG,  NONE },
+    { 0x76, "sys",  V8,   NONE },
+    { 0x77, "iret", NONE, NONE },
+    { 0x86, "sret", NONE, NONE },
+
+    // stack
+    { 0x78, "pushb",  REG,  NONE },
+    { 0x79, "pushb",  V8,   NONE },
+    { 0x7A, "pushw",  REG,  NONE },
+    { 0x7B, "pushw",  V16,  NONE },
+    { 0x7C, "pushd",  REG,  NONE },
+    { 0x7D, "pushd",  V32,  NONE },
+    { 0x7E, "push.a", NONE, NONE },
+    { 0x7F, "popb",   REG,  NONE },
+    { 0x80, "popw",   REG,  NONE },
+    { 0x81, "popd",   REG,  NONE },
+    { 0x82, "pop.a",  NONE, NONE },
+    { 0x83, "popx",   REG,  NONE },
+    { 0x84, "popx",   V8,   NONE },
+    { 0x85, "popx",   V16,  NONE },
+
+    // other
+    { 0x87, "nop",  NONE, NONE },
+    { 0x88, "halt", NONE, NONE },
+    { 0x89, "dbg",  NONE, NONE },
+    // }}}
+};
+
+static const char* registers[] = { "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "FP", "SP", "PC", "FL" };
+
+static ParType cpu_op_type(const char* par) {{{
+    if(par == NULL) {
+        return NONE;
+    } else if(par[0] == '[') {
+        if(isalpha(par[1])) {
+            return INDREG;
+        } else {
+            return INDV32;
+        }
+    } else if(isalpha(par[0])) {
+        return REG;
+    } else {
+        uint32_t v = (uint32_t)strtoll(par, NULL, 0);
+        if(v <= 0xFF) {
+            return V8;
+        } else if(v <= 0xFFFF) {
+            return V16;
+        } else {
+            return V32;
+        }
+    }
+}}}
+
+static size_t cpu_op_add_value(char* par, ParType tp, uint8_t* data, size_t pos) {{{
+    // remove brackets
+    if(par[0] == '[') {
+        ++par;
+        par[strlen(par)-1] = '\0';
+    }
+
+    // choose according to type
+    switch(tp) {
+        case NONE:
+            return 0;
+        case REG:
+        case INDREG:
+            for(uint8_t i=0; i<sizeof(registers)/sizeof(registers[0]); ++i) {
+                if(strcmp(registers[i], par) == 0) {
+                    data[pos] = i;
+                    return pos + 1;
+                }
+            }
+            abort();
+        case V8:
+            data[pos] = (uint8_t)strtol(par, NULL, 0);
+            return pos + 1;
+        case V16: {
+                uint16_t v = (uint16_t)strtoll(par, NULL, 0);
+                data[pos++] = (uint8_t)(v & 0xFF);
+                data[pos++] = (uint8_t)(v >> 8);
+            }
+            return pos;
+        case INDV32:
+        case V32: {
+                uint32_t v = (uint32_t)strtoll(par, NULL, 0);
+                data[pos++] = (uint8_t)(v & 0xFF);
+                data[pos++] = (uint8_t)((v >> 8) & 0xFF);
+                data[pos++] = (uint8_t)((v >> 16) & 0xFF);
+                data[pos++] = (uint8_t)((v >> 24) & 0xFF);
+            }
+            return pos;
+        default:
+            abort();
+    }
+}}}
+
 static void
 cpu_add(const char* code)
 {
-    typedef enum { NONE, REG, V8, V16, V32, INDREG, INDV32 } ParType;
-
-    static struct {
-        uint8_t opcode;
-        const char *name;
-        ParType par1, par2;
-    } opcodes[] = {
-        // opcode list {{{
-        // movement
-        { 0x01, "mov",  REG, REG    },
-        { 0x02, "mov",  REG, V8     },
-        { 0x03, "mov",  REG, V16    },
-        { 0x04, "mov",  REG, V32    },
-        { 0x05, "movb", REG, INDREG },
-        { 0x06, "movb", REG, INDV32 },
-        { 0x07, "movw", REG, INDREG },
-        { 0x08, "movw", REG, INDV32 },
-        { 0x09, "movd", REG, INDREG },
-        { 0x0A, "movd", REG, INDV32 },
-
-        { 0x0B, "movb", INDREG, REG    },
-        { 0x0C, "movb", INDREG, V8     },
-        { 0x0D, "movb", INDREG, INDREG },
-        { 0x0E, "movb", INDREG, INDV32 },
-        { 0x0F, "movw", INDREG, REG    },
-        { 0x1A, "movw", INDREG, V16    },
-        { 0x1B, "movw", INDREG, INDREG },
-        { 0x1C, "movw", INDREG, INDV32 },
-        { 0x1D, "movd", INDREG, REG    },
-        { 0x1E, "movd", INDREG, V32    },
-        { 0x1F, "movd", INDREG, INDREG },
-        { 0x20, "movd", INDREG, INDV32 },
-
-        { 0x21, "movb", INDV32, REG    },
-        { 0x22, "movb", INDV32, V8     },
-        { 0x23, "movb", INDV32, INDREG },
-        { 0x24, "movb", INDV32, INDV32 },
-        { 0x25, "movw", INDV32, REG    },
-        { 0x26, "movw", INDV32, V16    },
-        { 0x27, "movw", INDV32, INDREG },
-        { 0x28, "movw", INDV32, INDV32 },
-        { 0x29, "movd", INDV32, REG    },
-        { 0x2A, "movd", INDV32, V32    },
-        { 0x2B, "movd", INDV32, INDREG },
-        { 0x2C, "movd", INDV32, INDV32 },
-
-        { 0x8A, "swap", REG, REG },
-
-        // logic
-        { 0x2D, "or",  REG, REG  },
-        { 0x2E, "or",  REG, V8   },
-        { 0x2F, "or",  REG, V16  },
-        { 0x30, "or",  REG, V32  },
-        { 0x31, "xor", REG, REG  },
-        { 0x32, "xor", REG, V8   },
-        { 0x33, "xor", REG, V16  },
-        { 0x34, "xor", REG, V32  },
-        { 0x35, "and", REG, REG  },
-        { 0x36, "and", REG, V8   },
-        { 0x37, "and", REG, V16  },
-        { 0x38, "and", REG, V32  },
-        { 0x39, "shl", REG, REG  },
-        { 0x3A, "shl", REG, V8   },
-        { 0x3D, "shr", REG, REG  },
-        { 0x3E, "shr", REG, V8   },
-        { 0x41, "not", REG, NONE },
-
-        // arithmetic
-        { 0x42, "add",  REG, REG  },
-        { 0x43, "add",  REG, V8   },
-        { 0x44, "add",  REG, V16  },
-        { 0x45, "add",  REG, V32  },
-        { 0x46, "sub",  REG, REG  },
-        { 0x47, "sub",  REG, V8   },
-        { 0x48, "sub",  REG, V16  },
-        { 0x49, "sub",  REG, V32  },
-        { 0x4A, "cmp",  REG, REG  },
-        { 0x4B, "cmp",  REG, V8   },
-        { 0x4C, "cmp",  REG, V16  },
-        { 0x4D, "cmp",  REG, V32  },
-        { 0x8B, "cmp",  REG, NONE },
-        { 0x4E, "mul",  REG, REG  },
-        { 0x4F, "mul",  REG, V8   },
-        { 0x50, "mul",  REG, V16  },
-        { 0x51, "mul",  REG, V32  },
-        { 0x52, "idiv", REG, REG  },
-        { 0x53, "idiv", REG, V8   },
-        { 0x54, "idiv", REG, V16  },
-        { 0x55, "idiv", REG, V32  },
-        { 0x56, "mod",  REG, REG  },
-        { 0x57, "mod",  REG, V8   },
-        { 0x58, "mod",  REG, V16  },
-        { 0x59, "mod",  REG, V32  },
-        { 0x5A, "inc",  REG, NONE },
-        { 0x5B, "dec",  REG, NONE },
-
-        // jumps
-        { 0x5C, "bz",   REG,  NONE },
-        { 0x5D, "bz",   V32,  NONE },
-        { 0x5C, "beq",  REG,  NONE },
-        { 0x5D, "beq",  V32,  NONE },
-        { 0x5E, "bnz",  REG,  NONE },
-        { 0x5F, "bnz",  V32,  NONE },
-        { 0x60, "bneg", REG,  NONE },
-        { 0x61, "bneg", V32,  NONE },
-        { 0x62, "bpos", REG,  NONE },
-        { 0x63, "bpos", V32,  NONE },
-        { 0x64, "bgt",  REG,  NONE },
-        { 0x65, "bgt",  V32,  NONE },
-        { 0x66, "bgte", REG,  NONE },
-        { 0x67, "bgte", V32,  NONE },
-        { 0x68, "blt",  REG,  NONE },
-        { 0x69, "blt",  V32,  NONE },
-        { 0x6A, "blte", REG,  NONE },
-        { 0x6B, "blte", V32,  NONE },
-        { 0x6C, "bv",   REG,  NONE },
-        { 0x6D, "bv",   V32,  NONE },
-        { 0x6E, "bnv",  REG,  NONE },
-        { 0x6F, "bnv",  V32,  NONE },
-        { 0x70, "jmp",  REG,  NONE },
-        { 0x71, "jmp",  V32,  NONE },
-        { 0x72, "jsr",  REG,  NONE },
-        { 0x73, "jsr",  V32,  NONE },
-        { 0x74, "ret",  NONE, NONE },
-        { 0x75, "sys",  REG,  NONE },
-        { 0x76, "sys",  V8,   NONE },
-        { 0x77, "iret", NONE, NONE },
-        { 0x86, "sret", NONE, NONE },
-
-        // stack
-        { 0x78, "pushb",  REG,  NONE },
-        { 0x79, "pushb",  V8,   NONE },
-        { 0x7A, "pushw",  REG,  NONE },
-        { 0x7B, "pushw",  V16,  NONE },
-        { 0x7C, "pushd",  REG,  NONE },
-        { 0x7D, "pushd",  V32,  NONE },
-        { 0x7E, "push.a", NONE, NONE },
-        { 0x7F, "popb",   REG,  NONE },
-        { 0x80, "popw",   REG,  NONE },
-        { 0x81, "popd",   REG,  NONE },
-        { 0x82, "pop.a",  NONE, NONE },
-        { 0x83, "popx",   REG,  NONE },
-        { 0x84, "popx",   V8,   NONE },
-        { 0x85, "popx",   V16,  NONE },
-
-        // other
-        { 0x87, "nop",  NONE, NONE },
-        { 0x88, "halt", NONE, NONE },
-        { 0x89, "dbg",  NONE, NONE },
-        // }}}
-    };
-
-    static const char* registers[] = { "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "FP", "SP", "PC", "FL" };
-
     char *tmp = strdup(code);
     char *opcode = strtok(tmp, " "),
          *par1 = strtok(NULL, ", "),
          *par2 = strtok(NULL, ", ");
 
-    ParType type(const char* par) {{{
-        if(par == NULL) {
-            return NONE;
-        } else if(par[0] == '[') {
-            if(isalpha(par[1])) {
-                return INDREG;
-            } else {
-                return INDV32;
-            }
-        } else if(isalpha(par[0])) {
-            return REG;
-        } else {
-            uint32_t v = (uint32_t)strtoll(par, NULL, 0);
-            if(v <= 0xFF) {
-                return V8;
-            } else if(v <= 0xFFFF) {
-                return V16;
-            } else {
-                return V32;
-            }
-        }
-        abort();
-    }}}
-
-    size_t add_value(char* par, ParType tp, uint8_t* data, size_t pos) {{{
-        // remove brackets
-        if(par[0] == '[') {
-            ++par;
-            par[strlen(par)-1] = '\0';
-        }
-
-        // choose according to type
-        switch(tp) {
-            case NONE:
-                return 0;
-            case REG:
-            case INDREG:
-                for(uint8_t i=0; i<sizeof(registers)/sizeof(registers[0]); ++i) {
-                    if(strcmp(registers[i], par) == 0) {
-                        data[pos] = i;
-                        return pos + 1;
-                    }
-                }
-                abort();
-            case V8:
-                data[pos] = (uint8_t)strtol(par, NULL, 0);
-                return pos + 1;
-            case V16: {
-                    uint16_t v = (uint16_t)strtoll(par, NULL, 0);
-                    data[pos++] = (uint8_t)(v & 0xFF);
-                    data[pos++] = (uint8_t)(v >> 8);
-                }
-                return pos;
-            case INDV32:
-            case V32: {
-                    uint32_t v = (uint32_t)strtoll(par, NULL, 0);
-                    data[pos++] = (uint8_t)(v & 0xFF);
-                    data[pos++] = (uint8_t)((v >> 8) & 0xFF);
-                    data[pos++] = (uint8_t)((v >> 16) & 0xFF);
-                    data[pos++] = (uint8_t)((v >> 24) & 0xFF);
-                }
-                return pos;
-            default:
-                abort();
-        }
-    }}}
-
     // find value bytes
     uint8_t ram[25] = { 0 };
     size_t  pos = 1;
-    ParType par1type = type(par1),
-            par2type = type(par2);
-    pos = add_value(par1, par1type, ram, pos);
-    pos = add_value(par2, par2type, ram, pos);
+    ParType par1type = cpu_op_type(par1),
+            par2type = cpu_op_type(par2);
+    pos = cpu_op_add_value(par1, par1type, ram, pos);
+    pos = cpu_op_add_value(par2, par2type, ram, pos);
 
     // if both parameters are registers, join them in one byte
     if((par1type == REG || par1type == INDREG) && (par2type == REG || par2type == INDREG)) {
@@ -368,7 +367,7 @@ test_cpu_basic()
 static void
 test_cpu_MOV()
 {
-    syslog(LOG_NOTICE, "* operator MOV");
+    syslog(LOG_NOTICE, "* simple movement (MOV)");
 
     EXEC(cpu_setregister(B, 0x42), "mov A, B", cpu_register(A), 0x42);
     test(cpu_register(PC), 2, "PC = 2");
@@ -390,7 +389,7 @@ test_cpu_MOV()
 static void
 test_cpu_MOVB()
 {
-    syslog(LOG_NOTICE, "* operator MOV");
+    syslog(LOG_NOTICE, "* 8-bit movement (MOVB)");
 
     EXEC({ cpu_setregister(B, 0x100); memory_set(cpu_register(B), 0xAB); },
             "movb A, [B]", cpu_register(A), 0xAB);
@@ -416,53 +415,34 @@ test_cpu_MOVB()
 
 
 static void
-test_cpu()
+test_cpu_MOVW()
 {
-    syslog(LOG_NOTICE, "[[[ CPU ]]]");
+    syslog(LOG_NOTICE, "* 16-bit movement (MOVW)");
 
-    test_cpu_basic();
-    test_cpu_MOV();
-    test_cpu_MOVB();
+    EXEC({ cpu_setregister(B, 0x1000); memory_set16(cpu_register(B), 0xABCD); },
+            "movw A, [B]", cpu_register(A), 0xABCD);
+    EXEC({ memory_set16(0x1000, 0xABCD); },
+            "movw A, [0x1000]", cpu_register(A), 0xABCD);
+    EXEC({ cpu_setregister(A, 0x6402); },
+            "movw [A], A", memory_get16(0x6402), 0x6402);
+    EXEC({ cpu_setregister(A, 0x64); },
+            "movw [A], 0xFABA", memory_get16(0x64), 0xFABA);
+    EXEC({ cpu_setregister(A, 0x32CC); cpu_setregister(B, 0x64); memory_set16(0x64, 0xFFAB); },
+            "movw [A], [B]", memory_get16(0x32CC), 0xFFAB);
+    EXEC({ cpu_setregister(A, 0x32); memory_set16(0x6420, 0xFFAB); },
+            "movw [A], [0x6420]", memory_get16(0x32), 0xFFAB);
+    EXEC({ cpu_setregister(A, 0xAB32AC); },
+            "movw [0x64], A", memory_get16(0x64), 0x32AC);
+    EXEC({},
+            "movw [0x64], 0xF0FA", memory_get(0x64), 0xF0FA);
+    EXEC({ cpu_setregister(A, 0xF000); memory_set16(0xF000, 0x4245); },
+            "movw [0xCC64], [A]", memory_get16(0xCC64), 0x4245);
+    EXEC({ memory_set32(0xABF0, 0x1234); memory_set16(0x1234, 0x3F54); },
+            "movw [0x64], [0xABF0]", memory_get16(0x64), 0x3F54);
 }
 
-/*
-  s = opc('movb A, [0x1000]', () => mb.set(0x1000, 0xAB));
-  t.equal(cpu.A, 0xAB, s);
 
-  s = opc('movb [C], A', () => { cpu.A = 0x64, cpu.C = 0x32 });
-  t.equal(mb.get(0x32), 0x64, s);
-
-  s = opc('movb [A], 0xFA', () => cpu.A = 0x64);
-  t.equal(mb.get(0x64), 0xFA, s);
-
-  s = opc('movb [A], [B]', () => { cpu.A = 0x32; cpu.B = 0x64; mb.set(0x64, 0xFF); });
-  t.equal(mb.get(0x32), 0xFF, s);
-
-  s = opc('movb [A], [0x6420]', () => { cpu.A = 0x32; mb.set(0x6420, 0xFF); });
-  t.equal(mb.get(0x32), 0xFF, s);
-
-  s = opc('movb [0x64], A', () => cpu.A = 0xAC32);
-  t.equal(mb.get(0x64), 0x32, s);
-
-  s = opc('movb [0x64], 0xF0');
-  t.equal(mb.get(0x64), 0xF0, s);
-  
-  s = opc('movb [0xCC64], [A]', () => { 
-    cpu.A = 0xF000; mb.set(0xF000, 0x42); 
-  });
-  t.equal(mb.get(0xCC64), 0x42, s);
-  
-  s = opc('movb [0x64], [0xABF0]', () => { 
-    mb.set32(0xABF0, 0x1234); mb.set(0x1234, 0x3F);
-  });
-  t.equal(mb.get(0x64), 0x3F, s);
-
-  // 
-  // MOVW
-  //
-  
-  t.comment('16-bit movement (movw)');
-  
+/*{{{
   s = opc('movw A, [B]', () => { cpu.B = 0x1000; mb.set16(cpu.B, 0xABCD); }); 
   t.equal(cpu.A, 0xABCD, s);
   
@@ -920,7 +900,18 @@ test('CPU: invalid opcode', t => {
 
   t.end();
 
-});
-*/
+});}}} */
+
+
+static void
+test_cpu()
+{
+    syslog(LOG_NOTICE, "[[[ CPU ]]]");
+
+    test_cpu_basic();
+    test_cpu_MOV();
+    test_cpu_MOVB();
+    test_cpu_MOVW();
+}
 
 // }}}

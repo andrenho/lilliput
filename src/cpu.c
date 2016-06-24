@@ -130,57 +130,57 @@ void cpu_step()
             break;
 
         case 0x0B: {  // movb [R], R
-                uint8_t value = reg[memory_get(rPC+1) >> 4];
-                memory_set(reg[memory_get(rPC+1) & 0xF], affect_flags(value));
+                uint8_t value = (uint8_t)reg[memory_get(rPC+1) >> 4];
+                memory_set(reg[memory_get(rPC+1) & 0xF], (uint8_t)affect_flags(value));
                 rPC += 2;
             }
             break;
 
         case 0x0C: {  // movb [R], v8
                 uint8_t value = memory_get(rPC+2);
-                memory_set(reg[memory_get(rPC+1)], affect_flags(value));
+                memory_set(reg[memory_get(rPC+1)], (uint8_t)affect_flags(value));
                 rPC += 3;
             }
             break;
 
         case 0x0D: {  // movb [R], [R]
                 uint8_t value = memory_get(reg[memory_get(rPC+1) >> 4]);
-                memory_set(reg[memory_get(rPC+1) & 0xF], affect_flags(value));
+                memory_set(reg[memory_get(rPC+1) & 0xF], (uint8_t)affect_flags(value));
                 rPC += 2;
             }
             break;
 
         case 0x0E: {  // movb [R], [v32]
                 uint8_t value = memory_get(memory_get32(rPC+2));
-                memory_set(reg[memory_get(rPC+1)], affect_flags(value));
+                memory_set(reg[memory_get(rPC+1)], (uint8_t)affect_flags(value));
                 rPC += 6;
             }
             break;
 
         case 0x21: {  // movb [v32], R
-                uint8_t value = reg[memory_get(rPC+5)];
-                memory_set(memory_get32(rPC+1), affect_flags(value));
+                uint8_t value = (uint8_t)reg[memory_get(rPC+5)];
+                memory_set(memory_get32(rPC+1), (uint8_t)affect_flags(value));
                 rPC += 6;
             }
             break;
 
         case 0x22: {  // movb [v32], v8
                 uint8_t value = memory_get(rPC+5);
-                memory_set(memory_get32(rPC+1), affect_flags(value));
+                memory_set(memory_get32(rPC+1), (uint8_t)affect_flags(value));
                 rPC += 6;
             }
             break;
 
         case 0x23: {  // movb [v32], [R]
                 uint8_t value = memory_get(reg[memory_get(rPC+5)]);
-                memory_set(memory_get32(rPC+1), affect_flags(value));
+                memory_set(memory_get32(rPC+1), (uint8_t)affect_flags(value));
                 rPC += 6;
             }
             break;
 
         case 0x24: {  // movb [v32], [v32]
                 uint8_t value = memory_get(memory_get32(memory_get32(rPC+5)));
-                memory_set(memory_get32(rPC+1), affect_flags(value));
+                memory_set(memory_get32(rPC+1), (uint8_t)affect_flags(value));
                 rPC += 9;
             }
             break;
