@@ -185,192 +185,243 @@ void cpu_step()
             }
             break;
 
+        // 
+        // MOVW
+        //
+
+        case 0x07: {  // movw R, [R]
+                uint16_t value = memory_get16(reg[memory_get(rPC+1) >> 4]);
+                reg[memory_get(rPC+1) & 0xF] = affect_flags(value);
+                rPC += 2;
+            }
+            break;
+
+        case 0x08: {  // movw R, [v32]
+                uint16_t value = memory_get16(memory_get32(rPC+2));
+                reg[memory_get(rPC+1)] = affect_flags(value);
+                rPC += 6;
+            }
+            break;
+
+        case 0x0F: {  // movw [R], R
+                uint16_t value = (uint16_t)reg[memory_get(rPC+1) >> 4];
+                memory_set16(reg[memory_get(rPC+1) & 0xF], (uint16_t)affect_flags(value));
+                rPC += 2;
+            }
+            break;
+
+        case 0x1A: {  // movw [R], v16
+                uint16_t value = memory_get16(rPC+2);
+                memory_set16(reg[memory_get(rPC+1)], (uint16_t)affect_flags(value));
+                rPC += 4;
+            }
+            break;
+
+        case 0x1B: {  // movw [R], [R]
+                uint16_t value = memory_get16(reg[memory_get(rPC+1) >> 4]);
+                memory_set16(reg[memory_get(rPC+1) & 0xF], (uint16_t)affect_flags(value));
+                rPC += 2;
+            }
+            break;
+
+        case 0x1C: {  // movw [R], [v32]
+                uint16_t value = memory_get16(memory_get32(rPC+2));
+                memory_set16(reg[memory_get(rPC+1)], (uint16_t)affect_flags(value));
+                rPC += 6;
+            }
+            break;
+
+        case 0x25: {  // movw [v32], R
+                uint16_t value = (uint16_t)reg[memory_get(rPC+5)];
+                memory_set16(memory_get32(rPC+1), (uint16_t)affect_flags(value));
+                rPC += 6;
+            }
+            break;
+
+        case 0x26: {  // movw [v32], v16
+                uint16_t value = memory_get16(rPC+5);
+                memory_set16(memory_get32(rPC+1), (uint16_t)affect_flags(value));
+                rPC += 7;
+            }
+            break;
+
+        case 0x27: {  // movw [v32], [R]
+                uint16_t value = memory_get16(reg[memory_get(rPC+5)]);
+                memory_set16(memory_get32(rPC+1), (uint16_t)affect_flags(value));
+                rPC += 6;
+            }
+            break;
+
+        case 0x28: {  // movw [v32], [v32]
+                uint16_t value = memory_get16(memory_get32(memory_get32(rPC+5)));
+                memory_set16(memory_get32(rPC+1), (uint16_t)affect_flags(value));
+                rPC += 9;
+            }
+            break;
+
+        // 
+        // MOVD
+        //
+
+        case 0x09: {  // movd R, [R]
+                uint32_t value = memory_get32(reg[memory_get(rPC+1) >> 4]);
+                reg[memory_get(rPC+1) & 0xF] = affect_flags(value);
+                rPC += 2;
+            }
+            break;
+
+        case 0x0A: {  // movd R, [v32]
+                uint32_t value = memory_get32(memory_get32(rPC+2));
+                reg[memory_get(rPC+1)] = affect_flags(value);
+                rPC += 6;
+            }
+            break;
+
+        case 0x1D: {  // movd [R], R
+                uint32_t value = reg[memory_get(rPC+1) >> 4];
+                memory_set32(reg[memory_get(rPC+1) & 0xF], affect_flags(value));
+                rPC += 2;
+            }
+            break;
+
+        case 0x1E: {  // movd [R], v32
+                uint32_t value = memory_get32(rPC+2);
+                memory_set32(reg[memory_get(rPC+1)], affect_flags(value));
+                rPC += 6;
+            }
+            break;
+
+        case 0x1F: {  // movd [R], [R]
+                uint32_t value = memory_get32(reg[memory_get(rPC+1) >> 4]);
+                memory_set32(reg[memory_get(rPC+1) & 0xF], affect_flags(value));
+                rPC += 2;
+            }
+            break;
+
+        case 0x20: {  // movd [R], [v32]
+                uint32_t value = memory_get32(memory_get32(rPC+2));
+                memory_set32(reg[memory_get(rPC+1)], affect_flags(value));
+                rPC += 6;
+            }
+            break;
+
+        case 0x29: {  // movd [v32], R
+                uint32_t value = reg[memory_get(rPC+5)];
+                memory_set32(memory_get32(rPC+1), affect_flags(value));
+                rPC += 6;
+            }
+            break;
+
+        case 0x2A: {  // movd [v32], v32
+                uint32_t value = memory_get32(rPC+5);
+                memory_set32(memory_get32(rPC+1), affect_flags(value));
+                rPC += 9;
+            }
+            break;
+
+        case 0x2B: {  // movd [v32], [R]
+                uint32_t value = memory_get32(reg[memory_get(rPC+5)]);
+                memory_set32(memory_get32(rPC+1), affect_flags(value));
+                rPC += 6;
+            }
+            break;
+
+        case 0x2C: {  // movd [v32], [v32]
+                uint32_t value = memory_get32(memory_get32(memory_get32(rPC+5)));
+                memory_set32(memory_get32(rPC+1), affect_flags(value));
+                rPC += 9;
+            }
+            break;
+
+        //
+        // SWAP
+        //
+        
+        case 0x8A: {  // swap R, R
+                uint32_t tmp = reg[memory_get(rPC+1) >> 4];
+                reg[memory_get(rPC+1) >> 4] = reg[memory_get(rPC+1) & 0xF];
+                reg[memory_get(rPC+1) & 0xF] = tmp;
+                rPC += 2;
+            }
+            break;
+
+        // 
+        // OR
+        //
+
+        case 0x2D: {  // or R, R
+                uint32_t value = reg[memory_get(rPC+1) & 0xF] | reg[memory_get(rPC+1) >> 4];
+                reg[memory_get(rPC+1) & 0xF] = affect_flags(value);
+                rPC += 2;
+            }
+            break;
+
+        case 0x2E: {  // or R, v8
+                uint8_t value = (uint8_t)reg[memory_get(rPC+1)] | (uint8_t)memory_get(rPC+2);
+                reg[memory_get(rPC+1)] = affect_flags(value);
+                rPC += 2;
+            }
+            break;
+
+        case 0x2F: {  // or R, v16
+                uint16_t value = (uint16_t)reg[memory_get(rPC+1)] | (uint16_t)memory_get16(rPC+2);
+                reg[memory_get(rPC+1)] = affect_flags(value);
+                rPC += 3;
+            }
+            break;
+
+        case 0x30: {  // or R, v32
+                uint32_t value = reg[memory_get(rPC+1)] | memory_get32(rPC+2);
+                reg[memory_get(rPC+1)] = affect_flags(value);
+                rPC += 5;
+            }
+            break;
+
+        // 
+        // XOR
+        //
+
+        case 0x31: {  // xor R, R
+                uint32_t value = reg[memory_get(rPC+1) & 0xF] ^ reg[memory_get(rPC+1) >> 4];
+                reg[memory_get(rPC+1) & 0xF] = affect_flags(value);
+                rPC += 2;
+            }
+            break;
+
+        case 0x32: {  // xor R, v8
+                uint8_t value = (uint8_t)reg[memory_get(rPC+1)] ^ (uint8_t)memory_get(rPC+2);
+                reg[memory_get(rPC+1)] = affect_flags(value);
+                rPC += 2;
+            }
+            break;
+
+        case 0x33: {  // xor R, v16
+                uint16_t value = (uint16_t)reg[memory_get(rPC+1)] ^ (uint16_t)memory_get16(rPC+2);
+                reg[memory_get(rPC+1)] = affect_flags(value);
+                rPC += 3;
+            }
+            break;
+
+        case 0x34: {  // xor R, v32
+                uint32_t value = reg[memory_get(rPC+1)] | memory_get32(rPC+2);
+                reg[memory_get(rPC+1)] = affect_flags(value);
+                rPC += 5;
+            }
+            break;
+
+
+
+
+        //
+        // INVALID OPCODE
+        //
+
         default:
             syslog(LOG_ERR, "Invalid opcode 0x%02X from memory position 0x%" PRIX32, opcode, reg[PC]);
             exit(EXIT_FAILURE);
     }
 
 /*
-
-    //
-    // MOVW
-    //
-
-    f[0x07] = pos => {  // movw R, [R]
-      let [reg, mb] = [this._reg, this._mb];
-      const [p1, p2] = [mb.get(pos), mb.get(pos + 1)];
-      const r = mb.get16(reg[p2]);
-      reg[p1] = this._affectFlags(r);
-      return 2;
-    };
-
-    f[0x08] = pos => {  // movw R, [v32]
-      let [reg, mb] = [this._reg, this._mb];
-      const [p1, p2] = [mb.get(pos), mb.get32(pos + 1)];
-      const r =  mb.get16(p2);
-      reg[p1] = this._affectFlags(r);
-      return 5;
-    };
-
-    f[0x0F] = pos => {  // movw [R], R
-      let [reg, mb] = [this._reg, this._mb];
-      const [p1, p2] = [mb.get(pos), mb.get(pos + 1)];
-      const r = reg[p2] & 0xFFFF;
-      mb.set16(reg[p1], this._affectFlags(r));
-      return 2;
-    };
-
-    f[0x1A] = pos => {  // movw [R], v16
-      let [reg, mb] = [this._reg, this._mb];
-      const [p1, p2] = [mb.get(pos), mb.get16(pos + 1)];
-      const r = p2;
-      mb.set16(reg[p1], this._affectFlags(r));
-      return 3;
-    };
-
-    f[0x1B] = pos => {  // movw [R], [R]
-      let [reg, mb] = [this._reg, this._mb];
-      const [p1, p2] = [mb.get(pos), mb.get(pos + 1)];
-      const r = mb.get16(reg[p2]);
-      mb.set16(reg[p1], this._affectFlags(r));
-      return 2;
-    };
-
-    f[0x1C] = pos => {  // movw [R], [v32]
-      let [reg, mb] = [this._reg, this._mb];
-      const [p1, p2] = [mb.get(pos), mb.get32(pos + 1)];
-      const r = mb.get16(p2);
-      mb.set16(reg[p1], this._affectFlags(r));
-      return 5;
-    };
-
-    f[0x25] = pos => {  // movw [v32], R
-      let [reg, mb] = [this._reg, this._mb];
-      const [p1, p2] = [mb.get32(pos), mb.get(pos + 4)];
-      const r = reg[p2] & 0xFFFF;
-      mb.set16(p1, this._affectFlags(r));
-      return 5;
-    };
-
-    f[0x26] = pos => {  // movw [v32], v16
-      let [reg, mb] = [this._reg, this._mb];
-      const [p1, p2] = [mb.get32(pos), mb.get16(pos + 4)];
-      const r = p2;
-      mb.set16(p1, this._affectFlags(r));
-      return 6;
-    };
-
-    f[0x27] = pos => {  // movw [v32], [R]
-      let [reg, mb] = [this._reg, this._mb];
-      const [p1, p2] = [mb.get32(pos), mb.get(pos + 4)];
-      mb.set16(p1, mb.get16(reg[p2]));
-      return 5;
-    };
-
-    f[0x28] = pos => {  // movw [v32], [v32]
-      let [reg, mb] = [this._reg, this._mb];
-      const [p1, p2] = [mb.get32(pos), mb.get32(pos + 4)];
-      mb.set16(p1, mb.get16(mb.get32(p2)));
-      return 8;
-    };
-
-
-    //
-    // MOVD
-    //
-
-    f[0x09] = pos => {  // movd R, [R]
-      let [reg, mb] = [this._reg, this._mb];
-      const [p1, p2] = [mb.get(pos), mb.get(pos + 1)];
-      const r =  mb.get32(reg[p2]);
-      reg[p1] = this._affectFlags(r);
-      return 2;
-    };
-
-    f[0x0A] = pos => {  // movd R, [v32]
-      let [reg, mb] = [this._reg, this._mb];
-      const [p1, p2] = [mb.get(pos), mb.get32(pos + 1)];
-      const r =  mb.get32(p2);
-      reg[p1] = this._affectFlags(r);
-      return 5;
-    };
-
-    f[0x1D] = pos => {  // movd [R], R
-      let [reg, mb] = [this._reg, this._mb];
-      const [p1, p2] = [mb.get(pos), mb.get(pos + 1)];
-      const r = reg[p2];
-      mb.set32(reg[p1], this._affectFlags(r));
-      return 2;
-    };
-
-    f[0x1E] = pos => {  // movd [R], v32
-      let [reg, mb] = [this._reg, this._mb];
-      const [p1, p2] = [mb.get(pos), mb.get32(pos + 1)];
-      const r = p2;
-      mb.set32(reg[p1], this._affectFlags(r));
-      return 5;
-    };
-
-    f[0x1F] = pos => {  // movd [R], [R]
-      let [reg, mb] = [this._reg, this._mb];
-      const [p1, p2] = [mb.get(pos), mb.get(pos + 1)];
-      const r = mb.get32(reg[p2]);
-      mb.set32(reg[p1], this._affectFlags(r));
-      return 2;
-    };
-
-    f[0x20] = pos => {  // movd [R], [v32]
-      let [reg, mb] = [this._reg, this._mb];
-      const [p1, p2] = [mb.get(pos), mb.get32(pos + 1)];
-      const r = mb.get32(p2);
-      mb.set32(reg[p1], this._affectFlags(r));
-      return 5;
-    };
-
-    f[0x29] = pos => {  // movd [v32], R
-      let [reg, mb] = [this._reg, this._mb];
-      const [p1, p2] = [mb.get32(pos), mb.get(pos + 4)];
-      const r = reg[p2];
-      mb.set32(p1, this._affectFlags(r));
-      return 5;
-    };
-
-    f[0x2A] = pos => {  // movd [v32], v32
-      let [reg, mb] = [this._reg, this._mb];
-      const [p1, p2] = [mb.get32(pos), mb.get32(pos + 4)];
-      const r = p2;
-      mb.set32(p1, this._affectFlags(r));
-      return 8;
-    };
-
-    f[0x2B] = pos => {  // movd [v32], [R]
-      let [reg, mb] = [this._reg, this._mb];
-      const [p1, p2] = [mb.get32(pos), mb.get(pos + 4)];
-      const r = mb.get32(reg[p2]);
-      mb.set32(p1, this._affectFlags(r));
-      return 5;
-    };
-
-    f[0x2C] = pos => {  // movd [v32], [v32]
-      let [reg, mb] = [this._reg, this._mb];
-      const [p1, p2] = [mb.get32(pos), mb.get32(pos + 4)];
-      const r = mb.get32(mb.get32(p2));
-      mb.set32(p1, this._affectFlags(r));
-      return 8;
-    };
-
-    //
-    // SWAP
-    //
-    f[0x8A] = pos => {  // swap R, R
-      let [reg, mb] = [this._reg, this._mb];
-      const [p1, p2] = [mb.get(pos), mb.get(pos + 1)];
-      [reg[p1], reg[p2]] = [reg[p2], reg[p1]]
-      this._affectFlags(reg[p1]);
-      return 2;
-    };
-
-
     //
     // OR
     //

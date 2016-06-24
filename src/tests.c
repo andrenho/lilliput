@@ -434,7 +434,7 @@ test_cpu_MOVW()
     EXEC({ cpu_setregister(A, 0xAB32AC); },
             "movw [0x64], A", memory_get16(0x64), 0x32AC);
     EXEC({},
-            "movw [0x64], 0xF0FA", memory_get(0x64), 0xF0FA);
+            "movw [0x64], 0xF0FA", memory_get16(0x64), 0xF0FA);
     EXEC({ cpu_setregister(A, 0xF000); memory_set16(0xF000, 0x4245); },
             "movw [0xCC64], [A]", memory_get16(0xCC64), 0x4245);
     EXEC({ memory_set32(0xABF0, 0x1234); memory_set16(0x1234, 0x3F54); },
@@ -442,143 +442,82 @@ test_cpu_MOVW()
 }
 
 
+static void
+test_cpu_MOVD()
+{
+    syslog(LOG_NOTICE, "* 32-bit movement (MOVD)");
+
+    EXEC({ cpu_setregister(B, 0x1000); memory_set32(cpu_register(B), 0xABCDEF01); },
+            "movd A, [B]", cpu_register(A), 0xABCDEF01);
+    EXEC({ memory_set32(0x1000, 0xABCDEF01); },
+            "movd A, [0x1000]", cpu_register(A), 0xABCDEF01);
+    EXEC({ cpu_setregister(A, 0x16402); },
+            "movd [A], A", memory_get32(0x16402), 0x16402);
+    EXEC({ cpu_setregister(A, 0x64); },
+            "movd [A], 0xFABA1122", memory_get32(0x64), 0xFABA1122);
+    EXEC({ cpu_setregister(A, 0x32CC); cpu_setregister(B, 0x64); memory_set32(0x64, 0xFFAB5678); },
+            "movd [A], [B]", memory_get32(0x32CC), 0xFFAB5678);
+    EXEC({ cpu_setregister(A, 0x32); memory_set32(0x6420, 0xFFAC9876); },
+            "movd [A], [0x6420]", memory_get32(0x32), 0xFFAC9876);
+    EXEC({ cpu_setregister(A, 0xAB32AC44); },
+            "movd [0x64], A", memory_get32(0x64), 0xAB32AC44);
+    EXEC({},
+            "movd [0x64], 0xF0FA1234", memory_get32(0x64), 0xF0FA1234);
+    EXEC({ cpu_setregister(A, 0xF000); memory_set32(0xF000, 0x4245AABB); },
+            "movd [0xCC64], [A]", memory_get32(0xCC64), 0x4245AABB);
+    EXEC({ memory_set32(0xABF0, 0x1234); memory_set32(0x1234, 0x3F54FABC); },
+            "movd [0x64], [0xABF0]", memory_get32(0x64), 0x3F54FABC);
+}
+
+
+static void
+test_cpu_SWAP()
+{
+    syslog(LOG_NOTICE, "* swap registers (SWAP)");
+    
+    EXEC({ cpu_setregister(A, 0xA); cpu_setregister(B, 0xB); }, 
+            "swap A, B", cpu_register(A), 0xB);
+    test(cpu_register(B), 0xA, "B = 0xA");
+}
+
+
+static void
+test_cpu_logical()
+{
+    syslog(LOG_NOTICE, "* logical operations");
+
+    EXEC({ cpu_setregister(A, 0b1010); cpu_setregister(B, 0b1100); }, "or A, B", cpu_register(A), 0b1110);
+    test(cpu_flag(S), false, "S = 0");
+    test(cpu_flag(P), true , "P = 1");
+    test(cpu_flag(Z), false, "Z = 0");
+    test(cpu_flag(Y), false, "Y = 0");
+    test(cpu_flag(V), false, "V = 0");
+
+    EXEC({ cpu_setregister(A, 0b11); }, "or A, 0x4", cpu_register(A), 0b111);
+    EXEC({ cpu_setregister(A, 0b111); }, "or A, 0x4000", cpu_register(A), 0x4007);
+    EXEC({ cpu_setregister(A, 0x10800000); }, "or A, 0x2A426653", cpu_register(A), 0x3AC26653);
+
+    EXEC({ cpu_setregister(A, 0b1010); cpu_setregister(B, 0b1100); }, "xor A, B", cpu_register(A), 0b110);
+    EXEC({ cpu_setregister(A, 0b11); }, "xor A, 0x4", cpu_register(A), 0b111);
+    EXEC({ cpu_setregister(A, 0xFF0); }, "xor A, 0xFF00", cpu_register(A), 0xF0F0);
+    EXEC({ cpu_setregister(A, 0x148ABD12); }, "xor A, 0x2A426653", cpu_register(A), 0x3EC8DB41);
+
+    EXEC({ cpu_setregister(A, 0b11); cpu_setregister(B, 0b1100); }, "and A, B", cpu_register(A), 0);
+    test(cpu_flag(Z), true, "Z = 1");
+    EXEC({ cpu_setregister(A, 0b11); }, "and A, 0x7", cpu_register(A), 0b11);
+    EXEC({ cpu_setregister(A, 0xFF0); }, "and A, 0xFF00", cpu_register(A), 0xF00);
+    EXEC({ cpu_setregister(A, 0x148ABD12); }, "and A, 0x2A426653", cpu_register(A), 0x22412);
+
+    EXEC({ cpu_setregister(A, 0b10101010); cpu_setregister(B, 4); }, "shl A, B", cpu_register(A), 0b101010100000);
+    EXEC({ cpu_setregister(A, 0b10101010); }, "shl A, 4", cpu_register(A), 0b101010100000);
+
+    EXEC({ cpu_setregister(A, 0b10101010); cpu_setregister(B, 4); }, "shr A, B", cpu_register(A), 0b1010);
+    EXEC({ cpu_setregister(A, 0b10101010); }, "shr A, 4", cpu_register(A), 0b1010);
+
+    EXEC({ cpu_setregister(A, 0b11001010); }, "not A", cpu_register(A), 0b11111111111111111111111100110101);
+}
+
 /*{{{
-  s = opc('movw A, [B]', () => { cpu.B = 0x1000; mb.set16(cpu.B, 0xABCD); }); 
-  t.equal(cpu.A, 0xABCD, s);
-  
-  s = opc('movw A, [0x1000]', () => mb.set16(0x1000, 0xABCD));
-  t.equal(cpu.A, 0xABCD, s);
-
-  s = opc('movw [A], A', () => cpu.A = 0x6402);
-  t.equal(mb.get16(0x6402), 0x6402, s);
-
-  s = opc('movw [A], 0xFABA', () => cpu.A = 0x64);
-  t.equal(mb.get16(0x64), 0xFABA, s);
-
-  s = opc('movw [A], [B]', () => { cpu.A = 0x32CC; cpu.B = 0x64; mb.set16(0x64, 0xFFAB); });
-  t.equal(mb.get16(0x32CC), 0xFFAB, s);
-
-  s = opc('movw [A], [0x6420]', () => { cpu.A = 0x32; mb.set16(0x6420, 0xFFAC); });
-  t.equal(mb.get16(0x32), 0xFFAC, s);
-
-  s = opc('movw [0x64], A', () => cpu.A = 0xAB32AC);
-  t.equal(mb.get16(0x64), 0x32AC, s);
-
-  s = opc('movw [0x64], 0xF0FA');
-  t.equal(mb.get16(0x64), 0xF0FA, s);
-  
-  s = opc('movw [0xCC64], [A]', () => { 
-    cpu.A = 0xF000; mb.set16(0xF000, 0x4245); 
-  });
-  t.equal(mb.get16(0xCC64), 0x4245, s);
-  
-  s = opc('movw [0x64], [0xABF0]', () => { 
-    mb.set32(0xABF0, 0x1234); mb.set16(0x1234, 0x3F54);
-  });
-  t.equal(mb.get16(0x64), 0x3F54, s);
-
-  // 
-  // MOVD
-  //
-
-  t.comment('32-bit movement (movd)');
-  
-  s = opc('movd A, [B]', () => { cpu.B = 0x1000; mb.set32(cpu.B, 0xABCDEF01); }); 
-  t.equal(cpu.A, 0xABCDEF01, s);
-  
-  s = opc('movd A, [0x1000]', () => mb.set32(0x1000, 0xABCDEF01));
-  t.equal(cpu.A, 0xABCDEF01, s);
-
-  s = opc('movd [A], A', () => cpu.A = 0x16402);
-  t.equal(mb.get32(0x16402), 0x16402, s);
-
-  s = opc('movd [A], 0xFABA1122', () => cpu.A = 0x64);
-  t.equal(mb.get32(0x64), 0xFABA1122, s);
-
-  s = opc('movd [A], [B]', () => { cpu.A = 0x32CC; cpu.B = 0x64; mb.set32(0x64, 0xFFAB5678); });
-  t.equal(mb.get32(0x32CC), 0xFFAB5678, s);
-
-  s = opc('movd [A], [0x6420]', () => { cpu.A = 0x32; mb.set32(0x6420, 0xFFAC9876); });
-  t.equal(mb.get32(0x32), 0xFFAC9876, s);
-
-  s = opc('movd [0x64], A', () => cpu.A = 0xAB32AC44);
-  t.equal(mb.get32(0x64), 0xAB32AC44, s);
-
-  s = opc('movd [0x64], 0xF0FA1234');
-  t.equal(mb.get32(0x64), 0xF0FA1234, s);
-  
-  s = opc('movd [0xCC64], [A]', () => { 
-    cpu.A = 0xF000; mb.set32(0xF000, 0x4245AABB); 
-  });
-  t.equal(mb.get32(0xCC64), 0x4245AABB, s);
-  
-  s = opc('movd [0x64], [0xABF0]', () => { 
-    mb.set32(0xABF0, 0x1234); mb.set32(0x1234, 0x3F54FABC);
-  });
-  t.equal(mb.get32(0x64), 0x3F54FABC, s);
-
-  //
-  // LOGIC OPERATIONS
-  //
-
-  t.comment('Logic operations');
-
-  s = opc('or A, B', () => { cpu.A = 0b1010; cpu.B = 0b1100; });
-  t.equal(cpu.A, 0b1110, s);
-  t.false(cpu.S, "cpu.S == 0");
-  t.true(cpu.P, "cpu.P == 1");
-  t.false(cpu.Z, "cpu.Z == 0");
-  t.false(cpu.Y, "cpu.Y == 0");
-  t.false(cpu.V, "cpu.V == 0");
-
-  s = opc('or A, 0x4', () => { cpu.A = 0b11; });
-  t.equal(cpu.A, 0b111, s);
-
-  s = opc('or A, 0x4000', () => { cpu.A = 0b111; });
-  t.equal(cpu.A, 0x4007, s);
-
-  s = opc('or A, 0x2A426653', () => { cpu.A = 0x10800000; });
-  t.equal(cpu.A, 0x3AC26653, s);
-
-  s = opc('xor A, B', () => { cpu.A = 0b1010; cpu.B = 0b1100; });
-  t.equal(cpu.A, 0b110, s);
-
-  s = opc('xor A, 0x4', () => { cpu.A = 0b11; });
-  t.equal(cpu.A, 0b111, s);
-
-  s = opc('xor A, 0xFF00', () => { cpu.A = 0xFF0; });
-  t.equal(cpu.A, 0xF0F0, s);
-
-  s = opc('xor A, 0x2A426653', () => { cpu.A = 0x148ABD12; });
-  t.equal(cpu.A, 0x3EC8DB41, s);
-
-  s = opc('and A, B', () => { cpu.A = 0b11; cpu.B = 0b1100; });
-  t.equal(cpu.A, 0, s);
-  t.true(cpu.Z, "cpu.Z == 1");
-
-  s = opc('and A, 0x7', () => { cpu.A = 0b11; });
-  t.equal(cpu.A, 0b11, s);
-
-  s = opc('and A, 0xFF00', () => { cpu.A = 0xFF0; });
-  t.equal(cpu.A, 0xF00, s);
-
-  s = opc('and A, 0x2A426653', () => { cpu.A = 0x148ABD12; });
-  t.equal(cpu.A, 0x22412, s);
-
-  s = opc('shl A, B', () => { cpu.A = 0b10101010; cpu.B = 4; });
-  t.equal(cpu.A, 0b101010100000, s);
-
-  s = opc('shl A, 4', () => { cpu.A = 0b10101010;});
-  t.equal(cpu.A, 0b101010100000, s);
-
-  s = opc('shr A, B', () => { cpu.A = 0b10101010; cpu.B = 4; });
-  t.equal(cpu.A, 0b1010, s);
-
-  s = opc('shr A, 4', () => { cpu.A = 0b10101010; });
-  t.equal(cpu.A, 0b1010, s);
-
-  s = opc('not A', () => { cpu.A = 0b11001010; });
-  t.equal(cpu.A, 0b11111111111111111111111100110101, s);
 
   //
   // integer math
@@ -912,6 +851,9 @@ test_cpu()
     test_cpu_MOV();
     test_cpu_MOVB();
     test_cpu_MOVW();
+    test_cpu_MOVD();
+    test_cpu_SWAP();
+    test_cpu_logical();
 }
 
 // }}}
