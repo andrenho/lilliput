@@ -169,13 +169,13 @@ def parse_cpu_code(code):
         elif str.isalpha(par[0]):
             return 'reg'
         else:
-            v = int(par)
+            v = int(par, 0)
             if v <= 0xFF:
                 return 'v8'
             elif v < 0xFFFF:
                 return 'v16'
             else:
-                return v32
+                return 'v32'
 
     def value(par, tp):
         if tp == None:
@@ -183,17 +183,17 @@ def parse_cpu_code(code):
         elif tp == 'reg':
             return (registers.index(par),)
         elif tp == 'v8':
-            return (int(par),)
+            return (int(par, 0),)
         elif tp == 'v16':
-            v = int(par)
+            v = int(par, 0)
             return (v & 0xFF, (v >> 8) & 0xFF)
         elif tp == 'v32':
-            v = int(par)
+            v = int(par, 0)
             return (v & 0xFF, (v >> 8) & 0xFF, (v >> 16) & 0xFF, (v >> 24) & 0xFF)
         elif tp == 'indreg':
             return (registers.index(re.sub('\[|\]', '', par)),)
         elif tp == 'indv32':
-            v = int(re.sub('\[|\]', '', par))
+            v = int(re.sub('\[|\]', '', par), 0)
             return (v & 0xFF, (v >> 8) & 0xFF, (v >> 16) & 0xFF, (v >> 24) & 0xFF)
 
     cmd, par1, par2 = regex.findall(code)[0]
@@ -256,6 +256,7 @@ class Connection:
         i = 0
         for bt in b:
             self.send('m w ' + str(i) + ' ' + str(bt))
+            i += 1
         self.send('c s')
 
     def disconnect(self):
@@ -309,7 +310,20 @@ class CPUTest(unittest.TestCase):
         conn.send('reset', 'c r b 0x42')
         conn.exec('mov a, b')
         self.assertEqual(conn.get_i('c r a'), 0x42)
-        self.assertEqual(conn.get_i('c r pc'), 3)
+        self.assertEqual(conn.get_i('c r pc'), 2)
+
+        conn.send('reset')
+        conn.exec('mov a, 0x34')
+        self.assertEqual(conn.get_i('c r a'), 0x34)
+
+        conn.send('reset')
+        conn.exec('mov a, 0x1234')
+        self.assertEqual(conn.get_i('m r 0'), 3)
+        self.assertEqual(conn.get_i('c r a'), 0x1234)
+
+        conn.send('reset')
+        conn.exec('mov a, 0xFABC1234')
+        self.assertEqual(conn.get_i('c r a'), 0xFABC1234)
 
 # }}}
 
@@ -321,3 +335,4 @@ if __name__ == '__main__':
     unittest.TextTestRunner(verbosity=2).run(unittest.TestLoader().loadTestsFromTestCase(MemoryTest))
     unittest.TextTestRunner(verbosity=2).run(unittest.TestLoader().loadTestsFromTestCase(CPUTest))
     conn.disconnect()
+    #print(parse_cpu_code('mov a, 0x34'))

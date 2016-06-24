@@ -50,6 +50,7 @@ void
 memory_reset()
 {
     memset(ram, 0, ram_sz);
+    offset = 0;
 }
 
 
@@ -120,7 +121,7 @@ memory_get16(uint32_t pos)
 {
     uint16_t b1 = memory_get(pos),
              b2 = memory_get(pos+1);
-    return b1 | (b2 >> 8);
+    return b1 | (uint16_t)(b2 << 8);
 }
 
 

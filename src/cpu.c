@@ -98,12 +98,35 @@ void cpu_step()
     uint8_t opcode = memory_get(PC);
 
     switch(opcode) {
+
         case 0x01: {  // mov R, R
-                uint32_t r = reg[memory_get(PC+2)];
-                reg[memory_get(PC+1)] = affect_flags(r);
+                uint32_t value = reg[memory_get(PC+1) >> 4];
+                reg[memory_get(PC+1) & 0xF] = affect_flags(value);
+                PC += 2;
+            }
+            break;
+
+        case 0x02: {  // mov R, v8
+                uint8_t value = memory_get(PC+2);
+                reg[memory_get(PC+1)] = affect_flags(value);
                 PC += 3;
             }
             break;
+
+        case 0x03: {  // mov R, v16
+                uint16_t value = memory_get16(PC+2);
+                reg[memory_get(PC+1)] = affect_flags(value);
+                PC += 4;
+            }
+            break;
+
+        case 0x04: {  // mov R, v32
+                uint32_t value = memory_get32(PC+2);
+                reg[memory_get(PC+1)] = affect_flags(value);
+                PC += 6;
+            }
+            break;
+
         default:
             syslog(LOG_ERR, "Invalid opcode 0x%02X from memory position 0x%" PRIX32, opcode, PC);
             exit(EXIT_FAILURE);
