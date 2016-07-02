@@ -4,7 +4,7 @@
 #include <stdint.h>
 
 typedef struct {
-    uint64_t total_ram;
+    uint32_t memory_kb;
     char*    rom_file;
 } Config;
 

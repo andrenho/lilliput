@@ -8,7 +8,9 @@ OBJS := main.o config.o
 #
 CPPFLAGS = -std=c11 -DVERSION=\"$(VERSION)\"
 ifdef FORCE_COLOR
-  CPPFLAGS = -fdiagnostics-color=always
+  CPPFLAGS += -fdiagnostics-color=always
+else
+  CPPFLAGS += -fdiagnostics-color
 endif
 
 #
