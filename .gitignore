@@ -35,3 +35,4 @@
 lilliput
 *.d
 .*.swp
+.*.swo

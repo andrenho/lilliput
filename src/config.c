@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <getopt.h>
 
+#include <syslog.h>
 
 static void
 help(char* program_name, bool ok)
@@ -92,8 +93,14 @@ parse_options(Config* config, int argc, char** argv)
         }
     }
 
+    // load ROM files
     if(optind < argc) {
-        
+        config->rom_files = calloc(sizeof(char*), (size_t)(argc - optind + 1));
+        int i = 0;
+        while(optind < argc) {
+            config->rom_files[i++] = argv[optind++];
+        }
+        config->rom_files[i] = 0;   // end of list
     }
 }
 
@@ -103,6 +110,7 @@ config_init(int argc, char** argv)
 {
     Config* config = calloc(sizeof(Config), 1);
     config->memory_kb = 1024;
+    config->rom_files = NULL;
 
     parse_options(config, argc, argv);
 
@@ -113,5 +121,27 @@ config_init(int argc, char** argv)
 void
 config_free(Config* config)
 {
+    if(config->rom_files) {
+        free(config->rom_files);
+        // no need for freeing each filename, as they come from argv
+    }
     free(config);
+}
+
+
+void    
+config_log(Config* config)
+{
+    syslog(LOG_DEBUG, "Options chosen:");
+    syslog(LOG_DEBUG, "  Memory KB: %d", config->memory_kb);
+    syslog(LOG_DEBUG, "  ROM files:");
+    if(!config->rom_files) {
+        syslog(LOG_DEBUG, "    None.");
+    } else {
+        int i = 0;
+        while(config->rom_files[i]) {
+            syslog(LOG_DEBUG, "    %s", config->rom_files[i]);
+            ++i;
+        }
+    }
 }
