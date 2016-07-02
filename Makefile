@@ -1,14 +1,16 @@
 VERSION = 0.0.1
 
 VPATH := src
-OBJS := main.o
+OBJS := main.o config.o
 
 #
 # compilation options
 #
 CPPFLAGS = -std=c11 -DVERSION=\"$(VERSION)\"
 ifdef FORCE_COLOR
-  CPPFLAGS = -fdiagnostics-color=always
+  CPPFLAGS += -fdiagnostics-color=always
+else
+  CPPFLAGS += -fdiagnostics-color
 endif
 
 #
