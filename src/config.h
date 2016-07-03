@@ -3,9 +3,14 @@
 
 #include <stdint.h>
 
+typedef enum {
+    XCB,
+} VideoOutput;
+
 typedef struct {
-    uint32_t memory_kb;
-    char**   rom_files;
+    uint32_t    memory_kb;
+    char**      rom_files;
+    VideoOutput video_output;
 } Config;
 
 Config* config_init(int argc, char** argv);
