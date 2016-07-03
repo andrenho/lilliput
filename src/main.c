@@ -20,7 +20,7 @@ main(int argc, char** argv)
     config_log(config);
 
     // initialize video
-    video_init(config->video_output);
+    video_init(config);
 
     // free everything
     video_destroy();

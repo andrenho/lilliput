@@ -3,7 +3,7 @@
 
 #include "config.h"
 
-void video_init(VideoOutput output);
+void video_init(Config* config);
 void video_destroy();
 
 #endif

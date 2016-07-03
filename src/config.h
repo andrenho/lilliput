@@ -7,9 +7,10 @@ typedef enum {
     XCB,
 } VideoOutput;
 
-typedef struct {
+typedef struct Config {
     uint32_t    memory_kb;
     char**      rom_files;
+    int         zoom;
     VideoOutput video_output;
 } Config;
 
