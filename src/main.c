@@ -27,9 +27,11 @@ main(int argc, char** argv)
         rom_init(config->rom_file);
         memory_addmap(0xF8001000, rom_size(), rom_get, NULL);
     }
+    cpu_init();
 
     if(config->test_only) {
         memory_test();
+        cpu_test();
     } else {
         // main loop
         video_init(config);
@@ -41,6 +43,7 @@ main(int argc, char** argv)
     }
 
     // free everything
+    cpu_destroy();
     if(config->rom_file) {
         rom_destroy();
     }

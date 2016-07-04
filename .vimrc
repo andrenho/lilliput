@@ -22,13 +22,9 @@ args Makefile
 args src/*.h
 args src/*.c
 args .vimrc
-b 1   " open initial buffer
-
-" open specific buffers
-map <Leader>C   :b src/config.h<CR>
-map <Leader>h   :b src/chars.c<CR>
-"map <Leader>p   :b src/physics.cc<CR>
+b 1
 map <Leader>x   :b src/main.c<CR>
+map <Leader>c   :b src/cpu.c<CR>
 map <Leader>m   :b src/memory.c<CR>
 map <Leader>v   :b src/video.c<CR>
 map <Leader>M   :b Makefile<CR>
