@@ -16,8 +16,8 @@ endif
 #
 # add cflags/libraries
 #
-CPPFLAGS += #`pkg-config --cflags sdl2`
-LDFLAGS  += -fuse-ld=gold #`pkg-config --libs sdl2` -lBox2D
+CPPFLAGS += `pkg-config --cflags sdl2`
+LDFLAGS  += -fuse-ld=gold `pkg-config --libs sdl2`
 
 #
 # add warnings
