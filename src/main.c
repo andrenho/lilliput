@@ -4,6 +4,7 @@
 #include "config.h"
 #include "video.h"
 #include "memory.h"
+#include "rom.h"
 
 int 
 main(int argc, char** argv)
@@ -22,6 +23,10 @@ main(int argc, char** argv)
 
     // initialize things
     memory_init(config);
+    if(config->rom_file) {
+        rom_init(config->rom_file);
+        memory_addmap(0xF8001000, rom_size(), rom_get, NULL);
+    }
 
     if(config->test_only) {
         memory_test();
@@ -36,6 +41,9 @@ main(int argc, char** argv)
     }
 
     // free everything
+    if(config->rom_file) {
+        rom_destroy();
+    }
     memory_destroy();
     config_free(config);
     closelog();
