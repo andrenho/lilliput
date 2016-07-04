@@ -30,7 +30,6 @@ main(int argc, char** argv)
 
     if(config->test_only) {
         memory_test();
-        // TODO - add ROM test
     } else {
         // main loop
         video_init(config);

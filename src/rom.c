@@ -20,6 +20,10 @@ rom_init(const char* filename)
 
     // get file size
     fseek(f, 0, SEEK_END);
+    if(ftell(f) >= 0x10000000) {
+        syslog(LOG_ERR, "ROM file is too large.");
+        exit(EXIT_FAILURE);
+    }
     rom_sz = (uint32_t)ftell(f);
     rom = malloc(rom_sz);
     rewind(f);
