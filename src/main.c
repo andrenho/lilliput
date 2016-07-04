@@ -22,6 +22,11 @@ main(int argc, char** argv)
     // initialize video
     video_init(config);
 
+    while(video_active()) {
+        video_doevents();
+        video_draw();
+    }
+
     // free everything
     video_destroy();
     config_free(config);
