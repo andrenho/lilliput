@@ -1,10 +1,16 @@
 #include "cpu.h"
 
 #include <stdint.h>
+#include <stdlib.h>
+#include <inttypes.h>
 #include <syslog.h>
 
+#include "memory.h"
 
 uint32_t reg[16] = { 0 };
+
+// {{{ INDIVIDUAL REGISTER MACROS
+
 #define A  (reg[0])
 #define B  (reg[1])
 #define C  (reg[2])
@@ -22,153 +28,69 @@ uint32_t reg[16] = { 0 };
 #define PC (reg[14])
 #define FL (reg[15])
 
+#define Y  (FL & 1)
+#define V  ((FL >> 1) & 1)
+#define Z  ((FL >> 2) & 1)
+#define S  ((FL >> 3) & 1)
+#define GT ((FL >> 4) & 1)
+#define LT ((FL >> 5) & 1)
+#define P  ((FL >> 6) & 1)
+#define T  ((FL >> 7) & 1)
+
+#define SET_Y(v)  (FL |= 1)
+#define SET_V(v)  (FL |= 1 << 2)
+#define SET_Z(v)  (FL |= 1 << 3)
+#define SET_S(v)  (FL |= 1 << 4)
+#define SET_GT(v) (FL |= 1 << 5)
+#define SET_LT(v) (FL |= 1 << 6)
+#define SET_P(v)  (FL |= 1 << 7)
+#define SET_T(v)  (FL |= 1 << 8)
+
+// }}}
 
 void cpu_init()
 {
 }
 
 
+void cpu_destroy()
+{
+}
+
+
 // {{{ STEP
+
+static inline uint32_t 
+affect_flags(uint32_t value)
+{
+    SET_Z((value & 0xFFFFFFFF) == 0);
+    SET_P((value % 2) == 0);
+    SET_S(value >> 31);
+    SET_V(0);
+    SET_Y(0);
+    SET_GT(0);
+    SET_LT(0);
+    return value;
+}
+
 
 void cpu_step()
 {
+    uint8_t opcode = memory_get(PC);
+
+    switch(opcode) {
+        case 0x01: {  // mov R, R
+                uint32_t r = reg[memory_get(PC+2)];
+                reg[memory_get(PC+1)] = affect_flags(r);
+                PC += 3;
+            }
+            break;
+        default:
+            syslog(LOG_ERR, "Invalid opcode 0x%02X from memory position 0x%" PRIX32, opcode, PC);
+            exit(EXIT_FAILURE);
+    }
+
 /*
-  step() {
-    const n = this._stepFunction[this._mb.get(this.PC)](this.PC + 1);
-    if (n) {
-      this.PC += n + 1;
-    }
-  }
-
-  
-  checkInterrupts() {
-    if (this.T && this._interruptsPending.length > 0) {
-      let n = this._interruptsPending.shift();
-      this._push32(this.PC);
-      this.T = false;
-      this.PC = this._interruptVector[n];
-      this.systemHalted = false;
-    }
-  }
-
-
-  _affectFlags(value) {
-    this.Z = ((value & 0xFFFFFFFF) === 0);
-    this.P = ((value % 2) === 0);
-    this.S = ((value >> 31) & 0x1 ? true : false);
-    this.V = false;
-    this.Y = false;
-    this.GT = false;
-    this.LT = false;
-    return value & 0xFFFFFFFF;
-  }
-
-
-  // 
-  // STACK
-  //
-
-  _push(value) {
-    this._mb.set(this.SP, value);
-    this.SP -= 1;
-  }
-
-
-  _push16(value) {
-    this.SP -= 1;
-    this._mb.set16(this.SP, value);
-    this.SP -= 1;
-  }
-
-
-  _push32(value) {
-    this.SP -= 3;
-    this._mb.set32(this.SP, value);
-    this.SP -= 1;
-  }
-  
-
-  _pop() {
-    this.SP += 1;
-    return this._mb.get(this.SP);
-  }
-
-
-  _pop16() {
-    this.SP += 1;
-    const r = this._mb.get16(this.SP);
-    this.SP += 1;
-    return r;
-  }
-
-
-  _pop32() {
-    this.SP += 1;
-    const r = this._mb.get32(this.SP);
-    this.SP += 3;
-    return r;
-  }
-
-
-  //
-  // GETTERS / SETTERS
-  //
-
-  get A() { return this._reg[0]; }
-  get B() { return this._reg[1]; }
-  get C() { return this._reg[2]; }
-  get D() { return this._reg[3]; }
-  get E() { return this._reg[4]; }
-  get F() { return this._reg[5]; }
-  get G() { return this._reg[6]; }
-  get H() { return this._reg[7]; }
-  get I() { return this._reg[8]; }
-  get J() { return this._reg[9]; }
-  get K() { return this._reg[10]; }
-  get L() { return this._reg[11]; }
-  get FP() { return this._reg[12]; }
-  get SP() { return this._reg[13]; }
-  get PC() { return this._reg[14]; }
-  get FL() { return this._reg[15]; }
-
-  set A(v) { this._reg[0] = v; }
-  set B(v) { this._reg[1] = v; }
-  set C(v) { this._reg[2] = v; }
-  set D(v) { this._reg[3] = v; }
-  set E(v) { this._reg[4] = v; }
-  set F(v) { this._reg[5] = v; }
-  set G(v) { this._reg[6] = v; }
-  set H(v) { this._reg[7] = v; }
-  set I(v) { this._reg[8] = v; }
-  set J(v) { this._reg[9] = v; }
-  set K(v) { this._reg[10] = v; }
-  set L(v) { this._reg[11] = v; }
-  set FP(v) { this._reg[12] = v; }
-  set SP(v) { this._reg[13] = v & 0xFFFFFFFF; }
-  set PC(v) { this._reg[14] = v; }
-  set FL(v) { this._reg[15] = v; }
-
-  get Y() { return (this._reg[15] & 0x1) ? true : false; }
-  get V() { return ((this._reg[15] >> 1) & 0x1) ? true : false; }
-  get Z() { return ((this._reg[15] >> 2) & 0x1) ? true : false; }
-  get S() { return ((this._reg[15] >> 3) & 0x1) ? true : false; }
-  get GT() { return ((this._reg[15] >> 4) & 0x1) ? true : false; }
-  get LT() { return ((this._reg[15] >> 5) & 0x1) ? true : false; }
-  get P() { return ((this._reg[15] >> 6) & 0x1) ? true : false; }
-  get T() { return ((this._reg[15] >> 7) & 0x1) ? true : false; }
-
-  // jscs:disable validateIndentation
-  set Y(v) { if (v) this._reg[15] |= (1 << 0); else this._reg[15] &= ~(1 << 0); }
-  set V(v) { if (v) this._reg[15] |= (1 << 1); else this._reg[15] &= ~(1 << 1); }
-  set Z(v) { if (v) this._reg[15] |= (1 << 2); else this._reg[15] &= ~(1 << 2); }
-  set S(v) { if (v) this._reg[15] |= (1 << 3); else this._reg[15] &= ~(1 << 3); }
-  set GT(v) { if (v) this._reg[15] |= (1 << 4); else this._reg[15] &= ~(1 << 4); }
-  set LT(v) { if (v) { this._reg[15] |= (1 << 5); } else { this._reg[15] &= ~(1 << 5); } }
-  set P(v) { if (v) { this._reg[15] |= (1 << 6); } else { this._reg[15] &= ~(1 << 6); } }
-  set T(v) { if (v) { this._reg[15] |= (1 << 7); } else { this._reg[15] &= ~(1 << 6); } }
-  // jscs:enable validateIndentation
-
-
   //
   // INSTRUCTIONS
   //
@@ -1249,31 +1171,149 @@ void cpu_step()
 
     return f;
   }
+
+  step() {
+    const n = this._stepFunction[this._mb.get(this.PC)](this.PC + 1);
+    if (n) {
+      this.PC += n + 1;
+    }
+  }
+
+  
+  checkInterrupts() {
+    if (this.T && this._interruptsPending.length > 0) {
+      let n = this._interruptsPending.shift();
+      this._push32(this.PC);
+      this.T = false;
+      this.PC = this._interruptVector[n];
+      this.systemHalted = false;
+    }
+  }
+
+
+  _affectFlags(value) {
+    this.Z = ((value & 0xFFFFFFFF) === 0);
+    this.P = ((value % 2) === 0);
+    this.S = ((value >> 31) & 0x1 ? true : false);
+    this.V = false;
+    this.Y = false;
+    this.GT = false;
+    this.LT = false;
+    return value & 0xFFFFFFFF;
+  }
+
+
+  // 
+  // STACK
+  //
+
+  _push(value) {
+    this._mb.set(this.SP, value);
+    this.SP -= 1;
+  }
+
+
+  _push16(value) {
+    this.SP -= 1;
+    this._mb.set16(this.SP, value);
+    this.SP -= 1;
+  }
+
+
+  _push32(value) {
+    this.SP -= 3;
+    this._mb.set32(this.SP, value);
+    this.SP -= 1;
+  }
+  
+
+  _pop() {
+    this.SP += 1;
+    return this._mb.get(this.SP);
+  }
+
+
+  _pop16() {
+    this.SP += 1;
+    const r = this._mb.get16(this.SP);
+    this.SP += 1;
+    return r;
+  }
+
+
+  _pop32() {
+    this.SP += 1;
+    const r = this._mb.get32(this.SP);
+    this.SP += 3;
+    return r;
+  }
+
+
+  //
+  // GETTERS / SETTERS
+  //
+
+  get A() { return this._reg[0]; }
+  get B() { return this._reg[1]; }
+  get C() { return this._reg[2]; }
+  get D() { return this._reg[3]; }
+  get E() { return this._reg[4]; }
+  get F() { return this._reg[5]; }
+  get G() { return this._reg[6]; }
+  get H() { return this._reg[7]; }
+  get I() { return this._reg[8]; }
+  get J() { return this._reg[9]; }
+  get K() { return this._reg[10]; }
+  get L() { return this._reg[11]; }
+  get FP() { return this._reg[12]; }
+  get SP() { return this._reg[13]; }
+  get PC() { return this._reg[14]; }
+  get FL() { return this._reg[15]; }
+
+  set A(v) { this._reg[0] = v; }
+  set B(v) { this._reg[1] = v; }
+  set C(v) { this._reg[2] = v; }
+  set D(v) { this._reg[3] = v; }
+  set E(v) { this._reg[4] = v; }
+  set F(v) { this._reg[5] = v; }
+  set G(v) { this._reg[6] = v; }
+  set H(v) { this._reg[7] = v; }
+  set I(v) { this._reg[8] = v; }
+  set J(v) { this._reg[9] = v; }
+  set K(v) { this._reg[10] = v; }
+  set L(v) { this._reg[11] = v; }
+  set FP(v) { this._reg[12] = v; }
+  set SP(v) { this._reg[13] = v & 0xFFFFFFFF; }
+  set PC(v) { this._reg[14] = v; }
+  set FL(v) { this._reg[15] = v; }
+
+  get Y() { return (this._reg[15] & 0x1) ? true : false; }
+  get V() { return ((this._reg[15] >> 1) & 0x1) ? true : false; }
+  get Z() { return ((this._reg[15] >> 2) & 0x1) ? true : false; }
+  get S() { return ((this._reg[15] >> 3) & 0x1) ? true : false; }
+  get GT() { return ((this._reg[15] >> 4) & 0x1) ? true : false; }
+  get LT() { return ((this._reg[15] >> 5) & 0x1) ? true : false; }
+  get P() { return ((this._reg[15] >> 6) & 0x1) ? true : false; }
+  get T() { return ((this._reg[15] >> 7) & 0x1) ? true : false; }
+
+  // jscs:disable validateIndentation
+  set Y(v) { if (v) this._reg[15] |= (1 << 0); else this._reg[15] &= ~(1 << 0); }
+  set V(v) { if (v) this._reg[15] |= (1 << 1); else this._reg[15] &= ~(1 << 1); }
+  set Z(v) { if (v) this._reg[15] |= (1 << 2); else this._reg[15] &= ~(1 << 2); }
+  set S(v) { if (v) this._reg[15] |= (1 << 3); else this._reg[15] &= ~(1 << 3); }
+  set GT(v) { if (v) this._reg[15] |= (1 << 4); else this._reg[15] &= ~(1 << 4); }
+  set LT(v) { if (v) { this._reg[15] |= (1 << 5); } else { this._reg[15] &= ~(1 << 5); } }
+  set P(v) { if (v) { this._reg[15] |= (1 << 6); } else { this._reg[15] &= ~(1 << 6); } }
+  set T(v) { if (v) { this._reg[15] |= (1 << 7); } else { this._reg[15] &= ~(1 << 6); } }
+  // jscs:enable validateIndentation
+
+
  */
 }
 
 // }}}
 
-
-void cpu_destroy()
-{
-}
-
-
-// {{{ TESTS
-
-void cpu_test()
-{
-
-
-    /*
-  t.comment('Register movement (mov)');
-
-  s = opc('mov A, B', () => cpu.B = 0x42); 
-  t.equal(cpu.A, 0x42, s);
-  t.equal(cpu.PC, 3, 'checking PC position');
-  */
-
+// {{{ OPCODE PARSING
 
 /*
 function encode(line, acceptLabel=false, labelPrefix = '') {
@@ -1560,7 +1600,40 @@ function parseParameter(p, acceptLabel, labelPrefix) {
 
   return { type, array };
 }
+*/
 
+// }}}
+
+// {{{ TESTS
+
+#include "test.h"
+
+static void 
+opcode(const char* op)
+{
+}
+
+
+void cpu_test()
+{
+    syslog(LOG_NOTICE, "[CPU]");
+
+    syslog(LOG_NOTICE, "** Register movement (mov)");
+
+    B = 0x42; opcode("mov A, B");
+    TEST(A, 0x42);
+    TEST(PC, 3);
+
+    /*
+  t.comment('Register movement (mov)');
+
+  s = opc('mov A, B', () => cpu.B = 0x42); 
+  t.equal(cpu.A, 0x42, s);
+  t.equal(cpu.PC, 3, 'checking PC position');
+  */
+
+
+/*
 function makeCPU() {
   const m = new Motherboard();
   m.addDevice(new MMU(new RAM(256)));
