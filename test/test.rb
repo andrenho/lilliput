@@ -20,12 +20,12 @@ class TestLillput < Test::Unit::TestCase
     def get_i(s)
         @s.getc
         @s.getc
-        @s.puts(s) ; @s.flush
+        @s.puts(s)
         return @s.gets.to_i(16)
     end
 
     def test_memory
-        @s.puts("m w 0x12 0xAF")
+        @s.getc; @s.getc; @s.puts("m w 0x12 0xAF")
         assert_equal(get_i("m r 0x12"), 0xAF)
     end
 

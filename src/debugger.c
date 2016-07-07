@@ -128,6 +128,7 @@ debugger_recv()
     // read data
     size_t pos = strlen(buffer);
     ssize_t n = recv(newfd, &buffer[pos], sizeof buffer - pos, 0);
+    buffer[pos+n] = '\0';
 
     if(n > 0) {
         syslog(LOG_DEBUG, "recv: %s", buffer);
