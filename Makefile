@@ -6,7 +6,7 @@ OBJS := main.o config.o video.o chars.o memory.o rom.o cpu.o debugger.o
 #
 # compilation options
 #
-CPPFLAGS = -std=c11 -DVERSION=\"$(VERSION)\"
+CPPFLAGS = -std=c11 -DVERSION=\"$(VERSION)\" -D_GNU_SOURCE
 ifdef FORCE_COLOR
   CPPFLAGS += -fdiagnostics-color=always
 else

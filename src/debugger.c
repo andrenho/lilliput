@@ -16,12 +16,18 @@
 
 #define PORT 5999
 
+static void debugger_accept();
+static void debugger_recv();
 static void dsend(const char* fmt, ...) __attribute__ ((format (printf, 1, 2)));
 static void debugger_parse(char* str);
 static void debugger_parse_memory(char* par[10]);
 static void debugger_parse_video(char* par[10]);
 
 static int sockfd, newfd = -1;
+
+static char buffer[4096];
+
+// {{{ MANAGE CONNECTION
 
 void
 debugger_init()
@@ -75,46 +81,80 @@ debugger_destroy()
 }
 
 
-
 void 
 debugger_serve()
+{
+    if(newfd == -1) {
+        debugger_accept();
+    } else {
+        debugger_recv();
+    }
+}
+
+
+static void
+debugger_accept()
 {
     socklen_t sin_size = 0;
     struct sockaddr_in their_addr = {0};
     
-    if(newfd == -1) {
-        // accept new connections
-        if((newfd = accept(sockfd, (struct sockaddr*)&their_addr, &sin_size)) == -1) {
-            if(errno == EAGAIN || errno == EWOULDBLOCK) {
-                // no connection present
-            } else {
-                perror("accept");
-                syslog(LOG_ERR, "Failed to accept.");
-                exit(EXIT_FAILURE);
-            }
+    // accept new connections
+    if((newfd = accept(sockfd, (struct sockaddr*)&their_addr, &sin_size)) == -1) {
+        if(errno == EAGAIN || errno == EWOULDBLOCK) {
+            // no connection present
         } else {
-            fcntl(newfd, F_SETFL, O_NONBLOCK);
-            syslog(LOG_DEBUG, "Debugger connection established.");
-            const char* welcome = "Welcome do lilliput debugger. Please type 'h' for help.\n";
-            send(newfd, welcome, strlen(welcome), 0);
-            send(newfd, "? ", 2, 0);
+            perror("accept");
+            syslog(LOG_ERR, "Failed to accept.");
+            exit(EXIT_FAILURE);
         }
     } else {
-        // read data
-        static char str[1024];
-        ssize_t n = recv(newfd, str, sizeof str - 1, 0);
-        str[n] = '\0';
-        if(n > 0) {
-            while(str[strlen(str)-1] == '\r' || str[strlen(str)-1] == '\n')
-                str[strlen(str)-1] = '\0';
-            debugger_parse(str);
-        } else if(n == 0) {
-            syslog(LOG_DEBUG, "Debugger connection closed.");
-            newfd = -1;
-        } else {
-            if(errno != EAGAIN && errno != EWOULDBLOCK) {
-                perror("recv");
+        fcntl(newfd, F_SETFL, O_NONBLOCK);
+        syslog(LOG_DEBUG, "Debugger connection established.");
+        const char* welcome = "Welcome do lilliput debugger. Please type 'h' for help.\n";
+        send(newfd, welcome, strlen(welcome), 0);
+        syslog(LOG_DEBUG, "send: %s", welcome);
+        send(newfd, "? ", 2, 0);
+        syslog(LOG_DEBUG, "send: ? ");
+    }
+}
+
+// }}}
+
+// {{{ RECEIVE/SEND DATA
+
+static void
+debugger_recv()
+{
+    // read data
+    size_t pos = strlen(buffer);
+    ssize_t n = recv(newfd, &buffer[pos], sizeof buffer - pos, 0);
+
+    if(n > 0) {
+        syslog(LOG_DEBUG, "recv: %s", buffer);
+
+        char* enter = NULL;
+        do {
+            enter = strstr(buffer, "\n");
+            if(enter) {
+                char* str = strndup(buffer, (enter - buffer));
+                size_t ne = strlen(enter);
+                memmove(buffer, enter+1, ne-1);
+                buffer[ne-1] = '\0';
+                if(str[0] != '\0') {
+                    if(str[strlen(str)-1] == '\r') {
+                        str[strlen(str)-1] = '\0';
+                    }
+                    debugger_parse(str);
+                }
+                free(str);
             }
+        } while(enter);
+    } else if(n == 0) {
+        syslog(LOG_DEBUG, "Debugger connection closed.");
+        newfd = -1;
+    } else {
+        if(errno != EAGAIN && errno != EWOULDBLOCK) {
+            perror("recv");
         }
     }
 }
@@ -133,8 +173,12 @@ dsend(const char* fmt, ...)
 
     send(newfd, buf, strlen(buf), 0);
     send(newfd, "\n", 1, 0);
+    syslog(LOG_DEBUG, "send: %s", buf);
 }
 
+// }}}
+
+// {{{ PARSE DATA
 
 #define EXPECT(par, c) {        \
     int n = 11;                 \
@@ -208,6 +252,7 @@ debugger_parse(char* str)
     }
 
     send(newfd, "? ", 2, 0);
+    syslog(LOG_DEBUG, "send: ? ");
 }
 
 
@@ -287,7 +332,7 @@ debugger_parse_video(char* par[10])
         EXPECT(par, 7);
         char c;
         if(strlen(par[1]) > 1) {
-            c = (uint8_t)strtoll(par[1], NULL, 0);
+            c = (char)strtoll(par[1], NULL, 0);
         } else {
             c = par[1][0];
         }
@@ -308,3 +353,5 @@ debugger_parse_video(char* par[10])
 }
 
 #undef EXPECT
+
+// }}}
