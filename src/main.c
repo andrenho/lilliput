@@ -3,7 +3,7 @@
 
 #include "config.h"
 #include "computer.h"
-#include "debugger.h"
+#include "tests.h"
 
 int 
 main(int argc, char** argv)
@@ -24,22 +24,22 @@ main(int argc, char** argv)
 
     // initialize things
     computer_init(config);
-    if(config->debugger) {
-        debugger_init();
-    }
 
     // main loop
-    while(computer_active()) {
-        computer_videoupdate();
-        if(config->debugger) {
-            debugger_serve();
+#ifdef DEBUG
+    if(config->run_tests) {
+        tests_run();
+    } else 
+#else
+    {
+        while(computer_active()) {
+            // TODO (step)
+            computer_videoupdate();
         }
     }
+#endif
 
     // free everything
-    if(config->debugger) {
-        debugger_destroy();
-    }
     computer_destroy();
     config_free(config);
     closelog();

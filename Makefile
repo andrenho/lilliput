@@ -1,7 +1,7 @@
 VERSION = 0.0.1
 
 VPATH := src
-OBJS := main.o config.o video.o chars.o memory.o rom.o cpu.o computer.o debugger.o
+OBJS := main.o config.o video.o chars.o memory.o rom.o cpu.o computer.o tests.o
 
 #
 # compilation options
@@ -95,7 +95,7 @@ uninstall:
 # other rules
 #
 test: debug
-	@python3 test/tests.py
+	@./lilliput -T
 
 cloc:
 	cloc Makefile src/*.h src/*.c test/*.py

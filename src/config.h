@@ -13,7 +13,9 @@ typedef struct Config {
     char*       rom_file;
     int         zoom;
     VideoOutput video_output;
-    bool        debugger;
+#ifdef DEBUG
+    bool        run_tests;
+#endif
     bool        quiet;
 } Config;
 
