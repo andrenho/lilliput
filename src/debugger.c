@@ -357,6 +357,10 @@ debugger_parse_cpu(char* par[10])
         "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "fp", "sp", "pc", "fl"
     };
 
+    const char* reg_names[] = { 
+        "y", "v", "z", "s", "gt", "lt", "p", "t", 
+    };
+
     if(par[0] == '\0') {
         dsend("- Invalid number of arguments.");
         return;
