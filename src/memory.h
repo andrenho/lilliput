@@ -25,6 +25,8 @@ uint32_t memory_get32(uint32_t pos);
 void     memory_set16(uint32_t pos, uint16_t data);
 void     memory_set32(uint32_t pos, uint32_t data);
 
+uint8_t* memory_get_direct();
+
 uint32_t memory_offset();
 uint32_t memory_set_offset(uint32_t offset);
 

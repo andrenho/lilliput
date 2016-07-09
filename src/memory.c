@@ -154,6 +154,13 @@ memory_set32(uint32_t pos, uint32_t data)
 }
 
 
+uint8_t* 
+memory_get_direct()
+{
+    return ram;
+}
+
+
 static uint8_t 
 my_get(uint32_t pos)
 {
