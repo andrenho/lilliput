@@ -161,6 +161,15 @@ memory_get_direct()
 }
 
 
+uint8_t 
+memory_getreg(uint32_t pos)
+{
+    uint8_t r = memory_get(pos);
+    assert(r < 16);
+    return r;
+}
+
+
 static uint8_t 
 my_get(uint32_t pos)
 {

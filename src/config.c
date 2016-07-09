@@ -7,6 +7,9 @@
 
 #include <syslog.h>
 
+static void help(char* program_name, bool ok) __attribute__((noreturn));
+static void version() __attribute__((noreturn));
+
 static void
 help(char* program_name, bool ok)
 {
@@ -97,6 +100,7 @@ parse_options(Config* config, int argc, char** argv)
             case 'T':
 #ifdef DEBUG
                 config->run_tests = true;
+                config->quiet = true;
 #else
                 syslog(LOG_ERROR, "Option only availabe in DEBUG mode.");
                 exit(EXIT_FAILURE);
