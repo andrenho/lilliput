@@ -257,7 +257,7 @@ cpu_add(const char* code)
         abort();
     }}}
 
-    size_t add_value(char* par, ParType tp, uint8_t* data, uint32_t pos) {{{
+    size_t add_value(char* par, ParType tp, uint8_t* data, size_t pos) {{{
         // remove brackets
         if(par[0] == '[') {
             ++par;
@@ -282,16 +282,17 @@ cpu_add(const char* code)
                 return pos + 1;
             case V16: {
                     uint16_t v = (uint16_t)strtoll(par, NULL, 0);
-                    data[pos++] = v & 0xFF;
-                    data[pos++] = v >> 8;
+                    data[pos++] = (uint8_t)(v & 0xFF);
+                    data[pos++] = (uint8_t)(v >> 8);
                 }
                 return pos;
+            case INDV32:
             case V32: {
-                    uint16_t v = (uint16_t)strtoll(par, NULL, 0);
-                    data[pos++] = v & 0xFF;
-                    data[pos++] = (v >> 8) & 0xFF;
-                    data[pos++] = (v >> 16) & 0xFF;
-                    data[pos++] = (v >> 24) & 0xFF;
+                    uint32_t v = (uint32_t)strtoll(par, NULL, 0);
+                    data[pos++] = (uint8_t)(v & 0xFF);
+                    data[pos++] = (uint8_t)((v >> 8) & 0xFF);
+                    data[pos++] = (uint8_t)((v >> 16) & 0xFF);
+                    data[pos++] = (uint8_t)((v >> 24) & 0xFF);
                 }
                 return pos;
             default:
@@ -301,7 +302,7 @@ cpu_add(const char* code)
 
     // find value bytes
     uint8_t ram[25] = { 0 };
-    uint32_t pos = 1;
+    size_t  pos = 1;
     ParType par1type = type(par1),
             par2type = type(par2);
     pos = add_value(par1, par1type, ram, pos);
@@ -309,17 +310,17 @@ cpu_add(const char* code)
 
     // if both parameters are registers, join them in one byte
     if((par1type == REG || par1type == INDREG) && (par2type == REG || par2type == INDREG)) {
-        ram[1] |= ram[2] << 4;
+        ram[1] |= (uint8_t)(ram[2] << 4);
         ram[2] = 0;
     }
 
     // find opcode
-    for(int i=0; i < sizeof(opcodes) / sizeof(opcodes[0]); ++i) {
+    for(size_t i=0; i < sizeof(opcodes) / sizeof(opcodes[0]); ++i) {
         if(strcmp(opcodes[i].name, opcode) == 0 
                 && opcodes[i].par1 == par1type && opcodes[i].par2 == par2type) {
             ram[0] = opcodes[i].opcode;
-            for(int j=0; j<sizeof(ram); ++j) {
-                memory_set(j, ram[j]);
+            for(size_t j=0; j<sizeof(ram); ++j) {
+                memory_set((uint32_t)j, ram[j]);
             }
             goto end;
         }
@@ -332,15 +333,9 @@ end:
     free(tmp);
 }
 
-#define EXECP(precode, assembly, tst, expected) \
+#define EXEC(precode, assembly, tst, expected) \
     computer_reset();                           \
     { precode; }                                \
-    cpu_add(assembly);                          \
-    cpu_step();                                 \
-    test(tst, expected, assembly);
-
-#define EXEC(assembly, tst, expected)           \
-    computer_reset();                           \
     cpu_add(assembly);                          \
     cpu_step();                                 \
     test(tst, expected, assembly);
@@ -371,29 +366,20 @@ test_cpu_basic()
 static void
 test_cpu_MOV()
 {
-    EXECP(cpu_setregister(B, 0x42), "mov a, b", cpu_register(A), 0x42);
-    //test(cpu_register(PC), 2, "PC = 2");
-    /*
-        conn.exec('mov a, 0x34')
-        self.assertE('c r a', 0x34)
+    EXEC(cpu_setregister(B, 0x42), "mov a, b", cpu_register(A), 0x42);
+    test(cpu_register(PC), 2, "PC = 2");
 
-        conn.exec('mov a, 0x1234')
-        self.assertE('m r 0', 3)
-        self.assertE('c r a', 0x1234)
+    EXEC({}, "mov a, 0x34", cpu_register(A), 0x34);
+    EXEC({}, "mov a, 0x1234", cpu_register(A), 0x1234);
+    EXEC({}, "mov a, 0xFABC1234", cpu_register(A), 0xFABC1234);
 
-        conn.exec('mov a, 0xFABC1234')
-        self.assertE('c r a', 0xFABC1234)
+    EXEC({}, "mov a, 0", cpu_flag(Z), true);
+    test(cpu_flag(P), true, "P=1");
+    test(cpu_flag(S), false, "P=0");
 
-        conn.exec('mov a, 0')
-        self.assertE('c f z', 1)
-        self.assertE('c f p', 1)
-        self.assertE('c f s', 0)
-
-        conn.exec('mov a, 0xF0000001')
-        self.assertE('c f z', 0)
-        self.assertE('c f p', 0)
-        self.assertE('c f s', 1)
-    */
+    EXEC({}, "mov a, 0xF0000001", cpu_flag(Z), false);
+    test(cpu_flag(P), false, "P=1");
+    test(cpu_flag(S), true, "P=0");
 }
 
 

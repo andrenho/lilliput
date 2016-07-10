@@ -8,6 +8,8 @@
 
 #include "memory.h"
 
+#define rPC (reg[PC])
+
 uint32_t reg[16] = { 0 };
 
 void
@@ -72,35 +74,35 @@ affect_flags(uint32_t value)
 
 void cpu_step()
 {
-    uint8_t opcode = memory_get(reg[PC]);
+    uint8_t opcode = memory_get(rPC);
 
     switch(opcode) {
 
         case 0x01: {  // mov R, R
-                uint32_t value = reg[memory_get(PC+1) >> 4];
-                reg[memory_get(PC+1) & 0xF] = affect_flags(value);
-                reg[PC] += 2;
+                uint32_t value = reg[memory_get(rPC+1) >> 4];
+                reg[memory_get(rPC+1) & 0xF] = affect_flags(value);
+                rPC += 2;
             }
             break;
 
         case 0x02: {  // mov R, v8
-                uint8_t value = memory_get(PC+2);
-                reg[memory_getreg(PC+1)] = affect_flags(value);
-                reg[PC] += 3;
+                uint8_t value = memory_get(rPC+2);
+                reg[memory_getreg(rPC+1)] = affect_flags(value);
+                rPC += 3;
             }
             break;
 
         case 0x03: {  // mov R, v16
-                uint16_t value = memory_get16(PC+2);
-                reg[memory_getreg(PC+1)] = affect_flags(value);
-                reg[PC] += 4;
+                uint16_t value = memory_get16(rPC+2);
+                reg[memory_getreg(rPC+1)] = affect_flags(value);
+                rPC += 4;
             }
             break;
 
         case 0x04: {  // mov R, v32
-                uint32_t value = memory_get32(PC+2);
-                reg[memory_getreg(PC+1)] = affect_flags(value);
-                reg[PC] += 6;
+                uint32_t value = memory_get32(rPC+2);
+                reg[memory_getreg(rPC+1)] = affect_flags(value);
+                rPC += 6;
             }
             break;
 
