@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #include "config.h"
 
-void computer_init(Config* config);
+void computer_init(Config* config, bool with_video);
 void computer_destroy();
 
 bool computer_active();

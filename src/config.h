@@ -13,7 +13,7 @@ typedef struct Config {
     char*       rom_file;
     int         zoom;
     VideoOutput video_output;
-    bool        debugger;
+    bool        run_tests;
     bool        quiet;
 } Config;
 

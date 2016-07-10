@@ -7,6 +7,9 @@
 
 #include <syslog.h>
 
+static void help(char* program_name, bool ok) __attribute__((noreturn));
+static void version() __attribute__((noreturn));
+
 static void
 help(char* program_name, bool ok)
 {
@@ -24,7 +27,7 @@ help(char* program_name, bool ok)
     fprintf(out, "Options:\n");
     fprintf(out, "   -m, --memory-kb        Total memory, in KB (default: 1024)\n");
     fprintf(out, "   -z, --zoom             Video zoom (default: 3)\n");
-    fprintf(out, "   -D, --debugger         Open debugger in TCP port 5999\n");
+    fprintf(out, "   -T, --tests            Run tests and exit\n");
     fprintf(out, "   -v, --version          Print version and exit\n");
     fprintf(out, "   -h, --help             Print this help and exit\n");
 
@@ -65,14 +68,14 @@ parse_options(Config* config, int argc, char** argv)
         static struct option long_options[] = {
             { "memory",   required_argument, 0, 'm' },
             { "zoom",     required_argument, 0, 'z' },
-            { "debugger", no_argument,       0, 'D' },
+            { "tests",    no_argument,       0, 'T' },
             { "quiet",    no_argument,       0, 'q' },
             { "version",  no_argument,       0, 'v' },
             { "help",     no_argument,       0, 'h' },
             { 0, 0, 0, 0 },
         };
 
-        c = getopt_long(argc, argv, "vhm:z:Dq", long_options, &option_index);
+        c = getopt_long(argc, argv, "vhm:z:Tq", long_options, &option_index);
         if(c == -1)
             break;
 
@@ -92,8 +95,9 @@ parse_options(Config* config, int argc, char** argv)
                 config->zoom = (int)to_num(optarg, "zoom level");
                 break;
 
-            case 'D':
-                config->debugger = true;
+            case 'T':
+                config->run_tests = true;
+                config->quiet = true;
                 break;
 
             case 'q':
@@ -132,7 +136,7 @@ config_init(int argc, char** argv)
     config->memory_kb = 1024;
     config->rom_file = NULL;
     config->zoom = 2;
-    config->debugger = false;
+    config->run_tests = false;
     config->quiet = false;
 
     parse_options(config, argc, argv);

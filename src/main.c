@@ -3,7 +3,7 @@
 
 #include "config.h"
 #include "computer.h"
-#include "debugger.h"
+#include "tests.h"
 
 int 
 main(int argc, char** argv)
@@ -19,27 +19,21 @@ main(int argc, char** argv)
     // read config file
     Config* config = config_init(argc, argv);
     if(config->quiet)
-        setlogmask(LOG_UPTO(LOG_ERR));
+        setlogmask(LOG_UPTO(LOG_NOTICE));
     config_log(config);
 
-    // initialize things
-    computer_init(config);
-    if(config->debugger) {
-        debugger_init();
-    }
-
-    // main loop
-    while(computer_active()) {
-        computer_videoupdate();
-        if(config->debugger) {
-            debugger_serve();
+    if(config->run_tests) {
+        computer_init(config, false);
+        tests_run();
+    } else {
+        computer_init(config, true);
+        while(computer_active()) {
+            // TODO (step)
+            computer_videoupdate();
         }
     }
 
     // free everything
-    if(config->debugger) {
-        debugger_destroy();
-    }
     computer_destroy();
     config_free(config);
     closelog();

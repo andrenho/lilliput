@@ -8,47 +8,9 @@
 
 #include "memory.h"
 
+#define rPC (reg[PC])
+
 uint32_t reg[16] = { 0 };
-
-// {{{ INDIVIDUAL REGISTER MACROS
-
-#define A  (reg[0])
-#define B  (reg[1])
-#define C  (reg[2])
-#define D  (reg[3])
-#define E  (reg[4])
-#define F  (reg[5])
-#define G  (reg[6])
-#define H  (reg[7])
-#define I  (reg[8])
-#define J  (reg[9])
-#define K  (reg[10])
-#define L  (reg[11])
-#define FP (reg[12])
-#define SP (reg[13])
-#define PC (reg[14])
-#define FL (reg[15])
-
-#define Y  (FL & 1)
-#define V  ((FL >> 1) & 1)
-#define Z  ((FL >> 2) & 1)
-#define S  ((FL >> 3) & 1)
-#define GT ((FL >> 4) & 1)
-#define LT ((FL >> 5) & 1)
-#define P  ((FL >> 6) & 1)
-#define T  ((FL >> 7) & 1)
-
-#define SET_FLAG(n, v)   { if(v) FL |= (1 << n); else FL &= ~(1 << n); }
-#define SET_Y(v)  SET_FLAG(0, v)
-#define SET_V(v)  SET_FLAG(1, v)
-#define SET_Z(v)  SET_FLAG(2, v)
-#define SET_S(v)  SET_FLAG(3, v)
-#define SET_GT(v) SET_FLAG(4, v)
-#define SET_LT(v) SET_FLAG(5, v)
-#define SET_P(v)  SET_FLAG(6, v)
-#define SET_T(v)  SET_FLAG(7, v)
-
-// }}}
 
 void
 cpu_init()
@@ -61,75 +23,91 @@ cpu_destroy()
 {
 }
 
+// {{{ REGISTERS
 
-uint32_t
-cpu_register(uint8_t n)
+inline uint32_t
+cpu_register(Register n)
 {
-    assert(n < 16);
     return reg[n];
 }
 
 
-void 
-cpu_setregister(uint8_t n, uint32_t v)
+inline void 
+cpu_setregister(Register n, uint32_t v)
 {
-    assert(n < 16);
     reg[n] = v;
 }
 
+
+inline bool 
+cpu_flag(Flag f)
+{
+    return (bool)((cpu_register(FL) >> (int)f) & 1);
+}
+
+
+inline void 
+cpu_setflag(Flag f, bool value)
+{
+    int64_t new_value = cpu_register(FL);
+    new_value ^= (-value ^ new_value) & (1 << (int)f);
+    cpu_setregister(FL, (uint32_t)new_value);
+}
+
+// }}}
 
 // {{{ STEP
 
 static inline uint32_t 
 affect_flags(uint32_t value)
 {
-    SET_Z((value & 0xFFFFFFFF) == 0);
-    SET_P((value % 2) == 0);
-    SET_S((value >> 31) & 1);
-    SET_V(0);
-    SET_Y(0);
-    SET_GT(0);
-    SET_LT(0);
+    cpu_setflag(Z, (value & 0xFFFFFFFF) == 0);
+    cpu_setflag(P, (value % 2) == 0);
+    cpu_setflag(S, (value >> 31) & 1);
+    cpu_setflag(V, 0);
+    cpu_setflag(Y, 0);
+    cpu_setflag(GT, 0);
+    cpu_setflag(LT, 0);
     return value;
 }
 
 
 void cpu_step()
 {
-    uint8_t opcode = memory_get(PC);
+    uint8_t opcode = memory_get(rPC);
 
     switch(opcode) {
 
         case 0x01: {  // mov R, R
-                uint32_t value = reg[memory_get(PC+1) >> 4];
-                reg[memory_get(PC+1) & 0xF] = affect_flags(value);
-                PC += 2;
+                uint32_t value = reg[memory_get(rPC+1) >> 4];
+                reg[memory_get(rPC+1) & 0xF] = affect_flags(value);
+                rPC += 2;
             }
             break;
 
         case 0x02: {  // mov R, v8
-                uint8_t value = memory_get(PC+2);
-                reg[memory_get(PC+1)] = affect_flags(value);
-                PC += 3;
+                uint8_t value = memory_get(rPC+2);
+                reg[memory_getreg(rPC+1)] = affect_flags(value);
+                rPC += 3;
             }
             break;
 
         case 0x03: {  // mov R, v16
-                uint16_t value = memory_get16(PC+2);
-                reg[memory_get(PC+1)] = affect_flags(value);
-                PC += 4;
+                uint16_t value = memory_get16(rPC+2);
+                reg[memory_getreg(rPC+1)] = affect_flags(value);
+                rPC += 4;
             }
             break;
 
         case 0x04: {  // mov R, v32
-                uint32_t value = memory_get32(PC+2);
-                reg[memory_get(PC+1)] = affect_flags(value);
-                PC += 6;
+                uint32_t value = memory_get32(rPC+2);
+                reg[memory_getreg(rPC+1)] = affect_flags(value);
+                rPC += 6;
             }
             break;
 
         default:
-            syslog(LOG_ERR, "Invalid opcode 0x%02X from memory position 0x%" PRIX32, opcode, PC);
+            syslog(LOG_ERR, "Invalid opcode 0x%02X from memory position 0x%" PRIX32, opcode, reg[PC]);
             exit(EXIT_FAILURE);
     }
 
