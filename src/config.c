@@ -27,9 +27,7 @@ help(char* program_name, bool ok)
     fprintf(out, "Options:\n");
     fprintf(out, "   -m, --memory-kb        Total memory, in KB (default: 1024)\n");
     fprintf(out, "   -z, --zoom             Video zoom (default: 3)\n");
-#ifdef DEBUG
     fprintf(out, "   -T, --tests            Run tests and exit\n");
-#endif
     fprintf(out, "   -v, --version          Print version and exit\n");
     fprintf(out, "   -h, --help             Print this help and exit\n");
 
@@ -98,13 +96,8 @@ parse_options(Config* config, int argc, char** argv)
                 break;
 
             case 'T':
-#ifdef DEBUG
                 config->run_tests = true;
                 config->quiet = true;
-#else
-                syslog(LOG_ERR, "Option only availabe in DEBUG mode.");
-                exit(EXIT_FAILURE);
-#endif
                 break;
 
             case 'q':
@@ -143,9 +136,7 @@ config_init(int argc, char** argv)
     config->memory_kb = 1024;
     config->rom_file = NULL;
     config->zoom = 2;
-#ifdef DEBUG
     config->run_tests = false;
-#endif
     config->quiet = false;
 
     parse_options(config, argc, argv);

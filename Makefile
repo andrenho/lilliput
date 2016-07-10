@@ -35,8 +35,8 @@ endif
 all:
 	@echo Choose a target: 'debug' or 'release'.
 
-debug: TARGET_CFLAGS = -g -ggdb3 -O0 -DDEBUG -fno-inline-functions `pcre-config --cflags`
-debug: TARGET_LDFLAGS = -g `pcre-config --libs`
+debug: TARGET_CFLAGS = -g -ggdb3 -O0 -DDEBUG -fno-inline-functions
+debug: TARGET_LDFLAGS = -g
 debug: lilliput
 
 release: TARGET_CFLAGS = -DNDEBUG -Ofast -fomit-frame-pointer -ffast-math -mfpmath=sse -fPIC -msse -msse2 -msse3 -mssse3 -msse4 -flto

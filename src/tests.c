@@ -1,11 +1,9 @@
 #include "tests.h"
 
-#ifdef DEBUG
-
 #include <assert.h>
 #include <stdlib.h>
+#include <string.h>
 #include <syslog.h>
-#include <pcre.h>
 
 #include "computer.h"
 #include "cpu.h"
@@ -22,6 +20,8 @@ tests_run()
 }
 
 
+// {{{ TEST EXECUTION
+
 static void
 test(uint32_t t, uint32_t expected, const char* desc)
 {
@@ -33,7 +33,11 @@ test(uint32_t t, uint32_t expected, const char* desc)
     }
 }
 
+// }}}
+
 //--------------------------------------------------------------
+
+// {{{ TEST MEMORY
 
 static void
 test_memory()
@@ -58,11 +62,13 @@ test_memory()
     test(memory_get_direct()[0x1012], 0xAF, "get direct from offset");
 }
 
+// }}}
+
 //--------------------------------------------------------------
 
-// {{{ opcode execution
+// {{{ TEST CPU
 
-pcre* re;
+// {{{ opcode execution
 
 static void
 cpu_add(const char* code)
@@ -221,19 +227,10 @@ cpu_add(const char* code)
 
     static const char* registers[] = { "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "fp", "sp", "pc", "fl" };
 
-    int substr[30];
-    int n = pcre_exec(re, NULL, code, strlen(code), 0, 0, substr, 30);
-    if(n < 0) {
-        syslog(LOG_ERR, "Error matching regex.");
-        exit(EXIT_FAILURE);
-    }
-
-    for(int i=0; i<n; ++i) {
-        const char* match;
-        pcre_get_substring(code, substr, n, i, &match);
-        syslog(LOG_NOTICE, "match: '%s'", match);
-        pcre_free_substring(match);
-    }
+    char* c = strdup(code);
+    syslog(LOG_NOTICE, "'%s'", strtok(c, " "));
+    syslog(LOG_NOTICE, "'%s'", strtok(NULL, ", "));
+    syslog(LOG_NOTICE, "'%s'", strtok(NULL, ", "));
 
 }
 
@@ -302,19 +299,8 @@ test_cpu()
 {
     syslog(LOG_NOTICE, "[[[ CPU ]]]");
 
-    const char* pcre_str;
-    int pcre_err_offset;
-    re = pcre_compile("([a-z\\.]+?)\\s+([\\w|\\[|\\]]+?)?(?:,\\s*([\\w|\\[|\\]]+?)?)", 
-            PCRE_CASELESS, &pcre_str, &pcre_err_offset, NULL);
-    if(!re) {
-        syslog(LOG_ERR, "Could not compile re: %s", pcre_str);
-        exit(EXIT_FAILURE);
-    }
-
     test_cpu_basic();
     test_cpu_MOV();
-
-    pcre_free(&re);
 }
 
-#endif
+// }}}

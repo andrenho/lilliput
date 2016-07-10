@@ -22,13 +22,10 @@ main(int argc, char** argv)
         setlogmask(LOG_UPTO(LOG_NOTICE));
     config_log(config);
 
-#ifdef DEBUG
-    computer_init(config, false);
     if(config->run_tests) {
+        computer_init(config, false);
         tests_run();
-    } else
-#endif
-    {
+    } else {
         computer_init(config, true);
         while(computer_active()) {
             // TODO (step)
