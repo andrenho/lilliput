@@ -35,8 +35,8 @@ endif
 all:
 	@echo Choose a target: 'debug' or 'release'.
 
-debug: TARGET_CFLAGS = -g -ggdb3 -O0 -DDEBUG -fno-inline-functions
-debug: TARGET_LDFLAGS = -g
+debug: TARGET_CFLAGS = -g -ggdb3 -O0 -DDEBUG -fno-inline-functions `pcre-config --cflags`
+debug: TARGET_LDFLAGS = -g `pcre-config --libs`
 debug: lilliput
 
 release: TARGET_CFLAGS = -DNDEBUG -Ofast -fomit-frame-pointer -ffast-math -mfpmath=sse -fPIC -msse -msse2 -msse3 -mssse3 -msse4 -flto
@@ -101,10 +101,10 @@ cloc:
 	cloc Makefile src/*.h src/*.c test/*.py
 
 check-leaks: debug
-	valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes --suppressions=build/lilliput.supp ./lilliput -D
+	valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes --suppressions=build/lilliput.supp ./lilliput -T
 
 gen-suppressions: debug
-	valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes --error-limit=no --gen-suppressions=all --log-file=build/lilliput.supp ./lilliput -D
+	valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes --error-limit=no --gen-suppressions=all --log-file=build/lilliput.supp ./lilliput -T
 	sed -i -e '/^==.*$$/d' build/lilliput.supp
 
 clean:

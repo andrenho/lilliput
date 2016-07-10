@@ -22,22 +22,19 @@ main(int argc, char** argv)
         setlogmask(LOG_UPTO(LOG_NOTICE));
     config_log(config);
 
-    // initialize things
-    computer_init(config);
-
-    // main loop
 #ifdef DEBUG
+    computer_init(config, false);
     if(config->run_tests) {
         tests_run();
-    } else 
-#else
+    } else
+#endif
     {
+        computer_init(config, true);
         while(computer_active()) {
             // TODO (step)
             computer_videoupdate();
         }
     }
-#endif
 
     // free everything
     computer_destroy();

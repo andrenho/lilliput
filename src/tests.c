@@ -3,9 +3,9 @@
 #ifdef DEBUG
 
 #include <assert.h>
-#include <regex.h>
 #include <stdlib.h>
 #include <syslog.h>
+#include <pcre.h>
 
 #include "computer.h"
 #include "cpu.h"
@@ -62,17 +62,19 @@ test_memory()
 
 // {{{ opcode execution
 
-regex_t re;
+pcre* re;
 
 static void
 cpu_add(const char* code)
 {
     typedef enum { NONE, REG, V8, V16, V32, INDREG, INDV32 } ParType;
+
     static struct {
         uint8_t opcode;
         const char *name;
         ParType par1, par2;
     } opcodes[] = {
+        // opcode list {{{
         // movement
         { 0x01, "mov",  REG, REG    },
         { 0x02, "mov",  REG, V8     },
@@ -214,11 +216,25 @@ cpu_add(const char* code)
         { 0x87, "nop",  NONE, NONE },
         { 0x88, "halt", NONE, NONE },
         { 0x89, "dbg",  NONE, NONE },
+        // }}}
     };
 
     static const char* registers[] = { "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "fp", "sp", "pc", "fl" };
 
-    (void) code;
+    int substr[30];
+    int n = pcre_exec(re, NULL, code, strlen(code), 0, 0, substr, 30);
+    if(n < 0) {
+        syslog(LOG_ERR, "Error matching regex.");
+        exit(EXIT_FAILURE);
+    }
+
+    for(int i=0; i<n; ++i) {
+        const char* match;
+        pcre_get_substring(code, substr, n, i, &match);
+        syslog(LOG_NOTICE, "match: '%s'", match);
+        pcre_free_substring(match);
+    }
+
 }
 
 #define EXECP(precode, assembly, tst, expected) \
@@ -256,7 +272,7 @@ static void
 test_cpu_MOV()
 {
     EXECP(cpu_setregister(B, 0x42), "mov a, b", cpu_register(A), 0x42);
-    test(cpu_register(PC), 2, "PC = 2");
+    //test(cpu_register(PC), 2, "PC = 2");
     /*
         conn.exec('mov a, 0x34')
         self.assertE('c r a', 0x34)
@@ -286,11 +302,19 @@ test_cpu()
 {
     syslog(LOG_NOTICE, "[[[ CPU ]]]");
 
-    int n = regcomp(&re, "^([a-z\\.]+?)(\\s+([\\w\\[\\]]+?))?(,\\s*([\\w\\[\\]]+?))?$", REG_EXTENDED | REG_ICASE);
-    assert(n == 0);
+    const char* pcre_str;
+    int pcre_err_offset;
+    re = pcre_compile("([a-z\\.]+?)\\s+([\\w|\\[|\\]]+?)?(?:,\\s*([\\w|\\[|\\]]+?)?)", 
+            PCRE_CASELESS, &pcre_str, &pcre_err_offset, NULL);
+    if(!re) {
+        syslog(LOG_ERR, "Could not compile re: %s", pcre_str);
+        exit(EXIT_FAILURE);
+    }
 
     test_cpu_basic();
     test_cpu_MOV();
+
+    pcre_free(&re);
 }
 
 #endif

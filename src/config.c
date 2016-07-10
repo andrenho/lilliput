@@ -102,7 +102,7 @@ parse_options(Config* config, int argc, char** argv)
                 config->run_tests = true;
                 config->quiet = true;
 #else
-                syslog(LOG_ERROR, "Option only availabe in DEBUG mode.");
+                syslog(LOG_ERR, "Option only availabe in DEBUG mode.");
                 exit(EXIT_FAILURE);
 #endif
                 break;
@@ -143,7 +143,9 @@ config_init(int argc, char** argv)
     config->memory_kb = 1024;
     config->rom_file = NULL;
     config->zoom = 2;
+#ifdef DEBUG
     config->run_tests = false;
+#endif
     config->quiet = false;
 
     parse_options(config, argc, argv);
