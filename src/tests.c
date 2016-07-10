@@ -1,6 +1,7 @@
 #include "tests.h"
 
 #include <assert.h>
+#include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
 #include <syslog.h>
@@ -78,7 +79,7 @@ cpu_add(const char* code)
     static struct {
         uint8_t opcode;
         const char *name;
-        ParType par1, par2;
+    ParType par1, par2;
     } opcodes[] = {
         // opcode list {{{
         // movement
@@ -227,11 +228,68 @@ cpu_add(const char* code)
 
     static const char* registers[] = { "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "fp", "sp", "pc", "fl" };
 
-    char* c = strdup(code);
-    syslog(LOG_NOTICE, "'%s'", strtok(c, " "));
-    syslog(LOG_NOTICE, "'%s'", strtok(NULL, ", "));
-    syslog(LOG_NOTICE, "'%s'", strtok(NULL, ", "));
+    char *tmp = strdup(code);
+    char *opcode = strtok(tmp, " "),
+         *par1 = strtok(NULL, ", "),
+         *par2 = strtok(NULL, ", ");
 
+    ParType type(const char* par) {{{
+        if(par1 == NULL) {
+            return NONE;
+        } else if(par1[0] == '[') {
+            if(isalpha(par[1])) {
+                return INDREG;
+            } else {
+                return INDV32;
+            }
+        } else if(isalpha(par[0])) {
+            return REG;
+        } else {
+            uint32_t v = (uint32_t)strtoll(par, NULL, 0);
+            if(v <= 0xFF) {
+                return V8;
+            } else if(v <= 0xFFFF) {
+                return V16;
+            } else {
+                return V32;
+            }
+        }
+        abort();
+    }}}
+
+    size_t add_value(char* par, ParType tp, uint8_t* data, uint32_t pos) {{{
+        // remove brackets
+        if(par[0] == '[') {
+            ++par;
+            par[strlen(par)-1] = '\0';
+        }
+
+        // choose according to type
+        switch(tp) {
+            case NONE:
+                return 0;
+            case REG:
+            case INDREG:
+                for(uint8_t i=0; i<sizeof(registers)/sizeof(registers[0]); ++i) {
+                    if(strcmp(registers[i], par) == 0) {
+                        data[pos] = i;
+                        return pos + 1;
+                    }
+                }
+                abort();
+            case V8:
+                data[pos] = (uint8_t)strtol(par, NULL, 0);
+                return pos + 1;
+            case V16:
+                // uint16_t v = (uint16_t)
+                // TODO
+        }
+    }}}
+
+    ParType par1type = type(par1),
+            par2type = type(par2);
+
+    free(tmp);
 }
 
 #define EXECP(precode, assembly, tst, expected) \
