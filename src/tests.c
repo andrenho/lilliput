@@ -79,7 +79,7 @@ cpu_add(const char* code)
     static struct {
         uint8_t opcode;
         const char *name;
-    ParType par1, par2;
+        ParType par1, par2;
     } opcodes[] = {
         // opcode list {{{
         // movement
@@ -280,15 +280,55 @@ cpu_add(const char* code)
             case V8:
                 data[pos] = (uint8_t)strtol(par, NULL, 0);
                 return pos + 1;
-            case V16:
-                // uint16_t v = (uint16_t)
-                // TODO
+            case V16: {
+                    uint16_t v = (uint16_t)strtoll(par, NULL, 0);
+                    data[pos++] = v & 0xFF;
+                    data[pos++] = v >> 8;
+                }
+                return pos;
+            case V32: {
+                    uint16_t v = (uint16_t)strtoll(par, NULL, 0);
+                    data[pos++] = v & 0xFF;
+                    data[pos++] = (v >> 8) & 0xFF;
+                    data[pos++] = (v >> 16) & 0xFF;
+                    data[pos++] = (v >> 24) & 0xFF;
+                }
+                return pos;
+            default:
+                abort();
         }
     }}}
 
+    // find value bytes
+    uint8_t ram[25] = { 0 };
+    uint32_t pos = 1;
     ParType par1type = type(par1),
             par2type = type(par2);
+    pos = add_value(par1, par1type, ram, pos);
+    pos = add_value(par2, par2type, ram, pos);
 
+    // if both parameters are registers, join them in one byte
+    if((par1type == REG || par1type == INDREG) && (par2type == REG || par2type == INDREG)) {
+        ram[1] |= ram[2] << 4;
+        ram[2] = 0;
+    }
+
+    // find opcode
+    for(int i=0; i < sizeof(opcodes) / sizeof(opcodes[0]); ++i) {
+        if(strcmp(opcodes[i].name, opcode) == 0 
+                && opcodes[i].par1 == par1type && opcodes[i].par2 == par2type) {
+            ram[0] = opcodes[i].opcode;
+            for(int j=0; j<sizeof(ram); ++j) {
+                memory_set(j, ram[j]);
+            }
+            goto end;
+        }
+    }
+
+    syslog(LOG_ERR, "Opcode not found");
+    exit(EXIT_FAILURE);
+
+end:
     free(tmp);
 }
 
@@ -320,6 +360,11 @@ test_cpu_basic()
     cpu_setflag(S, true);
     test(cpu_flag(S), true, "S = true");
     test(cpu_register(FL), 0b1000, "FL = 0b1000");
+
+    computer_reset();
+    cpu_add("mov a, b");
+    test(memory_get(0), 0x1, "[0] = 0x1");
+    test(memory_get(1), 0x10, "[1] = 0x10");
 }
 
 
