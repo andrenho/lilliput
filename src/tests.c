@@ -384,12 +384,21 @@ test_cpu_MOV()
 
 
 static void
+test_cpu_MOVB()
+{
+    EXEC({ cpu_setregister(B, 0x100); memory_set(cpu_register(B), 0xAB); },
+            "mov a, [b]", cpu_register(A), 0xAB);
+}
+
+
+static void
 test_cpu()
 {
     syslog(LOG_NOTICE, "[[[ CPU ]]]");
 
     test_cpu_basic();
     test_cpu_MOV();
+    test_cpu_MOVB();
 }
 
 // }}}
