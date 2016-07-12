@@ -1,4 +1,7 @@
+use std::any::Any;
+
 use device::*;
+use cpu::*;
 
 const PHYSICAL_MEMORY_LIMIT: u32 = 0xF0000000;
 
@@ -89,6 +92,7 @@ impl Computer {
         self.devices.push(DeviceDef { memory: mloc, device: dev });
         next
     }
+
 }
 
 

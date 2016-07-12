@@ -1,6 +1,6 @@
 mod device;
-mod computer;
 mod cpu;
+mod computer;
 
 //use computer::*;
 
