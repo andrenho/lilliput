@@ -484,6 +484,54 @@ void cpu_step()
             }
             break;
 
+        // 
+        // ADD
+        //
+
+        case 0x42: {  // add R, R
+                uint64_t value = (uint64_t)reg[memory_get(rPC+1) & 0xF] + (uint64_t)reg[memory_get(rPC+1) >> 4] + (uint64_t)cpu_flag(Y);
+                reg[memory_get(rPC+1) & 0xF] = affect_flags((uint32_t)value);
+                cpu_setflag(Y, value > 0xFFFFFFFF);
+                rPC += 2;
+            }
+            break;
+
+        case 0x43: {  // add R, v8
+                uint64_t value = (uint64_t)reg[memory_get(rPC+1)] + (uint64_t)memory_get(rPC+2) + (uint64_t)cpu_flag(Y);
+                reg[memory_get(rPC+1)] = affect_flags((uint32_t)value);
+                cpu_setflag(Y, value > 0xFFFFFFFF);
+                rPC += 3;
+            }
+            break;
+
+        case 0x44: {  // add R, v16
+                uint64_t value = (uint64_t)reg[memory_get(rPC+1)] + (uint64_t)memory_get16(rPC+2) + (uint64_t)cpu_flag(Y);
+                reg[memory_get(rPC+1)] = affect_flags((uint32_t)value);
+                cpu_setflag(Y, value > 0xFFFFFFFF);
+                rPC += 4;
+            }
+            break;
+
+        case 0x45: {  // add R, v32
+                uint64_t value = (uint64_t)reg[memory_get(rPC+1)] + (uint64_t)memory_get32(rPC+2) + (uint64_t)cpu_flag(Y);
+                reg[memory_get(rPC+1)] = affect_flags((uint32_t)value);
+                cpu_setflag(Y, value > 0xFFFFFFFF);
+                rPC += 6;
+            }
+            break;
+
+        //
+        // SUB
+        //
+
+        case 0x46: {  // sub R, v8
+                int64_t value = (int64_t)reg[memory_get(rPC+1) & 0xF] - (int64_t)reg[memory_get(rPC+1) >> 4] - (int64_t)cpu_flag(Y);
+                reg[memory_get(rPC+1) & 0xF] = affect_flags((uint32_t)value);
+                cpu_setflag(Y, value < 0);
+                rPC += 2;
+            }
+            break;
+
         //
         // INVALID OPCODE
         //
@@ -494,54 +542,6 @@ void cpu_step()
     }
 
 /*
-    // 
-    // ARITHMETIC
-    //
-
-    f[0x42] = pos => {  // add R, R
-      let [reg, mb] = [this._reg, this._mb];
-      const [p1, p2] = [mb.get(pos), mb.get(pos + 1)];
-      const r = reg[p1] + reg[p2] + (this.Y ? 1 : 0);
-      reg[p1] = this._affectFlags(r);
-      return 2;
-    };
-    
-    f[0x43] = pos => {  // add R, v8
-      let [reg, mb] = [this._reg, this._mb];
-      const [p1, p2] = [mb.get(pos), mb.get(pos + 1)];
-      const r = reg[p1] + p2 + (this.Y ? 1 : 0);
-      reg[p1] = this._affectFlags(r);
-      this.Y = (r > 0xFFFFFFFF);
-      return 2;
-    };
-    
-    f[0x44] = pos => {  // add R, v16
-      let [reg, mb] = [this._reg, this._mb];
-      const [p1, p2] = [mb.get(pos), mb.get16(pos + 1)];
-      const r = reg[p1] + p2 + (this.Y ? 1 : 0);
-      reg[p1] = this._affectFlags(r);
-      this.Y = (r > 0xFFFFFFFF);
-      return 3;
-    };
-    
-    f[0x45] = pos => {  // add R, v32
-      let [reg, mb] = [this._reg, this._mb];
-      const [p1, p2] = [mb.get(pos), mb.get32(pos + 1)];
-      const r = reg[p1] + p2 + (this.Y ? 1 : 0);
-      reg[p1] = this._affectFlags(r);
-      this.Y = (r > 0xFFFFFFFF);
-      return 5;
-    };
-    
-    f[0x46] = pos => {  // sub R, R
-      let [reg, mb] = [this._reg, this._mb];
-      const [p1, p2] = [mb.get(pos), mb.get(pos + 1)];
-      const r = reg[p1] - reg[p2] - (this.Y ? 1 : 0);
-      reg[p1] = this._affectFlags(r);
-      this.Y = (r < 0);
-      return 2;
-    };
-    
     f[0x47] = pos => {  // sub R, v8
       let [reg, mb] = [this._reg, this._mb];
       const [p1, p2] = [mb.get(pos), mb.get(pos + 1)];

@@ -490,6 +490,7 @@ test_cpu_logical()
 {
     syslog(LOG_NOTICE, "* logical operations");
 
+    // or
     EXEC({ cpu_setregister(A, 0b1010); cpu_setregister(B, 0b1100); }, "or A, B", cpu_register(A), 0b1110);
     test(cpu_flag(S), false, "S = 0");
     test(cpu_flag(P), true , "P = 1");
@@ -501,25 +502,59 @@ test_cpu_logical()
     EXEC({ cpu_setregister(A, 0b111); }, "or A, 0x4000", cpu_register(A), 0x4007);
     EXEC({ cpu_setregister(A, 0x10800000); }, "or A, 0x2A426653", cpu_register(A), 0x3AC26653);
 
+    // xor
     EXEC({ cpu_setregister(A, 0b1010); cpu_setregister(B, 0b1100); }, "xor A, B", cpu_register(A), 0b110);
     EXEC({ cpu_setregister(A, 0b11); }, "xor A, 0x4", cpu_register(A), 0b111);
     EXEC({ cpu_setregister(A, 0xFF0); }, "xor A, 0xFF00", cpu_register(A), 0xF0F0);
     EXEC({ cpu_setregister(A, 0x148ABD12); }, "xor A, 0x2A426653", cpu_register(A), 0x3EC8DB41);
 
+    // and
     EXEC({ cpu_setregister(A, 0b11); cpu_setregister(B, 0b1100); }, "and A, B", cpu_register(A), 0);
     test(cpu_flag(Z), true, "Z = 1");
     EXEC({ cpu_setregister(A, 0b11); }, "and A, 0x7", cpu_register(A), 0b11);
     EXEC({ cpu_setregister(A, 0xFF0); }, "and A, 0xFF00", cpu_register(A), 0xF00);
     EXEC({ cpu_setregister(A, 0x148ABD12); }, "and A, 0x2A426653", cpu_register(A), 0x22412);
 
+    // shl
     EXEC({ cpu_setregister(A, 0b10101010); cpu_setregister(B, 4); }, "shl A, B", cpu_register(A), 0b101010100000);
     EXEC({ cpu_setregister(A, 0b10101010); }, "shl A, 4", cpu_register(A), 0b101010100000);
 
+    // shr
     EXEC({ cpu_setregister(A, 0b10101010); cpu_setregister(B, 4); }, "shr A, B", cpu_register(A), 0b1010);
     EXEC({ cpu_setregister(A, 0b10101010); }, "shr A, 4", cpu_register(A), 0b1010);
 
+    // not
     EXEC({ cpu_setregister(A, 0b11001010); }, "not A", cpu_register(A), 0b11111111111111111111111100110101);
 }
+
+
+static void
+test_cpu_arithmetic()
+{
+    syslog(LOG_NOTICE, "* integer arithmetic operations");
+
+    // add
+    EXEC({ cpu_setregister(A, 0x12); cpu_setregister(B, 0x20); }, "add A, B", cpu_register(A), 0x32);
+    EXEC({ cpu_setregister(A, 0x12); }, "add A, 0x20", cpu_register(A), 0x32);
+    EXEC({ cpu_setregister(A, 0x12); }, "add A, 0x2000", cpu_register(A), 0x2012);
+    EXEC({ cpu_setregister(A, 0x10000012); }, "add A, 0xF0000000", cpu_register(A), 0x12);
+    test(cpu_flag(Y), true, "Y = 1");
+    
+    // add (with carry)
+    EXEC({ cpu_setregister(A, 0x12); cpu_setflag(Y, true); }, "add A, 0x20", cpu_register(A), 0x33);
+
+    // sub
+    EXEC({ cpu_setregister(A, 0x30); cpu_setregister(B, 0x20); }, "sub A, B", cpu_register(A), 0x10);
+    EXEC({ cpu_setregister(A, 0x20); cpu_setregister(B, 0x30); }, "sub A, B", cpu_register(A), 0xFFFFFFF0);
+    EXEC({ cpu_setregister(A, 0x22); }, "sub A, 0x20", cpu_register(A), 0x2);
+    EXEC({ cpu_setregister(A, 0x22); cpu_setflag(Y, true); }, "sub A, 0x20", cpu_register(A), 0x1);
+    EXEC({ cpu_setregister(A, 0x12); }, "sub A, 0x2000", cpu_register(A), 0xFFFFE012);
+    test(cpu_register(S), true, "S = 1");
+    test(cpu_register(Y), true, "Y = 1");
+    EXEC({ cpu_setregister(A, 0x20000012); }, "sub A, 0xF0000000", cpu_register(A), 0x20000012);
+    test(cpu_register(Y), true, "Y = 1");
+}
+
 
 /*{{{
 
@@ -529,22 +564,6 @@ test_cpu_logical()
 
   t.comment('Integer arithmetic');
   
-  s = opc('add A, B', () => { cpu.A = 0x12; cpu.B = 0x20; });
-  t.equal(cpu.A, 0x32, s);
-  
-  s = opc('add A, 0x20', () => cpu.A = 0x12);
-  t.equal(cpu.A, 0x32, s);
-
-  s = opc('add A, 0x20', () => { cpu.A = 0x12, cpu.Y = true; });
-  t.equal(cpu.A, 0x33, 'add A, 0x20 (with carry)');
-
-  s = opc('add A, 0x2000', () => cpu.A = 0x12);
-  t.equal(cpu.A, 0x2012, s);
-
-  s = opc('add A, 0xF0000000', () => cpu.A = 0x10000012);
-  t.equal(cpu.A, 0x12, s);
-  t.true(cpu.Y, "cpu.Y == 1");
-
   s = opc('sub A, B', () => { cpu.A = 0x30; cpu.B = 0x20; });
   t.equal(cpu.A, 0x10, s);
   t.false(cpu.S, 'cpu.S == 0');
@@ -858,6 +877,7 @@ test_cpu()
     test_cpu_MOVD();
     test_cpu_SWAP();
     test_cpu_logical();
+    test_cpu_arithmetic();
 }
 
 // }}}
