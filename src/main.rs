@@ -1,6 +1,9 @@
 mod device;
 mod computer;
+mod cpu;
+
+//use computer::*;
 
 fn main() {
-    println!("Hello, world!");
+    //let mut computer = Computer::new(64 * 1024);
 }

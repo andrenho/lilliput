@@ -1,4 +1,4 @@
-use device::Device;
+use device::*;
 
 const PHYSICAL_MEMORY_LIMIT: u32 = 0xF0000000;
 
@@ -12,7 +12,7 @@ struct DeviceDef {
     device: Box<Device>,
 }
 
-struct Computer {
+pub struct Computer {
     physical_memory : Vec<u8>,
     offset: u32,
     devices: Vec<DeviceDef>,
@@ -35,6 +35,8 @@ impl Computer {
                 Some(data) => *data,
                 None => panic!("Getting an invalid memory position.")  // TODO
             }
+        } else if pos >= PHYSICAL_MEMORY_LIMIT && pos < PHYSICAL_MEMORY_LIMIT + 4 {
+            (self.offset >> ((pos - PHYSICAL_MEMORY_LIMIT) * 8)) as u8
         } else {
             for dev in &self.devices {
                 match dev.memory {
@@ -54,6 +56,10 @@ impl Computer {
                 Some(old) => *old = data,
                 None => panic!("Setting an invalid memory position.")  // TODO
             }
+        } else if pos >= PHYSICAL_MEMORY_LIMIT && pos < PHYSICAL_MEMORY_LIMIT + 4 {
+            let bytes = 8 * (pos - PHYSICAL_MEMORY_LIMIT);
+            let mask : u32 = 0xFF << bytes;
+            self.offset = (self.offset & !mask) | (((data as u32) << bytes) & mask);
         } else {
             for dev in &mut self.devices {
                 match dev.memory {
@@ -71,7 +77,7 @@ impl Computer {
     pub fn add_device(&mut self, dev: Box<Device>, memory_pos: Option<u32>) -> u32 {
         let (next, mloc) = match memory_pos {
             Some(addr) => {
-                if addr < PHYSICAL_MEMORY_LIMIT {
+                if addr < PHYSICAL_MEMORY_LIMIT + 0x100 {
                     panic!("Memory position must be above PHYSICAL_MEMORY_LIMIT.");
                 }
                 let next = addr + dev.dev_size();
@@ -88,7 +94,6 @@ impl Computer {
 
 #[cfg(test)]
 mod tests { // {{{
-
     use super::Computer;
     use device::Device;
 
@@ -112,18 +117,29 @@ mod tests { // {{{
 
     impl Device for MockDevice {
         fn dev_get(&self, pos: u32) -> u8 { return pos as u8; }
-        fn dev_set(&mut self, pos: u32, data: u8) {}
+        fn dev_set(&mut self, _pos: u32, _data: u8) {}
         fn dev_size(&self) -> u32 { return 0x100; }
     }
 
     #[test]
-    fn device() {
+    fn new_device() {
         let mut computer = Computer::new(64 * 1024);
-        let mut mock = MockDevice {};
-        let n = computer.add_device(Box::new(mock), Some(0xF0000000));
-        assert_eq!(n, 0xF0000100);
-        assert_eq!(computer.get(0xF0000004), 0x4);
-        assert_eq!(computer.get(0xF0000007), 0x7);
+        let mock = MockDevice {};
+        let n = computer.add_device(Box::new(mock), Some(0xF0001000));
+        assert_eq!(n, 0xF0001100);
+        assert_eq!(computer.get(0xF0001004), 0x4);
+        assert_eq!(computer.get(0xF0001007), 0x7);
+    }
+
+    #[test]
+    fn offset_addr() {
+        let mut computer = Computer::new(64 * 1024);
+        computer.set(0xF0000000, 0x64);
+        assert_eq!(computer.get(0xF0000000), 0x64);
+        assert_eq!(computer.offset, 0x64);
+        computer.set(0xF0000001, 0xAB);
+        assert_eq!(computer.offset, 0xAB64);
+        assert_eq!(computer.get(0xF0000001), 0xAB);
     }
 
 } // }}}

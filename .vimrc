@@ -9,26 +9,22 @@ set foldmethod=marker
 
 " make program
 set makeprg=clear\ \&\&\ make
-nnoremap <Leader>b :make! debug<cr>
-nnoremap <Leader>B :make! debug FORCE_COLOR=1<cr>
-nnoremap <Leader>T :!clear && make debug && ./lilliput -T<cr>
-nnoremap <Leader>L :make! debug CXX=clang++<cr>
-nnoremap <Leader>C :make! clean<cr>
-nnoremap <Leader>r :!clear && ./lilliput<cr>
+nnoremap <Leader>B :!clear && cargo build<cr>
+nnoremap <Leader>T :!clear && cargo test<cr>
+nnoremap <Leader>R :!clear && cargo run<cr>
 nnoremap <Leader>G :!git commit -a && git push<CR>
 
 " open all files
 e src/main.rs
 args src/*.rs
+args Cargo.toml
 args .vimrc
 b 1
-map <Leader>x   :b src/main.c<CR>
-map <Leader>c   :b src/cpu.c<CR>
-map <Leader>m   :b src/memory.c<CR>
-map <Leader>v   :b src/video.c<CR>
-map <Leader>d   :b src/debugger.c<CR>
-map <Leader>t   :b test/tests.py<CR>
-map <Leader>M   :b Makefile<CR>
+map <Leader>x   :b src/main.rs<CR>
+map <Leader>c   :b src/cpu.rs<CR>
+map <Leader>m   :b src/computer.rs<CR>
+map <Leader>d   :b src/device.rs<CR>
+map <Leader>C   :b Cargo.toml<CR>
 map <Leader>V   :b .vimrc<CR>
 
 " swap between cc and hh
