@@ -68,20 +68,21 @@ impl Computer {
         }
     }
 
-    pub fn add_device(&mut self, dev: Box<Device>, memory: Option<MemoryLocation>) -> u32 {
-        let r = match memory {
-            Some(ref loc) => {
-                if loc.location < PHYSICAL_MEMORY_LIMIT {
+    pub fn add_device(&mut self, dev: Box<Device>, memory_pos: Option<u32>) -> u32 {
+        let (next, mloc) = match memory_pos {
+            Some(addr) => {
+                if addr < PHYSICAL_MEMORY_LIMIT {
                     panic!("Memory position must be above PHYSICAL_MEMORY_LIMIT.");
                 }
-                loc.location + loc.size
+                let next = addr + dev.dev_size();
+                let memloc = MemoryLocation { location: addr, size: dev.dev_size() };
+                (next, Some(memloc))
             },
-            None => 0
+            None => (0, None),
         };
-        self.devices.push(DeviceDef { memory: memory, device: dev });
-        r
+        self.devices.push(DeviceDef { memory: mloc, device: dev });
+        next
     }
-
 }
 
 
@@ -89,6 +90,7 @@ impl Computer {
 mod tests { // {{{
 
     use super::Computer;
+    use device::Device;
 
     #[test]
     fn physical_memory() {
@@ -105,4 +107,23 @@ mod tests { // {{{
         computer.offset = 0x0;
         assert_eq!(computer.get(0x1034), 0x68);
     }
+
+    struct MockDevice;
+
+    impl Device for MockDevice {
+        fn dev_get(&self, pos: u32) -> u8 { return pos as u8; }
+        fn dev_set(&mut self, pos: u32, data: u8) {}
+        fn dev_size(&self) -> u32 { return 0x100; }
+    }
+
+    #[test]
+    fn device() {
+        let mut computer = Computer::new(64 * 1024);
+        let mut mock = MockDevice {};
+        let n = computer.add_device(Box::new(mock), Some(0xF0000000));
+        assert_eq!(n, 0xF0000100);
+        assert_eq!(computer.get(0xF0000004), 0x4);
+        assert_eq!(computer.get(0xF0000007), 0x7);
+    }
+
 } // }}}
