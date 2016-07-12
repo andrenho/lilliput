@@ -250,6 +250,10 @@ static ParType cpu_op_type(const char* par) {{{
 }}}
 
 static size_t cpu_op_add_value(char* par, ParType tp, uint8_t* data, size_t pos) {{{
+    if(!par) {
+        return 0;
+    }
+
     // remove brackets
     if(par[0] == '[') {
         ++par;

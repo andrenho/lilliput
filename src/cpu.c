@@ -357,23 +357,23 @@ void cpu_step()
             break;
 
         case 0x2E: {  // or R, v8
-                uint8_t value = (uint8_t)reg[memory_get(rPC+1)] | (uint8_t)memory_get(rPC+2);
+                uint32_t value = reg[memory_get(rPC+1)] | memory_get(rPC+2);
                 reg[memory_get(rPC+1)] = affect_flags(value);
-                rPC += 2;
+                rPC += 3;
             }
             break;
 
         case 0x2F: {  // or R, v16
-                uint16_t value = (uint16_t)reg[memory_get(rPC+1)] | (uint16_t)memory_get16(rPC+2);
+                uint32_t value = reg[memory_get(rPC+1)] | memory_get16(rPC+2);
                 reg[memory_get(rPC+1)] = affect_flags(value);
-                rPC += 3;
+                rPC += 4;
             }
             break;
 
         case 0x30: {  // or R, v32
                 uint32_t value = reg[memory_get(rPC+1)] | memory_get32(rPC+2);
                 reg[memory_get(rPC+1)] = affect_flags(value);
-                rPC += 5;
+                rPC += 6;
             }
             break;
 
@@ -389,28 +389,100 @@ void cpu_step()
             break;
 
         case 0x32: {  // xor R, v8
-                uint8_t value = (uint8_t)reg[memory_get(rPC+1)] ^ (uint8_t)memory_get(rPC+2);
-                reg[memory_get(rPC+1)] = affect_flags(value);
-                rPC += 2;
-            }
-            break;
-
-        case 0x33: {  // xor R, v16
-                uint16_t value = (uint16_t)reg[memory_get(rPC+1)] ^ (uint16_t)memory_get16(rPC+2);
+                uint32_t value = reg[memory_get(rPC+1)] ^ memory_get(rPC+2);
                 reg[memory_get(rPC+1)] = affect_flags(value);
                 rPC += 3;
             }
             break;
 
-        case 0x34: {  // xor R, v32
-                uint32_t value = reg[memory_get(rPC+1)] | memory_get32(rPC+2);
+        case 0x33: {  // xor R, v16
+                uint32_t value = reg[memory_get(rPC+1)] ^ memory_get16(rPC+2);
                 reg[memory_get(rPC+1)] = affect_flags(value);
-                rPC += 5;
+                rPC += 4;
             }
             break;
 
+        case 0x34: {  // xor R, v32
+                uint32_t value = reg[memory_get(rPC+1)] ^ memory_get32(rPC+2);
+                reg[memory_get(rPC+1)] = affect_flags(value);
+                rPC += 6;
+            }
+            break;
 
+        // 
+        // AND
+        //
 
+        case 0x35: {  // and R, R
+                uint32_t value = reg[memory_get(rPC+1) & 0xF] & reg[memory_get(rPC+1) >> 4];
+                reg[memory_get(rPC+1) & 0xF] = affect_flags(value);
+                rPC += 2;
+            }
+            break;
+
+        case 0x36: {  // and R, v8
+                uint32_t value = reg[memory_get(rPC+1)] & memory_get(rPC+2);
+                reg[memory_get(rPC+1)] = affect_flags(value);
+                rPC += 3;
+            }
+            break;
+
+        case 0x37: {  // and R, v16
+                uint32_t value = reg[memory_get(rPC+1)] & memory_get16(rPC+2);
+                reg[memory_get(rPC+1)] = affect_flags(value);
+                rPC += 4;
+            }
+            break;
+
+        case 0x38: {  // and R, v32
+                uint32_t value = reg[memory_get(rPC+1)] & memory_get32(rPC+2);
+                reg[memory_get(rPC+1)] = affect_flags(value);
+                rPC += 6;
+            }
+            break;
+
+        // 
+        // SHIFT
+        //
+
+        case 0x39: {  // shl R, R
+                uint32_t value = reg[memory_get(rPC+1) & 0xF] << reg[memory_get(rPC+1) >> 4];
+                reg[memory_get(rPC+1) & 0xF] = affect_flags(value);
+                rPC += 2;
+            }
+            break;
+
+        case 0x3A: {  // shl R, v8
+                uint32_t value = reg[memory_get(rPC+1)] << memory_get(rPC+2);
+                reg[memory_get(rPC+1)] = affect_flags(value);
+                rPC += 3;
+            }
+            break;
+
+        case 0x3D: {  // shr R, R
+                uint32_t value = reg[memory_get(rPC+1) & 0xF] >> reg[memory_get(rPC+1) >> 4];
+                reg[memory_get(rPC+1) & 0xF] = affect_flags(value);
+                rPC += 2;
+            }
+            break;
+
+        case 0x3E: {  // shr R, v8
+                uint32_t value = reg[memory_get(rPC+1)] >> memory_get(rPC+2);
+                reg[memory_get(rPC+1)] = affect_flags(value);
+                rPC += 3;
+            }
+            break;
+
+        // 
+        // NOT
+        //
+
+        case 0x41: {  // not R
+                uint32_t value = ~reg[memory_get(rPC+1)];
+                reg[memory_get(rPC+1)] = affect_flags(value);
+                rPC += 2;
+            }
+            break;
 
         //
         // INVALID OPCODE
@@ -422,166 +494,6 @@ void cpu_step()
     }
 
 /*
-    //
-    // OR
-    //
-
-    f[0x2D] = pos => {  // or R, R
-      let [reg, mb] = [this._reg, this._mb];
-      const [p1, p2] = [mb.get(pos), mb.get(pos + 1)];
-      const r = reg[p1] | reg[p2];
-      reg[p1] = this._affectFlags(r);
-      return 2;
-    };
-    
-    f[0x2E] = pos => {  // or R, v8
-      let [reg, mb] = [this._reg, this._mb];
-      const [p1, p2] = [mb.get(pos), mb.get(pos + 1)];
-      const r = reg[p1] | p2;
-      reg[p1] = this._affectFlags(r);
-      return 2;
-    };
-    
-    f[0x2F] = pos => {  // or R, v16
-      let [reg, mb] = [this._reg, this._mb];
-      const [p1, p2] = [mb.get(pos), mb.get16(pos + 1)];
-      const r = reg[p1] | p2;
-      reg[p1] = this._affectFlags(r);
-      return 3;
-    };
-    
-    f[0x30] = pos => {  // or R, v32
-      let [reg, mb] = [this._reg, this._mb];
-      const [p1, p2] = [mb.get(pos), mb.get32(pos + 1)];
-      const r = reg[p1] | p2;
-      reg[p1] = this._affectFlags(r);
-      return 5;
-    };
-    
-    //
-    // XOR
-    //
-
-    f[0x31] = pos => {  // xor R, R
-      let [reg, mb] = [this._reg, this._mb];
-      const [p1, p2] = [mb.get(pos), mb.get(pos + 1)];
-      const r = reg[p1] ^ reg[p2];
-      reg[p1] = this._affectFlags(r);
-      return 2;
-    };
-    
-    f[0x32] = pos => {  // xor R, v8
-      let [reg, mb] = [this._reg, this._mb];
-      const [p1, p2] = [mb.get(pos), mb.get(pos + 1)];
-      const r = reg[p1] ^ p2;
-      reg[p1] = this._affectFlags(r);
-      return 2;
-    };
-    
-    f[0x33] = pos => {  // xor R, v16
-      let [reg, mb] = [this._reg, this._mb];
-      const [p1, p2] = [mb.get(pos), mb.get16(pos + 1)];
-      const r = reg[p1] ^ p2;
-      reg[p1] = this._affectFlags(r);
-      return 3;
-    };
-    
-    f[0x34] = pos => {  // xor R, v32
-      let [reg, mb] = [this._reg, this._mb];
-      const [p1, p2] = [mb.get(pos), mb.get32(pos + 1)];
-      const r = reg[p1] ^ p2;
-      reg[p1] = this._affectFlags(r);
-      return 5;
-    };
-    
-    //
-    // AND
-    //
-
-    f[0x35] = pos => {  // and R, R
-      let [reg, mb] = [this._reg, this._mb];
-      const [p1, p2] = [mb.get(pos), mb.get(pos + 1)];
-      const r = reg[p1] & reg[p2];
-      reg[p1] = this._affectFlags(r);
-      return 2;
-    };
-    
-    f[0x36] = pos => {  // and R, v8
-      let [reg, mb] = [this._reg, this._mb];
-      const [p1, p2] = [mb.get(pos), mb.get(pos + 1)];
-      const r = reg[p1] & p2;
-      reg[p1] = this._affectFlags(r);
-      return 2;
-    };
-    
-    f[0x37] = pos => {  // and R, v16
-      let [reg, mb] = [this._reg, this._mb];
-      const [p1, p2] = [mb.get(pos), mb.get16(pos + 1)];
-      const r = reg[p1] & p2;
-      reg[p1] = this._affectFlags(r);
-      return 3;
-    };
-    
-    f[0x38] = pos => {  // and R, v32
-      let [reg, mb] = [this._reg, this._mb];
-      const [p1, p2] = [mb.get(pos), mb.get32(pos + 1)];
-      const r = reg[p1] & p2;
-      reg[p1] = this._affectFlags(r);
-      return 5;
-    };
-
-    //
-    // SHIFT
-    //
-
-    f[0x39] = pos => {  // shl R, R
-      let [reg, mb] = [this._reg, this._mb];
-      const [p1, p2] = [mb.get(pos), mb.get(pos + 1)];
-      const r = reg[p1] << reg[p2];
-      reg[p1] = this._affectFlags(r);
-      this.Y = ((reg[p1] >> 31) & 1) == 1;
-      return 2;
-    };
-
-    f[0x3A] = pos => {  // shl R, v8
-      let [reg, mb] = [this._reg, this._mb];
-      const [p1, p2] = [mb.get(pos), mb.get(pos + 1)];
-      const r = reg[p1] << p2;
-      reg[p1] = this._affectFlags(r);
-      this.Y = ((reg[p1] >> 31) & 1) == 1;
-      return 2;
-    };
-
-    f[0x3D] = pos => {  // shr R, R
-      let [reg, mb] = [this._reg, this._mb];
-      const [p1, p2] = [mb.get(pos), mb.get(pos + 1)];
-      const r = reg[p1] >> reg[p2];
-      reg[p1] = this._affectFlags(r);
-      this.Y = (reg[p1] & 1) == 1;
-      return 2;
-    };
-
-    f[0x3E] = pos => {  // shr R, v8
-      let [reg, mb] = [this._reg, this._mb];
-      const [p1, p2] = [mb.get(pos), mb.get(pos + 1)];
-      const r = reg[p1] >> p2;
-      reg[p1] = this._affectFlags(r);
-      this.Y = (reg[p1] & 1) == 1;
-      return 2;
-    };
-
-    //
-    // NOT
-    //
-
-    f[0x41] = pos => {  // not
-      let [reg, mb] = [this._reg, this._mb];
-      const [p1] = [mb.get(pos)];
-      const r = ~reg[p1];
-      reg[p1] = this._affectFlags(r);
-      return 1;
-    };
-
     // 
     // ARITHMETIC
     //
