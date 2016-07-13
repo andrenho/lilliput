@@ -1,5 +1,3 @@
-use std::any::Any;
-
 use device::*;
 use cpu::*;
 
@@ -10,15 +8,15 @@ struct MemoryLocation {
     size: u32,
 }
 
-struct DeviceDef {
+pub struct DeviceDef {
     memory: Option<MemoryLocation>,
-    device: Box<Device>,
+    pub device: Box<Device>,
 }
 
 pub struct Computer {
     physical_memory : Vec<u8>,
     offset: u32,
-    devices: Vec<DeviceDef>,
+    pub devices: Vec<DeviceDef>,
 }
 
 

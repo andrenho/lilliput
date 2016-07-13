@@ -1,10 +1,12 @@
 use device::*;
 
-pub struct CPU;
+pub struct CPU {
+    A: u32,
+}
 
 impl CPU {
     pub fn new() -> CPU {
-        CPU {}
+        CPU { A: 0 }
     }
 }
 
@@ -15,7 +17,6 @@ impl Device for CPU {
 }
 
 
-/*
 #[cfg(test)]
 mod tests {
     use super::CPU;
@@ -26,18 +27,18 @@ mod tests {
     }
 
     fn prepare_cpu<F>(preparation: F, code: &str) -> Computer
-            where F : Fn(&mut Computer, &mut CPU) {
+            where F : Fn(&mut Computer) {
         let mut computer = Computer::new(64 * 1024);
         let mut cpu = CPU::new();
         computer.add_device(Box::new(cpu), None);
-        //preparation(&mut computer, &mut *computer.devices[0].device);
+        preparation(&mut computer);
         add_code(&mut computer, code);
         computer
     }
 
     #[test]
     fn MOV() {
-        let mut computer = prepare_cpu(|comp, cpu| comp.set(0, 0), "mov A, B");
+        let mut computer = prepare_cpu(|comp| comp.set(0, 0), "mov A, B");
+        let mut computer2 = prepare_cpu(|comp| comp.set(0, 0), "mov A, B");
     }
 }
-*/
