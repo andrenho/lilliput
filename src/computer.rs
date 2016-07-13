@@ -1,3 +1,6 @@
+use std::rc::Rc;
+use std::cell::RefCell;
+
 use device::*;
 use cpu::*;
 
@@ -10,13 +13,13 @@ struct MemoryLocation {
 
 pub struct DeviceDef {
     memory: Option<MemoryLocation>,
-    pub device: Box<Device>,
+    device: Rc<RefCell<Device>>,
 }
 
 pub struct Computer {
     physical_memory : Vec<u8>,
     offset: u32,
-    pub devices: Vec<DeviceDef>,
+    devices: Vec<DeviceDef>,
 }
 
 
@@ -42,7 +45,7 @@ impl Computer {
             for dev in &self.devices {
                 match dev.memory {
                     Some(ref loc) => if pos >= loc.location && pos < (loc.location + loc.size) {
-                        return dev.device.dev_get(pos - loc.location);
+                        return dev.device.borrow().dev_get(pos - loc.location);
                     },
                     None => (),
                 }
@@ -65,7 +68,7 @@ impl Computer {
             for dev in &mut self.devices {
                 match dev.memory {
                     Some(ref loc) => if pos >= loc.location && pos < (loc.location + loc.size) {
-                        dev.device.dev_set(pos - loc.location, data);
+                        dev.device.borrow_mut().dev_set(pos - loc.location, data);
                         return;
                     },
                     None => (),
@@ -75,14 +78,14 @@ impl Computer {
         }
     }
 
-    pub fn add_device(&mut self, dev: Box<Device>, memory_pos: Option<u32>) -> u32 {
+    pub fn add_device(&mut self, dev: Rc<RefCell<Device>>, memory_pos: Option<u32>) -> u32 {
         let (next, mloc) = match memory_pos {
             Some(addr) => {
                 if addr < PHYSICAL_MEMORY_LIMIT + 0x100 {
                     panic!("Memory position must be above PHYSICAL_MEMORY_LIMIT.");
                 }
-                let next = addr + dev.dev_size();
-                let memloc = MemoryLocation { location: addr, size: dev.dev_size() };
+                let next = addr + dev.borrow().dev_size();
+                let memloc = MemoryLocation { location: addr, size: dev.borrow().dev_size() };
                 (next, Some(memloc))
             },
             None => (0, None),
@@ -96,6 +99,9 @@ impl Computer {
 
 #[cfg(test)]
 mod tests { // {{{
+    use std::rc::Rc;
+    use std::cell::RefCell;
+
     use super::Computer;
     use device::Device;
 
@@ -127,7 +133,7 @@ mod tests { // {{{
     fn new_device() {
         let mut computer = Computer::new(64 * 1024);
         let mock = MockDevice {};
-        let n = computer.add_device(Box::new(mock), Some(0xF0001000));
+        let n = computer.add_device(Rc::new(RefCell::new(mock)), Some(0xF0001000));
         assert_eq!(n, 0xF0001100);
         assert_eq!(computer.get(0xF0001004), 0x4);
         assert_eq!(computer.get(0xF0001007), 0x7);
