@@ -58,6 +58,20 @@ impl Computer {
         }
     }
 
+    pub fn get16(&self, pos: u32) -> u16 {
+        let b1 = self.get(pos) as u16;
+        let b2 = self.get(pos+1) as u16;
+        b1 | (b2 << 8)
+    }
+
+    pub fn get32(&self, pos: u32) -> u32 {
+        let b1 = self.get(pos) as u32;
+        let b2 = self.get(pos+1) as u32;
+        let b3 = self.get(pos+2) as u32;
+        let b4 = self.get(pos+3) as u32;
+        b1 | (b2 << 8) | (b3 << 16) | (b4 << 24)
+    }
+
     pub fn set(&mut self, pos: u32, data: u8) {
         if pos < PHYSICAL_MEMORY_LIMIT {
             match self.physical_memory.get_mut((pos + self.offset) as usize) {
@@ -80,6 +94,18 @@ impl Computer {
             }
             panic!("Setting an invalid memory position.");
         }
+    }
+
+    pub fn set16(&mut self, pos: u32, data: u16) {
+        self.set(pos, data as u8);
+        self.set(pos+1, (data >> 8) as u8);
+    }
+
+    pub fn set32(&mut self, pos: u32, data: u32) {
+        self.set(pos, data as u8);
+        self.set(pos+1, (data >> 8) as u8);
+        self.set(pos+2, (data >> 16) as u8);
+        self.set(pos+3, (data >> 24) as u8);
     }
 
     pub fn cpu(&self) -> Ref<CPU> {
@@ -128,6 +154,16 @@ mod tests { // {{{
         let mut computer = Computer::new(64 * 1024);
         computer.set(0x12, 0xAF);
         assert_eq!(computer.get(0x12), 0xAF);
+    }
+
+    #[test]
+    fn bytes() {
+        let mut computer = Computer::new(64 * 1024);
+        computer.set32(0x0, 0x12345678);
+        assert_eq!(computer.get(0x0), 0x78);
+        assert_eq!(computer.get(0x1), 0x56);
+        assert_eq!(computer.get(0x2), 0x34);
+        assert_eq!(computer.get(0x3), 0x12);
     }
 
     #[test]
