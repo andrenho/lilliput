@@ -1,5 +1,6 @@
 use std::rc::Rc;
 use std::cell::RefCell;
+use std::cell::RefMut;
 
 use device::*;
 use cpu::*;
@@ -20,6 +21,7 @@ pub struct Computer {
     physical_memory : Vec<u8>,
     offset: u32,
     devices: Vec<DeviceDef>,
+    pub cpu: Option<Rc<RefCell<CPU>>>,
 }
 
 
@@ -30,6 +32,7 @@ impl Computer {
             physical_memory: vec![0u8; mem_size as usize],
             offset: 0x0,
             devices: vec![],
+            cpu: None,
         }
     }
 
@@ -78,7 +81,17 @@ impl Computer {
         }
     }
 
-    pub fn add_device(&mut self, dev: Rc<RefCell<Device>>, memory_pos: Option<u32>) -> u32 {
+    pub fn borrow_cpu(&mut self) -> RefMut<CPU> {
+        self.cpu.as_mut().unwrap().borrow_mut()
+    }
+
+    pub fn set_cpu(&mut self, cpu: CPU, pos: u32) -> u32 {
+        let rcpu = Rc::new(RefCell::new(cpu));
+        self.cpu = Some(rcpu.clone());
+        self.add_device(rcpu, Some(pos))
+    }
+
+    fn add_device(&mut self, dev: Rc<RefCell<Device>>, memory_pos: Option<u32>) -> u32 {
         let (next, mloc) = match memory_pos {
             Some(addr) => {
                 if addr < PHYSICAL_MEMORY_LIMIT + 0x100 {

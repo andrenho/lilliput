@@ -1,12 +1,17 @@
 use device::*;
 
+enum Register { A, B, C, D, E, F, G, H, I, J, K, L, FP, SP, PC, FL, }
+enum Flag { Y, V, Z, S, GT, LT, P, T, }
+
 pub struct CPU {
-    A: u32,
+    register: [u32; 16],
 }
 
 impl CPU {
     pub fn new() -> CPU {
-        CPU { A: 0 }
+        CPU { 
+            register: [0; 16],
+        }
     }
 }
 
@@ -17,7 +22,6 @@ impl Device for CPU {
 }
 
 
-/*
 #[cfg(test)]
 mod tests {
     use super::CPU;
@@ -30,8 +34,7 @@ mod tests {
     fn prepare_cpu<F>(preparation: F, code: &str) -> Computer
             where F : Fn(&mut Computer) {
         let mut computer = Computer::new(64 * 1024);
-        let mut cpu = CPU::new();
-        computer.add_device(Box::new(cpu), None);
+        computer.set_cpu(CPU::new(), 0xF0001000);
         preparation(&mut computer);
         add_code(&mut computer, code);
         computer
@@ -40,7 +43,6 @@ mod tests {
     #[test]
     fn MOV() {
         let mut computer = prepare_cpu(|comp| comp.set(0, 0), "mov A, B");
-        let mut computer2 = prepare_cpu(|comp| comp.set(0, 0), "mov A, B");
+        let mut computer2 = prepare_cpu(|comp| { comp.borrow_cpu().register[0] = 0x42; }, "mov A, B");
     }
 }
-*/
