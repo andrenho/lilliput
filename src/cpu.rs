@@ -40,9 +40,81 @@ mod tests {
     use computer::*;
 
     fn add_code(computer: &mut Computer, code: &str) {
-// {{{
-        // TODO
-// }}}
+        // split string
+        let _parts: Vec<&str> = code.split_whitespace().collect();
+        let opcode = _parts[0];
+        let pars: Vec<String> = _parts[1..].into_iter().map(|s| (*s).replace(",", "")).collect();
+
+        // find byte values
+        // {{{
+        fn register_from_name(reg: &str) -> Register {
+            match reg {
+                "A"  => Register::A,
+                "B"  => Register::B,
+                "C"  => Register::C,
+                "D"  => Register::D,
+                "E"  => Register::E,
+                "F"  => Register::F,
+                "G"  => Register::G,
+                "H"  => Register::H,
+                "I"  => Register::I,
+                "J"  => Register::J,
+                "K"  => Register::K,
+                "L"  => Register::L,
+                "FP" => Register::FP,
+                "SP" => Register::SP,
+                "PC" => Register::PC,
+                "FL" => Register::FL,
+                _    => panic!("Invalid register")
+            }
+        }
+
+        #[derive(PartialEq)]
+        enum Par { None, Reg(u8), IndReg(u8), V8(u8), V16(u16), V32(u32), IndV32(u32) };
+        fn get_type(par: &str) -> Par {
+            let fst = par.chars().nth(0).unwrap();
+            if fst == '[' {
+                if par.chars().nth(1).unwrap().is_alphanumeric() {
+                    Par::IndReg(register_from_name(par) as u8)
+                } else {
+                    Par::IndV32(par.parse::<u32>().unwrap())
+                }
+            } else if fst.is_alphanumeric() {
+                Par::Reg(register_from_name(par) as u8)
+            } else {
+                let v = par.parse::<u32>().unwrap();
+                match v {
+                    0x0   ...   0xFF =>  Par::V8(v as  u8),
+                    0x100 ... 0xFFFF => Par::V16(v as u16),
+                    _                => Par::V32(v as u32)
+                }
+            }
+        }
+        // }}}
+
+        let mut par: Vec<Par> = pars.into_iter().map(|p| get_type(&p)).collect();
+
+        // find opcode
+        struct Opcode {
+            opcode: u8,
+            name:   &'static str,
+            pars:   Vec<Par>
+        }
+        let opcodes: Vec<Opcode> = vec![
+            Opcode { opcode: 0x01, name: "mov", pars: vec![ Par::Reg(0), Par::Reg(0) ] },
+        ];
+
+        let mut pos = 0u32;
+        for opc in &opcodes {
+            if opcode == opc.name && par == opc.pars {  // TODO - equality?
+                computer.set(pos, opc.opcode);
+                pos += 1;
+                break;
+            }
+        }
+
+        // add parameters
+
     }
 
     fn prepare_cpu<F>(preparation: F, code: &str) -> Computer
