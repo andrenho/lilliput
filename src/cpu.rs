@@ -34,6 +34,7 @@ impl Device for CPU {
 }
 
 
+// {{{ tests
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -282,12 +283,21 @@ mod tests {
         }
 
         // add parameters
-        // TODO - registers in both parameters
-        for p in &par {
-            match p {
-                &Par::Reg(v) | &Par::IndReg(v) | &Par::V8(v) => { computer.set(pos, v); pos += 1; },
-                &Par::V16(v)                                 => { computer.set16(pos, v); pos += 2; }, 
-                &Par::V32(v) | &Par::IndV32(v)               => { computer.set32(pos, v); pos += 4; },
+        match (par.get(0), par.get(1)) {
+            // registers in both parameters
+            (Some(&Par::Reg(v1)), Some(&Par::Reg(v2)))       => computer.set(pos, (v1 << 4) | v2),
+            (Some(&Par::Reg(v1)), Some(&Par::IndReg(v2)))    => computer.set(pos, (v1 << 4) | v2),
+            (Some(&Par::IndReg(v1)), Some(&Par::Reg(v2)))    => computer.set(pos, (v1 << 4) | v2),
+            (Some(&Par::IndReg(v1)), Some(&Par::IndReg(v2))) => computer.set(pos, (v1 << 4) | v2),
+            // other
+            _ => {
+                for p in &par {
+                    match p {
+                        &Par::Reg(v) | &Par::IndReg(v) | &Par::V8(v) => { computer.set(pos, v); pos += 1; },
+                        &Par::V16(v)                                 => { computer.set16(pos, v); pos += 2; }, 
+                        &Par::V32(v) | &Par::IndV32(v)               => { computer.set32(pos, v); pos += 4; },
+                    }
+                }
             }
         }
     }
@@ -315,6 +325,10 @@ mod tests {
         assert_eq!(computer.get(0x0), 0x43);
         assert_eq!(computer.get(0x1), 0x01);
         assert_eq!(computer.get(0x2), 0xBF);
+        let computer2 = prepare_cpu(|_|(), "mov B, C");
+        assert_eq!(computer2.get(0x0), 0x01);
+        assert_eq!(computer2.get(0x1), 0x12);
+        assert_eq!(computer2.get(0x2), 0x00);
     }
 
     /*
@@ -325,3 +339,4 @@ mod tests {
     }
     */
 }
+// }}}
