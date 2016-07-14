@@ -9,6 +9,7 @@ use cpu::*;
 
 const PHYSICAL_MEMORY_LIMIT: u32 = 0xF0000000;
 
+#[derive(Debug)]
 pub enum Command {
     Set8(u32, u8),
     Set16(u32, u16),
@@ -161,6 +162,7 @@ impl Computer {
         }
 
         for cmd in cmds {
+            // println!("{:?}", cmd);
             match cmd {
                 Command::Set8(pos, data)  => self.set(pos, data),
                 Command::Set16(pos, data) => self.set16(pos, data),
@@ -212,7 +214,7 @@ mod tests { // {{{
         fn get(&self, pos: u32) -> u8 { return pos as u8; }
         fn set(&mut self, _pos: u32, _data: u8) {}
         fn size(&self) -> u32 { return 0x100; }
-        fn step(&mut self, _computer: &Computer, _dt: &Duration, cmds: &mut Vec<Command>) {}
+        fn step(&mut self, _computer: &Computer, _dt: &Duration, _cmds: &mut Vec<Command>) {}
     }
 
     #[test]

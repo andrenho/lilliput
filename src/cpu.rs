@@ -27,7 +27,7 @@ impl PartialEq for Par { // {{{ PartialEq
 } // }}}
 
 enum Instruction {
-    MOV
+    MOV, MOVB,
 }
 
 //
@@ -63,27 +63,51 @@ impl CPU {
     }
 
     fn parse_opcode(&self, computer: &Computer) -> (Instruction, Vec<Par>, u32) {
+        let reg = |p| Par::Reg(computer.get(p));
+        let v8 =  |p| Par::V8(computer.get(p));
+        let v16 = |p| Par::V16(computer.get16(p));
+        let v32 = |p| Par::V32(computer.get32(p));
+        let indreg =  |p| Par::IndReg(computer.get(p));
+        let indv32 =  |p| Par::IndV32(computer.get32(p));
+        let regs_rr = |p| vec![Par::Reg(computer.get(p) >> 4), Par::Reg(computer.get(p) & 0xF) ];
+        let regs_ri = |p| vec![Par::Reg(computer.get(p) >> 4), Par::IndReg(computer.get(p) & 0xF) ];
+        let regs_ir = |p| vec![Par::IndReg(computer.get(p) >> 4), Par::Reg(computer.get(p) & 0xF) ];
+        let regs_ii = |p| vec![Par::IndReg(computer.get(p) >> 4), Par::IndReg(computer.get(p) & 0xF) ];
+
         let pc = reg!(self, PC);
         match computer.get(pc) {
-            0x01 => (Instruction::MOV, vec![Par::Reg(computer.get(pc+1) >> 4), Par::Reg(computer.get(pc+1) & 0xF) ], 2),
-            0x02 => (Instruction::MOV, vec![Par::Reg(computer.get(pc+1)), Par::V8(computer.get(pc+2)) ], 3),
-            0x03 => (Instruction::MOV, vec![Par::Reg(computer.get(pc+1)), Par::V16(computer.get16(pc+2)) ], 4),
-            0x04 => (Instruction::MOV, vec![Par::Reg(computer.get(pc+1)), Par::V32(computer.get32(pc+2)) ], 6),
+			// MOV
+            0x01 => (Instruction::MOV, regs_rr(pc+1), 2),
+            0x02 => (Instruction::MOV, vec![reg(pc+1), v8(pc+2)], 3),
+            0x03 => (Instruction::MOV, vec![reg(pc+1), v16(pc+2)], 4),
+            0x04 => (Instruction::MOV, vec![reg(pc+1), v32(pc+2)], 6),
+			// MOVB
+            0x05 => (Instruction::MOVB, regs_ri(pc+1), 2),
+            0x06 => (Instruction::MOVB, vec![reg(pc+1), indv32(pc+2)], 6),
+            0x0B => (Instruction::MOVB, regs_ir(pc+1), 2),
+            0x0C => (Instruction::MOVB, vec![indreg(pc+1), v8(pc+2)], 3),
+            0x0D => (Instruction::MOVB, regs_ii(pc+1), 2),
+            0x0E => (Instruction::MOVB, vec![indreg(pc+1), indv32(pc+2)], 6),
+            0x21 => (Instruction::MOVB, vec![indv32(pc+1), reg(pc+5)], 6),
+            0x22 => (Instruction::MOVB, vec![indv32(pc+1), v8(pc+5)], 6),
+            0x23 => (Instruction::MOVB, vec![indv32(pc+1), indreg(pc+5)], 6),
+            0x24 => (Instruction::MOVB, vec![indv32(pc+1), indv32(pc+2)], 9),
             _    => panic!(format!("Invalid instruction 0x{:02x}", computer.get(pc)))
         }
     }
 
-    fn take(&self, par: &Par) -> u32 {
+    fn take(&self, par: &Par, computer: &Computer) -> u32 {
         match par {
-            &Par::Reg(v) => self.register[v as usize],
-            &Par::V8(v)  => v as u32,
-            &Par::V16(v) => v as u32,
-            &Par::V32(v) => v,
-            _            => unimplemented!()
+            &Par::Reg(v)    => self.register[v as usize],
+            &Par::IndReg(v) => computer.get32(self.register[v as usize]),
+            &Par::V8(v)     => v as u32,
+            &Par::V16(v)    => v as u32,
+            &Par::V32(v)    => v,
+            &Par::IndV32(v) => computer.get32(v),
         }
     }
 
-    fn apply(&mut self, par: &Par, value: u32, cmds: &mut Vec<Command>) {
+    fn apply(&mut self, par: &Par, value: u32, cmds: &mut Vec<Command>, size: u8) {
         self.set_flag(Flag::Z, value == 0);
         self.set_flag(Flag::P, (value % 2) == 0);
         self.set_flag(Flag::S, ((value >> 31) & 1) == 1);
@@ -93,8 +117,20 @@ impl CPU {
         self.set_flag(Flag::LT, false);
 
         match par {
-            &Par::Reg(v) => self.register[v as usize] = value,
-            _            => unimplemented!()
+            &Par::Reg(v)    => self.register[v as usize] = value,
+            &Par::IndReg(v) => match size {
+                                     8 => cmds.push(Command::Set8(self.register[v as usize], value as u8)),
+                                    16 => cmds.push(Command::Set16(self.register[v as usize], value as u16)),
+                                    32 => cmds.push(Command::Set32(self.register[v as usize], value as u32)),
+                                    _  => panic!("Invalid choice")
+                               },
+            &Par::IndV32(v) => match size {
+                                     8 => cmds.push(Command::Set8(v, value as u8)),
+                                    16 => cmds.push(Command::Set16(v, value as u16)),
+                                    32 => cmds.push(Command::Set32(v, value as u32)),
+                                    _  => panic!("Invalid choice")
+                               },
+            _               => unimplemented!()
         };
     }
 
@@ -110,8 +146,12 @@ impl Device for CPU {
         let (instruction, pars, sz) = self.parse_opcode(computer);
         match instruction {
             Instruction::MOV => { 
-                let value = self.take(&pars[1]);
-                self.apply(&pars[0], value, cmds);
+                let value = self.take(&pars[1], computer);
+                self.apply(&pars[0], value, cmds, 0);
+            },
+            Instruction::MOVB => { 
+                let value = self.take(&pars[1], computer) as u8;
+                self.apply(&pars[0], value as u32, cmds, 8);
             },
         }
 
@@ -139,7 +179,7 @@ mod tests {
         // find byte values
         // {{{ functions to understand the parameters
         fn register_from_name(reg: &str) -> Register {
-            match reg {
+            match &*reg.replace("[", "").replace("]", "") {
                 "A"  => Register::A,
                 "B"  => Register::B,
                 "C"  => Register::C,
@@ -161,10 +201,11 @@ mod tests {
         }
 
         fn parse_u32(par: &str) -> u32 {
-            if par.len() >= 2 && &par[0..2] == "0x" {
-                u32::from_str_radix(&par[2..], 16).unwrap()
+            let p = &*par.replace("[", "").replace("]", "");
+            if p.len() >= 2 && &p[0..2] == "0x" {
+                u32::from_str_radix(&p[2..], 16).unwrap()
             } else {
-                par.parse::<u32>().unwrap()
+                p.parse::<u32>().unwrap()
             }
         }
 
@@ -433,6 +474,53 @@ mod tests {
         assert_eq!(computer6.cpu().flag(Flag::Z), false);
         assert_eq!(computer6.cpu().flag(Flag::P), false);
         assert_eq!(computer6.cpu().flag(Flag::S), true);
+    }
+
+    #[test]
+    fn MOVB() {
+        let computer = prepare_cpu(|c| { reg!(c.cpu_mut(), B = 0x100); c.set(0x100, 0xAB); }, 
+            "movb A, [B]");
+        assert_eq!(reg!(computer.cpu(), A), 0xAB);
+
+        let computer2 = prepare_cpu(|c| c.set(0x1000, 0xAB), "movb A, [0x1000]");
+        assert_eq!(reg!(computer2.cpu(), A), 0xAB);
+
+        let computer3 = prepare_cpu(|c| { reg!(c.cpu_mut(), A = 0x64); reg!(c.cpu_mut(), C = 0x32); },
+            "movb [C], 0xFA");
+        assert_eq!(computer3.get(0x32), 0xFA);
+
+        let computer4 = prepare_cpu(|c| reg!(c.cpu_mut(), A = 0x64), "movb [A], 0xFA");
+        assert_eq!(computer4.get(0x64), 0xFA);
+
+        let computer5 = prepare_cpu(|c| { 
+            reg!(c.cpu_mut(), A = 0x32); 
+            reg!(c.cpu_mut(), B = 0x64); 
+            c.set(0x64, 0xFF);
+        }, "movb [A], [B]");
+        assert_eq!(computer5.get(0x32), 0xFF);
+
+        let computer6 = prepare_cpu(|c| { reg!(c.cpu_mut(), A = 0x32); c.set(0x6420, 0xFF); }, 
+            "movb [A], [0x6420]");
+        assert_eq!(computer6.get(0x32), 0xFF);
+
+        let computer7 = prepare_cpu(|c| reg!(c.cpu_mut(), A = 0xAC32), "movb [0x64], A");
+        assert_eq!(computer7.get(0x64), 0x32);
+
+        let computer8 = prepare_cpu(|_|(), "movb [0x64], 0xF0");
+        assert_eq!(computer8.get(0x64), 0xF0);
+
+        let computer9 = prepare_cpu(|c| { reg!(c.cpu_mut(), A = 0xF000); c.set(0xF000, 0x42); }, 
+            "movb [0xCC64], [A]");
+        assert_eq!(computer9.get(0xCC64), 0x42);
+
+        let computer10 = prepare_cpu(|c| { c.set32(0xABF0, 0x1234); c.set(0x1234, 0x3F); }, 
+            "movb [0x64], [0xABF0]");
+        assert_eq!(computer10.get(0x64), 0x3F);
+
+/*
+    EXEC({ memory_set32(0xABF0, 0x1234); memory_set(0x1234, 0x3F); },
+            "movb [0x64], [0xABF0]", memory_get(0x64), 0x3F);
+*/
     }
 }
 // }}}
