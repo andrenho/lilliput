@@ -1,7 +1,8 @@
-use std::rc::Rc;
 use std::cell::Ref;
 use std::cell::RefCell;
 use std::cell::RefMut;
+use std::rc::Rc;
+use std::time::{Duration, SystemTime};
 
 use device::*;
 use cpu::*;
@@ -20,9 +21,10 @@ pub struct DeviceDef {
 
 pub struct Computer {
     physical_memory : Vec<u8>,
-    offset: u32,
-    devices: Vec<DeviceDef>,
-    pub cpu: Option<Rc<RefCell<CPU>>>,
+    offset:           u32,
+    devices:          Vec<DeviceDef>,
+    cpu:              Option<Rc<RefCell<CPU>>>,
+    last_time:        SystemTime,
 }
 
 
@@ -34,6 +36,7 @@ impl Computer {
             offset: 0x0,
             devices: vec![],
             cpu: None,
+            last_time: SystemTime::now(),
         }
     }
 
@@ -49,7 +52,7 @@ impl Computer {
             for dev in &self.devices {
                 match dev.memory {
                     Some(ref loc) => if pos >= loc.location && pos < (loc.location + loc.size) {
-                        return dev.device.borrow().dev_get(pos - loc.location);
+                        return dev.device.borrow().get(pos - loc.location);
                     },
                     None => (),
                 }
@@ -86,7 +89,7 @@ impl Computer {
             for dev in &mut self.devices {
                 match dev.memory {
                     Some(ref loc) => if pos >= loc.location && pos < (loc.location + loc.size) {
-                        dev.device.borrow_mut().dev_set(pos - loc.location, data);
+                        dev.device.borrow_mut().set(pos - loc.location, data);
                         return;
                     },
                     None => (),
@@ -128,8 +131,8 @@ impl Computer {
                 if addr < PHYSICAL_MEMORY_LIMIT + 0x100 {
                     panic!("Memory position must be above PHYSICAL_MEMORY_LIMIT.");
                 }
-                let next = addr + dev.borrow().dev_size();
-                let memloc = MemoryLocation { location: addr, size: dev.borrow().dev_size() };
+                let next = addr + dev.borrow().size();
+                let memloc = MemoryLocation { location: addr, size: dev.borrow().size() };
                 (next, Some(memloc))
             },
             None => (0, None),
@@ -138,6 +141,18 @@ impl Computer {
         next
     }
 
+    pub fn step(&mut self) {
+        let now = SystemTime::now();
+        let frame_time = match now.duration_since(self.last_time) {
+            Ok(v)  => v,
+            Err(_) => Duration::new(1, 0)
+        };
+        self.last_time = now;
+
+        for dev in &mut self.devices {
+            dev.device.borrow_mut().step(&mut self, &frame_time);
+        }
+    }
 }
 
 
@@ -145,6 +160,7 @@ impl Computer {
 mod tests { // {{{
     use std::rc::Rc;
     use std::cell::RefCell;
+    use std::time::Duration;
 
     use super::Computer;
     use device::Device;
@@ -178,9 +194,10 @@ mod tests { // {{{
     struct MockDevice;
 
     impl Device for MockDevice {
-        fn dev_get(&self, pos: u32) -> u8 { return pos as u8; }
-        fn dev_set(&mut self, _pos: u32, _data: u8) {}
-        fn dev_size(&self) -> u32 { return 0x100; }
+        fn get(&self, pos: u32) -> u8 { return pos as u8; }
+        fn set(&mut self, _pos: u32, _data: u8) {}
+        fn size(&self) -> u32 { return 0x100; }
+        fn step(&mut self, _computer: &mut Computer, _dt: &Duration) {}
     }
 
     #[test]

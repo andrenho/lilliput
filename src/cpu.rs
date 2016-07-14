@@ -1,11 +1,42 @@
+use std::time::Duration;
+
+use computer::*;
 use device::*;
 
 pub enum Register { A, B, C, D, E, F, G, H, I, J, K, L, FP, SP, PC, FL }
+
+#[allow(dead_code)]
 pub enum Flag { Y, V, Z, S, GT, LT, P, T }
 
+// parameters
+enum Par { Reg(u8), IndReg(u8), V8(u8), V16(u16), V32(u32), IndV32(u32) }
+impl PartialEq for Par { // {{{ PartialEq
+    /* I couldn't find any better way to do that in Rust. This sucks. */
+    fn eq(&self, other: &Self) -> bool {
+        match (self, other) {
+            (&Par::Reg(_), &Par::Reg(_))       => true,
+            (&Par::IndReg(_), &Par::IndReg(_)) => true,
+            (&Par::V8(_), &Par::V8(_))         => true,
+            (&Par::V16(_), &Par::V16(_))       => true,
+            (&Par::V32(_), &Par::V32(_))       => true,
+            (&Par::IndV32(_), &Par::IndV32(_)) => true,
+            _                                  => false
+        }
+    }
+} // }}}
+
+//
+// CPU
+//
 pub struct CPU {
     register: [u32; 16],
 }
+
+macro_rules! reg {
+    ($cpu:expr, $reg:ident) => {{ $cpu.register[Register::$reg as usize] }};
+    ($cpu:expr, $reg:ident = $value:expr) => {{ $cpu.register[Register::$reg as usize] = $value }};
+}
+
 
 impl CPU {
 
@@ -24,20 +55,29 @@ impl CPU {
         self.register[Register::FL as usize] ^= (!x ^ self.register[Register::FL as usize]) & (1 << (f as usize));
     }
 
-    
+    fn parse_opcode(&self, computer: &mut Computer) {
+        let pc = reg!(self, PC);
+    }
 }
 
 impl Device for CPU {
-    fn dev_get(&self, pos: u32) -> u8 { return 0x0; }
-    fn dev_set(&mut self, _pos: u32, _data: u8) {}
-    fn dev_size(&self) -> u32 { return 0x0; }
+    fn get(&self, _pos: u32) -> u8 { return 0x0; }
+    fn set(&mut self, _pos: u32, _data: u8) {}
+    fn size(&self) -> u32 { return 0x0; }
+
+    fn step(&mut self, _computer: &mut Computer, _dt: &Duration) {
+        
+    }
 }
 
 
 // {{{ tests
 #[cfg(test)]
+#[allow(non_snake_case)]
 mod tests {
+
     use super::*;
+    use super::Par;
     use computer::*;
 
     fn add_code(computer: &mut Computer, code: &str) {
@@ -70,22 +110,6 @@ mod tests {
             }
         }
 
-        enum Par { Reg(u8), IndReg(u8), V8(u8), V16(u16), V32(u32), IndV32(u32) };
-        impl PartialEq for Par {
-            /* I couldn't find any better way to do that in Rust. This sucks. */
-            fn eq(&self, other: &Self) -> bool {
-                match (self, other) {
-                    (&Par::Reg(_), &Par::Reg(_))       => true,
-                    (&Par::IndReg(_), &Par::IndReg(_)) => true,
-                    (&Par::V8(_), &Par::V8(_))         => true,
-                    (&Par::V16(_), &Par::V16(_))       => true,
-                    (&Par::V32(_), &Par::V32(_))       => true,
-                    (&Par::IndV32(_), &Par::IndV32(_)) => true,
-                    _                                  => false
-                }
-            }
-        }
-
         fn parse_u32(par: &str) -> u32 {
             if &par[0..2] == "0x" {
                 u32::from_str_radix(&par[2..], 16).unwrap()
@@ -113,7 +137,7 @@ mod tests {
             }
         }
         // }}}
-        let mut par: Vec<Par> = pars.into_iter().map(|p| get_type(&p)).collect();
+        let par: Vec<Par> = pars.into_iter().map(|p| get_type(&p)).collect();
 
         // find opcode
         struct Opcode {
@@ -308,6 +332,7 @@ mod tests {
         computer.set_cpu(CPU::new(), 0xF0001000);
         preparation(&mut computer);
         add_code(&mut computer, code);
+        computer.step();
         computer
     }
 
@@ -331,12 +356,10 @@ mod tests {
         assert_eq!(computer2.get(0x2), 0x00);
     }
 
-    /*
     #[test]
     fn MOV() {
-        let computer = prepare_cpu(|comp| comp.cpu_mut().register[Register::B as usize] = 0x42, "mov A, B");
-        assert_eq!(computer.cpu().register[Register::A as usize], 0x42);
+        let computer = prepare_cpu(|comp| reg!(comp.cpu_mut(), A = 0x42), "mov A, B");
+        assert_eq!(reg!(computer.cpu(), A), 0x42);
     }
-    */
 }
 // }}}
