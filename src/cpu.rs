@@ -91,7 +91,7 @@ impl CPU {
             0x21 => (Instruction::MOVB, vec![indv32(pc+1), reg(pc+5)], 6),
             0x22 => (Instruction::MOVB, vec![indv32(pc+1), v8(pc+5)], 6),
             0x23 => (Instruction::MOVB, vec![indv32(pc+1), indreg(pc+5)], 6),
-            0x24 => (Instruction::MOVB, vec![indv32(pc+1), indv32(pc+2)], 9),
+            0x24 => (Instruction::MOVB, vec![indv32(pc+1), indv32(pc+5)], 9),
             _    => panic!(format!("Invalid instruction 0x{:02x}", computer.get(pc)))
         }
     }
@@ -513,14 +513,8 @@ mod tests {
             "movb [0xCC64], [A]");
         assert_eq!(computer9.get(0xCC64), 0x42);
 
-        let computer10 = prepare_cpu(|c| { c.set32(0xABF0, 0x1234); c.set(0x1234, 0x3F); }, 
-            "movb [0x64], [0xABF0]");
+        let computer10 = prepare_cpu(|c| c.set(0xABF0, 0x3F), "movb [0x64], [0xABF0]");
         assert_eq!(computer10.get(0x64), 0x3F);
-
-/*
-    EXEC({ memory_set32(0xABF0, 0x1234); memory_set(0x1234, 0x3F); },
-            "movb [0x64], [0xABF0]", memory_get(0x64), 0x3F);
-*/
     }
 }
 // }}}
