@@ -27,7 +27,7 @@ impl PartialEq for Par { // {{{ PartialEq
 } // }}}
 
 enum Instruction {
-    MOV, MOVB,
+    MOV, MOVB, MOVW, MOVD,
 }
 
 //
@@ -62,6 +62,7 @@ impl CPU {
         self.register[Register::FL as usize] = new_value as u32;
     }
 
+    #[inline]
     fn parse_opcode(&self, computer: &Computer) -> (Instruction, Vec<Par>, u32) {
         let reg = |p| Par::Reg(computer.get(p));
         let v8 =  |p| Par::V8(computer.get(p));
@@ -92,10 +93,34 @@ impl CPU {
             0x22 => (Instruction::MOVB, vec![indv32(pc+1), v8(pc+5)], 6),
             0x23 => (Instruction::MOVB, vec![indv32(pc+1), indreg(pc+5)], 6),
             0x24 => (Instruction::MOVB, vec![indv32(pc+1), indv32(pc+5)], 9),
+			// MOVW
+            0x07 => (Instruction::MOVW, regs_ri(pc+1), 2),
+            0x08 => (Instruction::MOVW, vec![reg(pc+1), indv32(pc+2)], 6),
+            0x0F => (Instruction::MOVW, regs_ir(pc+1), 2),
+            0x1A => (Instruction::MOVW, vec![indreg(pc+1), v16(pc+2)], 4),
+            0x1B => (Instruction::MOVW, regs_ii(pc+1), 2),
+            0x1C => (Instruction::MOVW, vec![indreg(pc+1), indv32(pc+2)], 6),
+            0x25 => (Instruction::MOVW, vec![indv32(pc+1), reg(pc+5)], 6),
+            0x26 => (Instruction::MOVW, vec![indv32(pc+1), v16(pc+5)], 7),
+            0x27 => (Instruction::MOVW, vec![indv32(pc+1), indreg(pc+5)], 6),
+            0x28 => (Instruction::MOVW, vec![indv32(pc+1), indv32(pc+5)], 9),
+			// MOVW
+            0x09 => (Instruction::MOVD, regs_ri(pc+1), 2),
+            0x0A => (Instruction::MOVD, vec![reg(pc+1), indv32(pc+2)], 6),
+            0x1D => (Instruction::MOVD, regs_ir(pc+1), 2),
+            0x1E => (Instruction::MOVD, vec![indreg(pc+1), v32(pc+2)], 6),
+            0x1F => (Instruction::MOVD, regs_ii(pc+1), 2),
+            0x20 => (Instruction::MOVD, vec![indreg(pc+1), indv32(pc+2)], 6),
+            0x29 => (Instruction::MOVD, vec![indv32(pc+1), reg(pc+5)], 6),
+            0x2A => (Instruction::MOVD, vec![indv32(pc+1), v32(pc+5)], 9),
+            0x2B => (Instruction::MOVD, vec![indv32(pc+1), indreg(pc+5)], 6),
+            0x2C => (Instruction::MOVD, vec![indv32(pc+1), indv32(pc+5)], 9),
+            // invalid
             _    => panic!(format!("Invalid instruction 0x{:02x}", computer.get(pc)))
         }
     }
 
+    #[inline]
     fn take(&self, par: &Par, computer: &Computer) -> u32 {
         match par {
             &Par::Reg(v)    => self.register[v as usize],
@@ -107,6 +132,7 @@ impl CPU {
         }
     }
 
+    #[inline]
     fn apply(&mut self, par: &Par, value: u32, cmds: &mut Vec<Command>, size: u8) {
         self.set_flag(Flag::Z, value == 0);
         self.set_flag(Flag::P, (value % 2) == 0);
@@ -152,6 +178,14 @@ impl Device for CPU {
             Instruction::MOVB => { 
                 let value = self.take(&pars[1], computer) as u8;
                 self.apply(&pars[0], value as u32, cmds, 8);
+            },
+            Instruction::MOVW => { 
+                let value = self.take(&pars[1], computer) as u16;
+                self.apply(&pars[0], value as u32, cmds, 16);
+            },
+            Instruction::MOVD => { 
+                let value = self.take(&pars[1], computer) as u32;
+                self.apply(&pars[0], value as u32, cmds, 32);
             },
         }
 
@@ -419,7 +453,7 @@ mod tests {
 
     fn prepare_cpu<F>(preparation: F, code: &str) -> Computer
             where F : Fn(&mut Computer) {
-        let mut computer = Computer::new(64 * 1024);
+        let mut computer = Computer::new(1024 * 1024);
         computer.set_cpu(CPU::new(), 0xF0001000);
         preparation(&mut computer);
         add_code(&mut computer, code);
@@ -516,5 +550,86 @@ mod tests {
         let computer10 = prepare_cpu(|c| c.set(0xABF0, 0x3F), "movb [0x64], [0xABF0]");
         assert_eq!(computer10.get(0x64), 0x3F);
     }
+
+    #[test]
+    fn MOVW() {
+        let computer = prepare_cpu(|c| { reg!(c.cpu_mut(), B = 0x1000); c.set16(0x1000, 0xABCD); }, 
+            "movw A, [B]");
+        assert_eq!(reg!(computer.cpu(), A), 0xABCD);
+
+        let computer2 = prepare_cpu(|c| c.set16(0x1000, 0xABCD), "movw A, [0x1000]");
+        assert_eq!(reg!(computer2.cpu(), A), 0xABCD);
+
+        let computer3 = prepare_cpu(|c| reg!(c.cpu_mut(), A = 0x6402), "movw [A], A");
+        assert_eq!(computer3.get16(0x6402), 0x6402);
+
+        let computer4 = prepare_cpu(|c| reg!(c.cpu_mut(), A = 0x64), "movw [A], 0xFABA");
+        assert_eq!(computer4.get16(0x64), 0xFABA);
+
+        let computer5 = prepare_cpu(|c| { 
+            reg!(c.cpu_mut(), A = 0x32CC); 
+            reg!(c.cpu_mut(), B = 0x64); 
+            c.set16(0x64, 0xFFAB);
+        }, "movw [A], [B]");
+        assert_eq!(computer5.get16(0x32CC), 0xFFAB);
+
+        let computer6 = prepare_cpu(|c| { reg!(c.cpu_mut(), A = 0x32); c.set16(0x6420, 0xFFAB); }, 
+            "movw [A], [0x6420]");
+        assert_eq!(computer6.get16(0x32), 0xFFAB);
+
+        let computer7 = prepare_cpu(|c| reg!(c.cpu_mut(), A = 0xAB32AC), "movw [0x64], A");
+        assert_eq!(computer7.get16(0x64), 0x32AC);
+
+        let computer8 = prepare_cpu(|_|(), "movw [0x64], 0xF0FA");
+        assert_eq!(computer8.get16(0x64), 0xF0FA);
+
+        let computer9 = prepare_cpu(|c| { reg!(c.cpu_mut(), A = 0xF000); c.set16(0xF000, 0x4245); }, 
+            "movw [0xCC64], [A]");
+        assert_eq!(computer9.get16(0xCC64), 0x4245);
+
+        let computer10 = prepare_cpu(|c| c.set16(0xABF0, 0x3FAB), "movw [0x64], [0xABF0]");
+        assert_eq!(computer10.get16(0x64), 0x3FAB);
+    }
+
+    #[test]
+    fn MOVD() {
+        let computer = prepare_cpu(|c| { reg!(c.cpu_mut(), B = 0x1000); c.set32(0x1000, 0xABCDEF01); }, 
+            "movd A, [B]");
+        assert_eq!(reg!(computer.cpu(), A), 0xABCDEF01);
+
+        let computer2 = prepare_cpu(|c| c.set32(0x1000, 0xABCDEF01), "movd A, [0x1000]");
+        assert_eq!(reg!(computer2.cpu(), A), 0xABCDEF01);
+
+        let computer3 = prepare_cpu(|c| reg!(c.cpu_mut(), A = 0x16402), "movd [A], A");
+        assert_eq!(computer3.get32(0x16402), 0x16402);
+
+        let computer4 = prepare_cpu(|c| reg!(c.cpu_mut(), A = 0x64), "movd [A], 0xFABA1112");
+        assert_eq!(computer4.get32(0x64), 0xFABA1112);
+
+        let computer5 = prepare_cpu(|c| { 
+            reg!(c.cpu_mut(), A = 0x32CC); 
+            reg!(c.cpu_mut(), B = 0x64); 
+            c.set32(0x64, 0xFFAB5678);
+        }, "movd [A], [B]");
+        assert_eq!(computer5.get32(0x32CC), 0xFFAB5678);
+
+        let computer6 = prepare_cpu(|c| { reg!(c.cpu_mut(), A = 0x32); c.set32(0x6420, 0xFFAB9876); }, 
+            "movd [A], [0x6420]");
+        assert_eq!(computer6.get32(0x32), 0xFFAB9876);
+
+        let computer7 = prepare_cpu(|c| reg!(c.cpu_mut(), A = 0xAB32AC44), "movd [0x64], A");
+        assert_eq!(computer7.get32(0x64), 0xAB32AC44);
+
+        let computer8 = prepare_cpu(|_|(), "movd [0x64], 0xF0FA1234");
+        assert_eq!(computer8.get32(0x64), 0xF0FA1234);
+
+        let computer9 = prepare_cpu(|c| { reg!(c.cpu_mut(), A = 0xF000); c.set32(0xF000, 0x4245AABB); }, 
+            "movd [0xCC64], [A]");
+        assert_eq!(computer9.get32(0xCC64), 0x4245AABB);
+
+        let computer10 = prepare_cpu(|c| c.set32(0xABF0, 0x3FABC312), "movd [0x64], [0xABF0]");
+        assert_eq!(computer10.get32(0x64), 0x3FABC312);
+    }
+
 }
 // }}}

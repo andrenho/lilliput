@@ -47,6 +47,7 @@ impl Computer {
         }
     }
 
+    #[inline]
     pub fn get(&self, pos: u32) -> u8 {
         if pos < PHYSICAL_MEMORY_LIMIT {
             match self.physical_memory.get((pos + self.offset) as usize) {
@@ -68,12 +69,14 @@ impl Computer {
         }
     }
 
+    #[inline]
     pub fn get16(&self, pos: u32) -> u16 {
         let b1 = self.get(pos) as u16;
         let b2 = self.get(pos+1) as u16;
         b1 | (b2 << 8)
     }
 
+    #[inline]
     pub fn get32(&self, pos: u32) -> u32 {
         let b1 = self.get(pos) as u32;
         let b2 = self.get(pos+1) as u32;
