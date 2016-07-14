@@ -18,11 +18,8 @@ nnoremap <Leader>r :!clear && ./lilliput<cr>
 nnoremap <Leader>G :!git commit -a && git push<CR>
 
 " open all files
-e src/main.c
-args Makefile
-args src/*.h
-args src/*.c
-args test/tests.py
+e src/main.rs
+args src/*.rs
 args .vimrc
 b 1
 map <Leader>x   :b src/main.c<CR>
