@@ -85,6 +85,7 @@ impl Computer {
         b1 | (b2 << 8) | (b3 << 16) | (b4 << 24)
     }
 
+    #[inline]
     pub fn set(&mut self, pos: u32, data: u8) {
         if pos < PHYSICAL_MEMORY_LIMIT {
             match self.physical_memory.get_mut((pos + self.offset) as usize) {
@@ -109,11 +110,13 @@ impl Computer {
         }
     }
 
+    #[inline]
     pub fn set16(&mut self, pos: u32, data: u16) {
         self.set(pos, data as u8);
         self.set(pos+1, (data >> 8) as u8);
     }
 
+    #[inline]
     pub fn set32(&mut self, pos: u32, data: u32) {
         self.set(pos, data as u8);
         self.set(pos+1, (data >> 8) as u8);

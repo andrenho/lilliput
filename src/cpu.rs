@@ -28,6 +28,7 @@ impl PartialEq for Par { // {{{ PartialEq
 
 enum Instruction {
     MOV, MOVB, MOVW, MOVD,
+    OR, XOR, AND, SHL, SHR, NOT,
 }
 
 //
@@ -77,6 +78,7 @@ impl CPU {
 
         let pc = reg!(self, PC);
         match computer.get(pc) {
+            // {{{ instructions
 			// MOV
             0x01 => (Instruction::MOV, regs_rr(pc+1), 2),
             0x02 => (Instruction::MOV, vec![reg(pc+1), v8(pc+2)], 3),
@@ -115,6 +117,29 @@ impl CPU {
             0x2A => (Instruction::MOVD, vec![indv32(pc+1), v32(pc+5)], 9),
             0x2B => (Instruction::MOVD, vec![indv32(pc+1), indreg(pc+5)], 6),
             0x2C => (Instruction::MOVD, vec![indv32(pc+1), indv32(pc+5)], 9),
+            // OR
+            0x2D => (Instruction::OR, regs_rr(pc+1), 2),
+            0x2E => (Instruction::OR, vec![reg(pc+1), v8(pc+2)], 3),
+            0x2F => (Instruction::OR, vec![reg(pc+1), v16(pc+2)], 4),
+            0x30 => (Instruction::OR, vec![reg(pc+1), v32(pc+2)], 6),
+            // XOR
+            0x31 => (Instruction::XOR, regs_rr(pc+1), 2),
+            0x32 => (Instruction::XOR, vec![reg(pc+1), v8(pc+2)], 3),
+            0x33 => (Instruction::XOR, vec![reg(pc+1), v16(pc+2)], 4),
+            0x34 => (Instruction::XOR, vec![reg(pc+1), v32(pc+2)], 6),
+            // AND
+            0x35 => (Instruction::AND, regs_rr(pc+1), 2),
+            0x36 => (Instruction::AND, vec![reg(pc+1), v8(pc+2)], 3),
+            0x37 => (Instruction::AND, vec![reg(pc+1), v16(pc+2)], 4),
+            0x38 => (Instruction::AND, vec![reg(pc+1), v32(pc+2)], 6),
+            // SH*
+            0x39 => (Instruction::SHL, regs_rr(pc+1), 2),
+            0x3A => (Instruction::SHL, vec![reg(pc+1), v8(pc+2)], 3),
+            0x3B => (Instruction::SHR, regs_rr(pc+1), 2),
+            0x3C => (Instruction::SHR, vec![reg(pc+1), v8(pc+2)], 3),
+            // NOT
+            0x41 => (Instruction::NOT, vec![reg(pc+1)], 2),
+            // }}}
             // invalid
             _    => panic!(format!("Invalid instruction 0x{:02x}", computer.get(pc)))
         }
@@ -186,6 +211,35 @@ impl Device for CPU {
             Instruction::MOVD => { 
                 let value = self.take(&pars[1], computer) as u32;
                 self.apply(&pars[0], value as u32, cmds, 32);
+            },
+            Instruction::OR => {
+                let value_a = self.take(&pars[0], computer) as u32;
+                let value_b = self.take(&pars[1], computer) as u32;
+                self.apply(&pars[0], (value_a | value_b) as u32, cmds, 0);
+            },
+            Instruction::XOR => {
+                let value_a = self.take(&pars[0], computer) as u32;
+                let value_b = self.take(&pars[1], computer) as u32;
+                self.apply(&pars[0], (value_a ^ value_b) as u32, cmds, 0);
+            },
+            Instruction::AND => {
+                let value_a = self.take(&pars[0], computer) as u32;
+                let value_b = self.take(&pars[1], computer) as u32;
+                self.apply(&pars[0], (value_a & value_b) as u32, cmds, 0);
+            },
+            Instruction::SHL => {
+                let value_a = self.take(&pars[0], computer) as u32;
+                let value_b = self.take(&pars[1], computer) as u32;
+                self.apply(&pars[0], (value_a << value_b) as u32, cmds, 0);
+            },
+            Instruction::SHR => {
+                let value_a = self.take(&pars[0], computer) as u32;
+                let value_b = self.take(&pars[1], computer) as u32;
+                self.apply(&pars[0], (value_a >> value_b) as u32, cmds, 0);
+            },
+            Instruction::NOT => {
+                let value = self.take(&pars[0], computer) as u32;
+                self.apply(&pars[0], !value as u32, cmds, 0);
             },
         }
 
@@ -629,6 +683,28 @@ mod tests {
 
         let computer10 = prepare_cpu(|c| c.set32(0xABF0, 0x3FABC312), "movd [0x64], [0xABF0]");
         assert_eq!(computer10.get32(0x64), 0x3FABC312);
+    }
+
+    #[test]
+    fn OR()
+    {
+        let computer = prepare_cpu(|c| { reg!(c.cpu_mut(), A = 0b1010); reg!(c.cpu_mut(), B = 0b1100); },
+            "or A, B");
+        assert_eq!(reg!(computer.cpu(), A), 0b1110);
+        assert_eq!(computer.cpu().flag(Flag::S), false);
+        assert_eq!(computer.cpu().flag(Flag::P), true);
+        assert_eq!(computer.cpu().flag(Flag::Z), false);
+        assert_eq!(computer.cpu().flag(Flag::Y), false);
+        assert_eq!(computer.cpu().flag(Flag::V), false);
+
+        let computer2 = prepare_cpu(|c| reg!(c.cpu_mut(), A = 0b11), "or A, 0x4");
+        assert_eq!(reg!(computer2.cpu(), A), 0b111);
+
+        let computer3 = prepare_cpu(|c| reg!(c.cpu_mut(), A = 0b111), "or A, 0x4000");
+        assert_eq!(reg!(computer3.cpu(), A), 0x4007);
+
+        let computer4 = prepare_cpu(|c| reg!(c.cpu_mut(), A = 0x10800000), "or A, 0x2A426653");
+        assert_eq!(reg!(computer4.cpu(), A), 0x3AC26653);
     }
 
 }
