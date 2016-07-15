@@ -135,8 +135,8 @@ impl CPU {
             // SH*
             0x39 => (Instruction::SHL, regs_rr(pc+1), 2),
             0x3A => (Instruction::SHL, vec![reg(pc+1), v8(pc+2)], 3),
-            0x3B => (Instruction::SHR, regs_rr(pc+1), 2),
-            0x3C => (Instruction::SHR, vec![reg(pc+1), v8(pc+2)], 3),
+            0x3D => (Instruction::SHR, regs_rr(pc+1), 2),
+            0x3E => (Instruction::SHR, vec![reg(pc+1), v8(pc+2)], 3),
             // NOT
             0x41 => (Instruction::NOT, vec![reg(pc+1)], 2),
             // }}}
@@ -707,5 +707,411 @@ mod tests {
         assert_eq!(reg!(computer4.cpu(), A), 0x3AC26653);
     }
 
+    #[test]
+    fn XOR()
+    {
+        let computer = prepare_cpu(|c| { reg!(c.cpu_mut(), A = 0b1010); reg!(c.cpu_mut(), B = 0b1100); },
+            "xor A, B");
+        assert_eq!(reg!(computer.cpu(), A), 0b110);
+
+        let computer2 = prepare_cpu(|c| reg!(c.cpu_mut(), A = 0b11), "xor A, 0x4");
+        assert_eq!(reg!(computer2.cpu(), A), 0b111);
+
+        let computer3 = prepare_cpu(|c| reg!(c.cpu_mut(), A = 0xFF0), "xor A, 0xFF00");
+        assert_eq!(reg!(computer3.cpu(), A), 0xF0F0);
+
+        let computer4 = prepare_cpu(|c| reg!(c.cpu_mut(), A = 0x148ABD12), "xor A, 0x2A426653");
+        assert_eq!(reg!(computer4.cpu(), A), 0x3EC8DB41);
+    }
+
+    #[test]
+    fn AND()
+    {
+        let computer = prepare_cpu(|c| { reg!(c.cpu_mut(), A = 0b11); reg!(c.cpu_mut(), B = 0b1100); },
+            "and A, B");
+        assert_eq!(reg!(computer.cpu(), A), 0);
+        assert_eq!(computer.cpu().flag(Flag::Z), true);
+
+        let computer2 = prepare_cpu(|c| reg!(c.cpu_mut(), A = 0b11), "and A, 0x7");
+        assert_eq!(reg!(computer2.cpu(), A), 0b11);
+
+        let computer3 = prepare_cpu(|c| reg!(c.cpu_mut(), A = 0xFF00), "and A, 0xFF0");
+        assert_eq!(reg!(computer3.cpu(), A), 0xF00);
+
+        let computer4 = prepare_cpu(|c| reg!(c.cpu_mut(), A = 0x148ABD12), "and A, 0x2A426653");
+        assert_eq!(reg!(computer4.cpu(), A), 0x22412);
+    }
+
+    #[test]
+    fn SHx()
+    {
+        let computer = prepare_cpu(|c| { reg!(c.cpu_mut(), A = 0b10101010); reg!(c.cpu_mut(), B = 4); },
+            "shl A, B");
+        assert_eq!(reg!(computer.cpu(), A), 0b101010100000);
+
+        let computer2 = prepare_cpu(|c| reg!(c.cpu_mut(), A = 0b10101010), "shl A, 4");
+        assert_eq!(reg!(computer2.cpu(), A), 0b101010100000);
+
+        let computer3 = prepare_cpu(|c| { reg!(c.cpu_mut(), A = 0b10101010); reg!(c.cpu_mut(), B = 4); }, "shr A, B");
+        assert_eq!(reg!(computer3.cpu(), A), 0b1010);
+
+        let computer4 = prepare_cpu(|c| reg!(c.cpu_mut(), A = 0b10101010), "shr A, 4");
+        assert_eq!(reg!(computer4.cpu(), A), 0b1010);
+    }
+
+    #[test]
+    fn NOT()
+    {
+        let computer = prepare_cpu(|c| reg!(c.cpu_mut(), A = 0b11001010), "not A");
+        assert_eq!(reg!(computer.cpu(), A), 0b11111111111111111111111100110101);
+    }
+
+    #[test]
+    fn ADD()
+    {
+        let computer = prepare_cpu(|c| { reg!(c.cpu_mut(), A = 0x12); reg!(c.cpu_mut(), B = 0x20); },
+            "add A, B");
+        assert_eq!(reg!(computer.cpu(), A), 0x32);
+
+        let computer2 = prepare_cpu(|c| reg!(c.cpu_mut(), A = 0x12), "and A, 0x20");
+        assert_eq!(reg!(computer2.cpu(), A), 0x32);
+
+        // with carry
+        let computer2c = prepare_cpu(|c| { reg!(c.cpu_mut(), A = 0x12), c.cpu_mut().set_flag(Flag::Y, true); }
+            "and A, 0x20");
+        assert_eq!(reg!(computer2c.cpu(), A), 0x32);
+
+        let computer3 = prepare_cpu(|c| reg!(c.cpu_mut(), A = 0x12), "and A, 0x2000");
+        assert_eq!(reg!(computer3.cpu(), A), 0x2012);
+
+        let computer4 = prepare_cpu(|c| reg!(c.cpu_mut(), A = 0x10000012), "and A, 0xF0000000");
+        assert_eq!(reg!(computer4.cpu(), A), 0x12);
+        assert_eq!(computer.cpu().flag(Flag::Y), true);
+    }
+
+/*
+  //
+  // integer math
+  //
+
+  t.comment('Integer arithmetic');
+  
+  s = opc('add A, B', () => { cpu.A = 0x12; cpu.B = 0x20; });
+  t.equal(cpu.A, 0x32, s);
+  
+  s = opc('add A, 0x20', () => cpu.A = 0x12);
+  t.equal(cpu.A, 0x32, s);
+
+  s = opc('add A, 0x20', () => { cpu.A = 0x12, cpu.Y = true; });
+  t.equal(cpu.A, 0x33, 'add A, 0x20 (with carry)');
+
+  s = opc('add A, 0x2000', () => cpu.A = 0x12);
+  t.equal(cpu.A, 0x2012, s);
+
+  s = opc('add A, 0xF0000000', () => cpu.A = 0x10000012);
+  t.equal(cpu.A, 0x12, s);
+  t.true(cpu.Y, "cpu.Y == 1");
+
+  s = opc('sub A, B', () => { cpu.A = 0x30; cpu.B = 0x20; });
+  t.equal(cpu.A, 0x10, s);
+  t.false(cpu.S, 'cpu.S == 0');
+
+  s = opc('sub A, B', () => { cpu.A = 0x20; cpu.B = 0x30; });
+  t.equal(cpu.A, 0xFFFFFFF0, 'sub A, B (negative)');
+  t.true(cpu.S, 'cpu.S == 1');
+
+  s = opc('sub A, 0x20', () => cpu.A = 0x22);
+  t.equal(cpu.A, 0x2, s);
+
+  s = opc('sub A, 0x20', () => { cpu.A = 0x22; cpu.Y = true; });
+  t.equal(cpu.A, 0x1, 'sub A, 0x20 (with carry)');
+
+  s = opc('sub A, 0x2000', () => cpu.A = 0x12);
+  t.equal(cpu.A, 0xFFFFE012, s);
+  t.true(cpu.S, 'cpu.S == 1');
+  t.true(cpu.Y, 'cpu.Y == 1');
+
+  s = opc('sub A, 0xF0000000', () => cpu.A = 0x10000012);
+  t.equal(cpu.A, 0x20000012, s);
+  t.true(cpu.Y, 'cpu.Y == 1');
+
+  s = opc('cmp A, B');
+  t.true(cpu.Z, s);
+
+  s = opc('cmp A, 0x12');
+  t.true(cpu.LT && !cpu.GT, s);
+
+  s = opc('cmp A, 0x1234', () => cpu.A = 0x6000);
+  t.true(!cpu.LT && cpu.GT, s);
+
+  s = opc('cmp A, 0x12345678', () => cpu.A = 0xF0000000);
+  t.true(!cpu.LT && cpu.GT, s);  // because of the signal!
+
+  s = opc('cmp A', () => cpu.A = 0x0);
+  t.true(cpu.Z, s);
+
+  s = opc('mul A, B', () => { cpu.A = 0xF0; cpu.B = 0xF000; });
+  t.equal(cpu.A, 0xE10000, s);
+
+  s = opc('mul A, 0x12', () => cpu.A = 0x1234);
+  t.equal(cpu.A, 0x147A8, s);
+
+  s = opc('mul A, 0x12AF', () => cpu.A = 0x1234);
+  t.equal(cpu.A, 0x154198C, s);
+  t.false(cpu.V, 'cpu.V == 0');
+
+  s = opc('mul A, 0x12AF87AB', () => cpu.A = 0x1234);
+  t.equal(cpu.A, 0x233194BC, s);
+  t.true(cpu.V, 'cpu.V == 1');
+
+  s = opc('idiv A, B', () => { cpu.A = 0xF000; cpu.B = 0xF0; });
+  t.equal(cpu.A, 0x100, s);
+
+  s = opc('idiv A, 0x12', () => cpu.A = 0x1234);
+  t.equal(cpu.A, 0x102, s);
+
+  s = opc('idiv A, 0x2AF', () => cpu.A = 0x1234);
+  t.equal(cpu.A, 0x6, s);
+
+  s = opc('idiv A, 0x12AF', () => cpu.A = 0x123487AB);
+  t.equal(cpu.A, 0xF971, s);
+
+  s = opc('mod A, B', () => { cpu.A = 0xF000; cpu.B = 0xF0; });
+  t.equal(cpu.A, 0x0, s);
+  t.true(cpu.Z, 'cpu.Z == 1');
+
+  s = opc('mod A, 0x12', () => cpu.A = 0x1234);
+  t.equal(cpu.A, 0x10, s);
+
+  s = opc('mod A, 0x2AF', () => cpu.A = 0x1234);
+  t.equal(cpu.A, 0x21A, s);
+
+  s = opc('mod A, 0x12AF', () => cpu.A = 0x123487AB);
+  t.equal(cpu.A, 0x116C, s);
+
+  s = opc('inc A', () => cpu.A = 0x42);
+  t.equal(cpu.A, 0x43, s);
+
+  s = opc('inc A', () => cpu.A = 0xFFFFFFFF);
+  t.equal(cpu.A, 0x0, 'inc A (overflow)');
+  t.true(cpu.Y, 'cpu.Y == 1');
+  t.true(cpu.Z, 'cpu.Z == 1');
+
+  s = opc('dec A', () => cpu.A = 0x42);
+  t.equal(cpu.A, 0x41, s);
+
+  s = opc('dec A', () => cpu.A = 0x0);
+  t.equal(cpu.A, 0xFFFFFFFF, 'dec A (underflow)');
+  t.false(cpu.Z, 'cpu.Z == 0');
+
+  // 
+  // branches
+  //
+
+  t.comment('Branch operations');
+
+  s = opc('bz A', () => { cpu.Z = true; cpu.A = 0x1000; });
+  t.equal(cpu.PC, 0x1000, s);
+
+  s = opc('bz A', () => { cpu.A = 0x1000; });
+  t.equal(cpu.PC, 0x2, 'bz A (false)');
+
+  s = opc('bz 0x1000', () => cpu.Z = true);
+  t.equal(cpu.PC, 0x1000, s);
+
+  s = opc('bnz A', () => cpu.A = 0x1000);
+  t.equal(cpu.PC, 0x1000, s);
+
+  s = opc('bnz 0x1000');
+  t.equal(cpu.PC, 0x1000, s);
+
+  s = opc('bneg A', () => { cpu.S = true; cpu.A = 0x1000; });
+  t.equal(cpu.PC, 0x1000, s);
+
+  s = opc('bneg A', () => { cpu.A = 0x1000; });
+  t.equal(cpu.PC, 0x2, 'bneg A (false)');
+
+  s = opc('bneg 0x1000', () => cpu.S = true);
+  t.equal(cpu.PC, 0x1000, s);
+
+  s = opc('bpos A', () => cpu.A = 0x1000);
+  t.equal(cpu.PC, 0x1000, s);
+
+  s = opc('bpos 0x1000');
+  t.equal(cpu.PC, 0x1000, s);
+
+  s = opc('jmp 0x12345678');
+  t.equal(cpu.PC, 0x12345678, s);
+  
+
+  // 
+  // stack
+  //
+
+  t.comment('Stack operations');
+
+  mb.reset();
+  cpu.SP = 0xFFF; 
+  cpu.A = 0xABCDEF12;
+
+  mb.setArray(0x0, Debugger.encode('pushb A'));
+  mb.setArray(0x2, Debugger.encode('pushb 0x12'));
+  mb.setArray(0x4, Debugger.encode('pushw A'));
+  mb.setArray(0x6, Debugger.encode('pushd A'));
+
+  mb.setArray(0x8, Debugger.encode('popd B'));
+  mb.setArray(0xA, Debugger.encode('popw B'));
+  mb.setArray(0xC, Debugger.encode('popb B'));
+
+  mb.setArray(0xE, Debugger.encode('popx 1'));
+
+  mb.step();
+  t.equal(mb.get(0xFFF), 0x12, 'pushb A');
+  t.equal(cpu.SP, 0xFFE, 'SP = 0xFFE');
+
+  mb.step();
+  t.equal(mb.get(0xFFE), 0x12, 'pushb 0x12');
+  t.equal(cpu.SP, 0xFFD, 'SP = 0xFFD');
+
+  mb.step();
+  t.equal(mb.get16(0xFFC), 0xEF12, s);
+  t.equal(mb.get(0xFFD), 0xEF, s);
+  t.equal(mb.get(0xFFC), 0x12, s);
+  t.equal(cpu.SP, 0xFFB, 'SP = 0xFFB');
+
+  mb.step();
+  t.equal(mb.get32(0xFF8), 0xABCDEF12);
+  t.equal(cpu.SP, 0xFF7, 'SP = 0xFF7');
+
+  mb.step();
+  t.equal(cpu.B, 0xABCDEF12, 'popd B');
+
+  mb.step();
+  t.equal(cpu.B, 0xEF12, 'popw B');
+
+  mb.step();
+  t.equal(cpu.B, 0x12, 'popb B');
+
+  mb.step();
+  t.equal(cpu.SP, 0xFFF, 'popx 1');
+
+  // all registers
+  s = opc('push.a', () => {
+    cpu.SP = 0xFFF;
+    cpu.A = 0xA1B2C3E4;
+    cpu.B = 0xFFFFFFFF;
+  });
+  t.equal(cpu.SP, 0xFCF, s);
+  t.equal(mb.get32(0xFFC), 0xA1B2C3E4, 'A is saved');
+  t.equal(mb.get32(0xFF8), 0xFFFFFFFF, 'B is saved');
+  
+  s = opc('pop.a', () => {
+    cpu.SP = 0xFCF;
+    mb.set32(0xFFC, 0xA1B2C3E4);
+    mb.set32(0xFF8, 0xFFFFFFFF);
+  });
+  t.equal(cpu.SP, 0xFFF, s);
+  t.equal(cpu.A, 0xA1B2C3E4, 'A is restored');
+  t.equal(cpu.B, 0xFFFFFFFF, 'B is restored');
+
+  // others
+  t.comment('Others');
+
+  opc('nop');
+  
+  s = opc('dbg');
+  t.true(cpu.activateDebugger, s);
+
+  s = opc('halt');
+  t.true(cpu.systemHalted, s);
+
+  s = opc('swap A, B', () => {
+    cpu.A = 0xA;
+    cpu.B = 0xB;
+  });
+  t.true(cpu.A == 0xB && cpu.B == 0xA, s);
+
+  t.end();
+
+});
+
+
+test('CPU: subroutines and system calls', t => {
+
+  let [mb, cpu] = makeCPU();
+
+  // jsr
+  mb.reset();
+  mb.setArray(0x200, Debugger.encode('jsr 0x1234'));
+  mb.setArray(0x1234, Debugger.encode('ret'));
+  cpu.PC = 0x200;
+  cpu.SP = 0xFFF;
+  mb.step();
+  t.equal(cpu.PC, 0x1234, 'jsr 0x1234');
+  t.equal(mb.get(0xFFC), 0x5, '[FFC] = 0x5');
+  t.equal(mb.get(0xFFD), 0x2, '[FFD] = 0x2');
+  t.equal(cpu.SP, 0xFFB, 'SP = 0xFFB');
+  t.equal(mb.get32(0xFFC), 0x200 + 5, 'address in stack'); 
+
+  mb.step();
+  t.equal(cpu.PC, 0x205, 'ret');
+  t.equal(cpu.SP, 0xFFF, 'SP = 0xFFF');
+
+  // sys
+  mb.reset();
+  cpu.SP = 0xFFF;
+  mb.setArray(0, Debugger.encode('sys 2'));
+  mb.set32(cpu.CPU_SYSCALL_VECT + 8, 0x1000);
+  t.equal(cpu._syscallVector[2], 0x1000, 'syscall vector');
+  mb.setArray(0x1000, Debugger.encode('sret'));
+
+  mb.step();
+  t.equal(cpu.PC, 0x1000, 'sys 2');
+  t.equal(cpu.SP, 0xFFB, 'SP = 0xFFD');
+  mb.step();
+  t.equal(cpu.PC, 0x2, 'sret');
+  t.equal(cpu.SP, 0xFFF, 'SP = 0xFFF');
+
+  t.end();
+
+});
+
+
+test('CPU: interrupts', t => {
+
+  let [mb, cpu] = makeCPU();
+  cpu.T = true;
+  cpu.SP = 0x800;
+  mb.set32(cpu.CPU_INTERRUPT_VECT + 8, 0x1000);
+  mb.setArray(0x0, Debugger.encode('movb A, [0xE0000000]'));
+  mb.setArray(0x1000, Debugger.encode('iret'));
+
+  mb.step();  // cause the exception
+  t.equal(cpu.PC, 0x1000, 'interrupt called');
+  t.true(cpu.T, 'interrupts disabled');
+
+  mb.step();  // iret
+  t.equal(cpu.PC, 0x6, 'iret');
+  t.true(cpu.T, 'interrupts enabled');
+
+  t.end();
+
+});
+
+
+test('CPU: invalid opcode', t => {
+
+  let [mb, cpu] = makeCPU();
+  cpu.T = true;
+  mb.set32(cpu.CPU_INTERRUPT_VECT + 12, 0x1000);
+  mb.set(0x0, 0xFF);
+  mb.step();
+  t.equal(cpu.PC, 0x1000, 'interrupt called');
+
+  t.end();
+
+});
+
+*/
 }
 // }}}

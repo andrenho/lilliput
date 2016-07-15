@@ -38,13 +38,15 @@ pub struct Computer {
 impl Computer {
 
     pub fn new(mem_size: u32) -> Computer {
-        Computer {
-            physical_memory: vec![0u8; mem_size as usize],
+        let mut c = Computer {
+            physical_memory: Vec::with_capacity(mem_size as usize),
             offset: 0x0,
             devices: vec![],
             cpu: None,
             last_time: SystemTime::now(),
-        }
+        };
+        c.physical_memory.resize(mem_size as usize, 0);
+        c
     }
 
     #[inline]

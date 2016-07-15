@@ -3,4 +3,7 @@ name = "lilliput"
 version = "0.1.0"
 authors = ["Andre Wagner"]
 
+[profile.release]
+opt-level = 3
+
 [dependencies]
