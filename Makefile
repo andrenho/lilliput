@@ -3,7 +3,7 @@ VERSION = 0.0.1
 VPATH := src lib
 
 OBJS_EXE := main.o
-OBJS_LIB := computer.o
+OBJS_LIB := log.o computer.o
 
 #
 # compilation options
@@ -88,7 +88,7 @@ libluisavm.so: $(OBJS_LIB)
 	$(CC) -shared $^ -o $@ $(TARGET_LDFLAGS) $(LDFLAGS)
 
 bindings/lua/luisavm.so: bindings/lua/luisavm.c libluisavm.so
-	$(CC) $? -shared -o $@ $(CFLAGS) `pkg-config --cflags --libs lua` -Wl,-rpath=. -L. -lluisavm
+	$(CC) bindings/lua/luisavm.c -shared -o $@ $(CFLAGS) `pkg-config --cflags --libs lua` -Wl,-rpath=. -L. -lluisavm
 
 # 
 # install

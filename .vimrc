@@ -29,6 +29,7 @@ args bindings/lua/luisavm.c
 args .vimrc
 b 1
 map <Leader>x   :b src/main.c<CR>
+map <Leader>h   :b lib/luisavm.h<CR>
 map <Leader>m   :b lib/computer.c<CR>
 map <Leader>t   :b test/test.lua<CR>
 map <Leader>l   :b bindings/lua/luisavm.c<CR>

@@ -1,0 +1,21 @@
+Usage:
+
+luisavm = require('luisavm')
+
+luisavm
+-------
+
+luisavm.debug_log(bool)        -> activate/deactivate detailed log
+luisavm.create_computer()      -> create a new computer
+
+Computer
+--------
+
+computer:get(pos)              -> read data from memory
+computer:get16(pos)
+computer:get32(pos)
+computer:set(pos, data)        -> white data to memory
+computer:set16(pos, data)
+computer:set32(pos, data)
+computer.physical_memory[x]    -> direct access to physical memory
+computer.offset                -> memory offset
