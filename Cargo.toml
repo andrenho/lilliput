@@ -1,0 +1,6 @@
+[package]
+name = "lilliput"
+version = "0.1.0"
+authors = ["Andre Wagner"]
+
+[dependencies]
