@@ -41,37 +41,37 @@ local opcodes = {
     [0x02] = { instruction = 'mov', parameters = { 'reg', 'v8' } },
     [0x03] = { instruction = 'mov', parameters = { 'reg', 'v16' } },
     [0x04] = { instruction = 'mov', parameters = { 'reg', 'v32' } },
-    [0x05] = { instruction = 'movb', parameters = { 'reg', 'indreg' } },
+    [0x05] = { instruction = 'movb', parameters = { 'reg', 'regind' } },
     [0x06] = { instruction = 'movb', parameters = { 'reg', 'indv32' } },
-    [0x07] = { instruction = 'movw', parameters = { 'reg', 'indreg' } },
+    [0x07] = { instruction = 'movw', parameters = { 'reg', 'regind' } },
     [0x08] = { instruction = 'movw', parameters = { 'reg', 'indv32' } },
-    [0x09] = { instruction = 'movd', parameters = { 'reg', 'indreg' } },
+    [0x09] = { instruction = 'movd', parameters = { 'reg', 'regind' } },
     [0x0A] = { instruction = 'movd', parameters = { 'reg', 'indv32' } },
 
-    [0x0B] = { instruction = 'movb', parameters = { 'indreg', 'reg' } },
-    [0x0C] = { instruction = 'movb', parameters = { 'indreg', 'v8' } },
-    [0x0D] = { instruction = 'movb', parameters = { 'indreg', 'indreg' } },
-    [0x0E] = { instruction = 'movb', parameters = { 'indreg', 'indv32' } },
-    [0x0F] = { instruction = 'movw', parameters = { 'indreg', 'reg' } },
-    [0x1A] = { instruction = 'movw', parameters = { 'indreg', 'v16' } },
-    [0x1B] = { instruction = 'movw', parameters = { 'indreg', 'indreg' } },
-    [0x1C] = { instruction = 'movw', parameters = { 'indreg', 'indv32' } },
-    [0x1D] = { instruction = 'movd', parameters = { 'indreg', 'reg' } },
-    [0x1E] = { instruction = 'movd', parameters = { 'indreg', 'v32' } },
-    [0x1F] = { instruction = 'movd', parameters = { 'indreg', 'indreg' } },
-    [0x20] = { instruction = 'movd', parameters = { 'indreg', 'indv32' } },
+    [0x0B] = { instruction = 'movb', parameters = { 'regind', 'reg' } },
+    [0x0C] = { instruction = 'movb', parameters = { 'regind', 'v8' } },
+    [0x0D] = { instruction = 'movb', parameters = { 'regind', 'regind' } },
+    [0x0E] = { instruction = 'movb', parameters = { 'regind', 'indv32' } },
+    [0x0F] = { instruction = 'movw', parameters = { 'regind', 'reg' } },
+    [0x1A] = { instruction = 'movw', parameters = { 'regind', 'v16' } },
+    [0x1B] = { instruction = 'movw', parameters = { 'regind', 'regind' } },
+    [0x1C] = { instruction = 'movw', parameters = { 'regind', 'indv32' } },
+    [0x1D] = { instruction = 'movd', parameters = { 'regind', 'reg' } },
+    [0x1E] = { instruction = 'movd', parameters = { 'regind', 'v32' } },
+    [0x1F] = { instruction = 'movd', parameters = { 'regind', 'regind' } },
+    [0x20] = { instruction = 'movd', parameters = { 'regind', 'indv32' } },
 
     [0x21] = { instruction = 'movb', parameters = { 'indv32', 'reg' } },
     [0x22] = { instruction = 'movb', parameters = { 'indv32', 'v8' } },
-    [0x23] = { instruction = 'movb', parameters = { 'indv32', 'indreg' } },
+    [0x23] = { instruction = 'movb', parameters = { 'indv32', 'regind' } },
     [0x24] = { instruction = 'movb', parameters = { 'indv32', 'indv32' } },
     [0x25] = { instruction = 'movw', parameters = { 'indv32', 'reg' } },
     [0x26] = { instruction = 'movw', parameters = { 'indv32', 'v16' } },
-    [0x27] = { instruction = 'movw', parameters = { 'indv32', 'indreg' } },
+    [0x27] = { instruction = 'movw', parameters = { 'indv32', 'regind' } },
     [0x28] = { instruction = 'movw', parameters = { 'indv32', 'indv32' } },
     [0x29] = { instruction = 'movd', parameters = { 'indv32', 'reg' } },
     [0x2A] = { instruction = 'movd', parameters = { 'indv32', 'v32' } },
-    [0x2B] = { instruction = 'movd', parameters = { 'indv32', 'indreg' } },
+    [0x2B] = { instruction = 'movd', parameters = { 'indv32', 'regind' } },
     [0x2C] = { instruction = 'movd', parameters = { 'indv32', 'indv32' } },
 
     [0x8A] = { instruction = 'swap', parameters = { 'reg', 'reg' } },
@@ -187,20 +187,21 @@ function compile(comp, code)
         local fst = par:sub(1, 1)
         if fst == '[' then
             if par:sub(2, 2):match('%a') then
-                return { type='indreg', value=register_from_name(par) }
+                return { type='regind', value={ assert(registers[par]) } }
             else
-                return { type='indv32', value=math.tointeger(par:sub(2, #par-1)) }
+                local v = math.tointeger(par:sub(2, #par-1))
+                return { type='indv32', value={ (v & 0xFF), ((v >> 8) & 0xFF), ((v >> 16) & 0xFF), ((v >> 24) & 0xFF) } }
             end
         elseif fst:match('%a') then
-            return { type='reg', value=assert(registers[par]) }
+            return { type='reg', value={ assert(registers[par]) } }
         else
             local v = assert(math.tointeger(par:sub(2, #par-1)))
             if v <= 0xFF then
-                return { type='v8', value=v }
+                return { type='v8', value={ v } }
             elseif v <= 0xFFFF then
-                return { type='v16', value=v }
+                return { type='v16', value={ (v & 0xFF), ((v >> 8) & 0xFF) } }
             else
-                return { type='v32', value=v }
+                return { type='v32', value={ (v & 0xFF), ((v >> 8) & 0xFF), ((v >> 16) & 0xFF), ((v >> 24) & 0xFF) } }
             end
         end
         assert(false, "we shouldn't get here")
@@ -217,7 +218,7 @@ function compile(comp, code)
         if op.instruction == instruction and #op.parameters == #parameters then
             local eq = true
             for i,p in ipairs(op.parameters) do
-                if p ~= parameters[i] then eq = false end
+                if p ~= parameters[i].type then eq = false end
             end
             if eq then
                 comp:set(0, opcode)
@@ -226,9 +227,21 @@ function compile(comp, code)
         end
     end
     assert(false, "opcode from code '" .. code .. "' not found")
-
 ::found::
     
+    -- add parameters
+    if parameters[1].type:sub(1, 3) == 'reg' and parameters[2].type:sub(1, 3) == 'reg' then
+        comp:set(1, (parameters[1].value[1] << 4) | parameters[2].value[1])
+    else
+        local i = 1
+        for _,p in ipairs(parameters) do
+            for _,v in ipairs(p.value) do
+                assert(v <= 0xFF)
+                comp:set(i, v)
+                i = i+1
+            end
+        end
+    end
 end
 
 --
