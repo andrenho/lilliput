@@ -76,7 +76,7 @@ function cpu_tests()
     equals(cpu.flags.Z, false, "Z = false")
     cpu.flags.Z = true
     equals(cpu.flags.Z, true, "Z = true")
-    equals(cpu.FL & 0x4, 0x4, "FL = 0b100 (Z)")
+    equals(cpu.FL, 0x4, "FL = 0b100 (Z)")
 end
 
 --
