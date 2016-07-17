@@ -13,15 +13,21 @@ impl Computer {
         }
     }
 
-    pub fn get(pos: u32) -> u8 {
+    pub fn get(&self, pos: u32) -> u8 {
+        match(self.physical_meory
     }
 
-    pub fn set(pos: u32, data: u8) {
-    
+    pub fn set(&mut self, pos: u32, data: u8) {
+        if pos < 0xF0000000 {
+        }
     }
 
 }
 
+
 #[test]
-fn works() {
+fn physical_memory() {
+    let mut computer = Computer::new(64 * 1024);
+    computer.set(0x12, 0xAF);
+    assert_eq!(computer.get(0x12), 0xAF);
 }
