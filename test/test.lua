@@ -31,6 +31,12 @@ end
 
 --}}}
 
+-- 
+-- COMPILATION
+--
+function compile(comp, code)
+end
+
 --
 -- COMPUTER TESTS
 --
@@ -69,16 +75,23 @@ function cpu_tests()
 
     function sanity()
         print("# sanity")
-        local cpu = computer().cpu[1]
+
+        local comp = computer()
+        local cpu = comp.cpu[1]
+
         cpu.A = 0x24
         cpu.B = 0xBF
         equals(cpu.B, 0xBF, "B")
         equals(cpu.A, 0x24, "A")
 
-        equals(cpu.flags.Z, false, "Z = false")
+        equals(cpu.flags.Z, false, "Z")
         cpu.flags.Z = true
-        equals(cpu.flags.Z, true, "Z = true")
-        equals(cpu.FL, 0x4, "FL = 0b100 (Z)")
+        equals(cpu.flags.Z, true, "Z")
+        equals(cpu.FL, 0x4, "FL")
+
+        compile(comp, "mov A, B")
+        equals(comp:get(0x0), 0x01, "mov A, B [0]")
+        equals(comp:get(0x1), 0x10, "mov A, B [1]")
     end
 
     sanity()
