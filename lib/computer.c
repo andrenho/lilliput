@@ -3,10 +3,15 @@
 #include <stdlib.h>
 #include <syslog.h>
 
+
+extern LVM_CPU* lvm_createcpu(LVM_Computer* comp);
+extern void lvm_destroycpu(LVM_CPU* cpu);
+
 typedef struct LVM_Computer {
-    uint8_t* physical_memory;
-    uint32_t physical_memory_size;
-    uint32_t offset;
+    uint8_t*  physical_memory;
+    uint32_t  physical_memory_size;
+    uint32_t  offset;
+    LVM_CPU** cpu;
 } LVM_Computer;
 
 
@@ -16,6 +21,7 @@ lvm_computercreate(uint32_t physical_memory_size)
     LVM_Computer* comp = calloc(1, sizeof(LVM_Computer));
     comp->physical_memory = calloc(physical_memory_size, 1);
     comp->physical_memory_size = physical_memory_size;
+    comp->cpu = calloc(1, sizeof(LVM_CPU*));
     syslog(LOG_DEBUG, "Computer created with %d kB of physical memory.", physical_memory_size / 1024);
     return comp;
 }
@@ -24,6 +30,10 @@ lvm_computercreate(uint32_t physical_memory_size)
 void
 lvm_computerdestroy(LVM_Computer* comp)
 {
+    size_t i = 0;
+    while(comp->cpu[i]) {
+        lvm_destroycpu(comp->cpu[i++]);
+    }
     free(comp->physical_memory);
     free(comp);
     syslog(LOG_DEBUG, "Computer destroyed.");
@@ -119,4 +129,28 @@ uint32_t
 lvm_offset(LVM_Computer* comp)
 {
     return comp->offset;
+}
+
+
+LVM_CPU* 
+lvm_addcpu(LVM_Computer* comp)
+{
+    size_t i = 0;
+    while(comp->cpu[i++]);
+    
+    // create space for one extra CPU
+    comp->cpu = realloc(comp->cpu, sizeof(LVM_CPU*) * (i+1));
+    comp->cpu[i] = NULL;
+
+    // add CPU
+    comp->cpu[i-1] = lvm_createcpu(comp);
+    syslog(LOG_DEBUG, "New CPU added to computer.");
+    return comp->cpu[i-1];
+}
+
+
+LVM_CPU* 
+lvm_cpu(LVM_Computer* comp, size_t n)
+{
+    return comp->cpu[n];
 }

@@ -96,6 +96,19 @@ void* get_object_ptr(lua_State* L, int n)
 
 // }}}
 
+//
+// CPU
+//
+
+static int computer_addcpu(lua_State* L)
+{
+    LVM_CPU* cpu = lvm_addcpu((LVM_Computer*)get_object_ptr(L, 1));
+    create_object(L, "LVM_CPU", cpu, (struct luaL_Reg[]) {
+        { NULL, NULL }
+    });
+    return 1;
+}
+
 // 
 // PHYSICAL MEMORY
 //
@@ -241,12 +254,13 @@ static int create_computer(lua_State* L)
     uint32_t sz = luaL_checkinteger(L, 1);
     LVM_Computer* comp = lvm_computercreate(sz);
     create_object(L, "LVM_Computer", comp, (struct luaL_Reg[]) {
-        { "get",   computer_get   },
-        { "get16", computer_get16 },
-        { "get32", computer_get32 },
-        { "set",   computer_set   },
-        { "set16", computer_set16 },
-        { "set32", computer_set32 },
+        { "get",     computer_get   },
+        { "get16",   computer_get16 },
+        { "get32",   computer_get32 },
+        { "set",     computer_set   },
+        { "set16",   computer_set16 },
+        { "set32",   computer_set32 },
+        { "add_cpu", computer_addcpu },
         { NULL, NULL },
     });
 

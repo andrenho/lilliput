@@ -33,7 +33,8 @@ end
 
 function computer()
     local computer = luisavm.create_computer(1024 * 1024)
-    return computer
+    local cpu = computer:add_cpu()
+    return computer, cpu
 end
 
 --}}}
