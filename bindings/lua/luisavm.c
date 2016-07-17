@@ -378,6 +378,17 @@ SETTER(set32, uint32_t)
 #undef SETTER
 
 
+static int computer_step(lua_State* L)
+{
+    if(lua_gettop(L) == 1) {
+        lvm_step(get_object_ptr(L, 1), 0);
+    } else {
+        lvm_step(get_object_ptr(L, 1), luaL_checknumber(L, 2));
+    }
+    return 0;
+}
+
+
 static int destroy_computer(lua_State* L)
 {
     lvm_computerdestroy(get_object_ptr(L, 1));
@@ -392,13 +403,14 @@ static int create_computer(lua_State* L)
     uint32_t sz = luaL_checkinteger(L, 1);
     LVM_Computer* comp = lvm_computercreate(sz);
     create_object(L, "LVM_Computer", comp, (struct luaL_Reg[]) {
-        { "get",     computer_get   },
-        { "get16",   computer_get16 },
-        { "get32",   computer_get32 },
-        { "set",     computer_set   },
-        { "set16",   computer_set16 },
-        { "set32",   computer_set32 },
+        { "get",     computer_get    },
+        { "get16",   computer_get16  },
+        { "get32",   computer_get32  },
+        { "set",     computer_set    },
+        { "set16",   computer_set16  },
+        { "set32",   computer_set32  },
         { "add_cpu", computer_addcpu },
+        { "step",    computer_step   },
         { NULL, NULL },
     });
 

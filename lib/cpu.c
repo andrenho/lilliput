@@ -11,6 +11,8 @@ typedef struct LVM_CPU {
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wmissing-declarations"
 
+// {{{ CONSTRUCTOR/DESTRUCTOR
+
 LVM_CPU* 
 lvm_createcpu(LVM_Computer* comp)
 {
@@ -28,7 +30,21 @@ lvm_destroycpu(LVM_CPU* cpu)
     syslog(LOG_DEBUG, "CPU destroyed.");
 }
 
+// }}}
+
+// {{{ STEP
+
+extern void 
+lvm_cpustep(LVM_CPU* cpu)
+{
+    (void) cpu;
+}
+
+// }}}
+
 #pragma GCC diagnostic pop
+
+// {{{ REGISTERS & FLAGS
 
 uint32_t 
 lvm_cpuregister(LVM_CPU* cpu, LVM_CPURegister r)
@@ -66,3 +82,5 @@ lvm_cpusetflag(LVM_CPU* cpu, LVM_CPUFlag f, bool value)
     new_value ^= (-value ^ new_value) & (1 << (int)f);
     lvm_cpusetregister(cpu, FL, (uint32_t)new_value);
 }
+
+// }}}

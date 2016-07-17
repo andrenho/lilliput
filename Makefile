@@ -118,7 +118,7 @@ debug-test: bindings/lua/luisavm.so
 	@LUA_CPATH="$LUA_CPATH;bindings/lua/?.so" gdb --args lua test/test.lua
 
 cloc:
-	cloc Makefile src/*.h src/*.c
+	cloc Makefile src/*.h src/*.c lib/*.h lib/*.c test/*.lua bindings/lua/*.c
 
 check-leaks: debug
 	valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes --suppressions=build/luisavm.supp ./luisavm -D

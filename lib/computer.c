@@ -2,18 +2,24 @@
 
 #include <stdlib.h>
 #include <syslog.h>
+#include <time.h>
 
 
 extern LVM_CPU* lvm_createcpu(LVM_Computer* comp);
 extern void lvm_destroycpu(LVM_CPU* cpu);
+extern void lvm_cpustep(LVM_CPU* cpu);
 
 typedef struct LVM_Computer {
     uint8_t*  physical_memory;
     uint32_t  physical_memory_size;
     uint32_t  offset;
     LVM_CPU** cpu;
+    struct timespec last_step;
 } LVM_Computer;
 
+// 
+// COMPUTER MANAGEMENT
+// 
 
 LVM_Computer*
 lvm_computercreate(uint32_t physical_memory_size)
@@ -22,6 +28,7 @@ lvm_computercreate(uint32_t physical_memory_size)
     comp->physical_memory = calloc(physical_memory_size, 1);
     comp->physical_memory_size = physical_memory_size;
     comp->cpu = calloc(1, sizeof(LVM_CPU*));
+    clock_gettime(CLOCK_MONOTONIC, &comp->last_step);
     syslog(LOG_DEBUG, "Computer created with %d kB of physical memory.", physical_memory_size / 1024);
     return comp;
 }
@@ -39,6 +46,44 @@ lvm_computerdestroy(LVM_Computer* comp)
     syslog(LOG_DEBUG, "Computer destroyed.");
 }
 
+
+void
+lvm_step(LVM_Computer* comp, size_t force_time_us)
+{
+    // calculate time since last frame
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wsign-conversion"
+    ssize_t time_us = (size_t)force_time_us;
+#pragma GCC diagnostic pop
+    if(force_time_us > 0) {
+        struct timespec now;
+        clock_gettime(CLOCK_MONOTONIC, &now);
+        time_us = ((now.tv_sec - comp->last_step.tv_sec) * 1000000) +   // seconds
+                  ((now.tv_nsec - comp->last_step.tv_nsec) / 1000);     // nanoseconds
+        comp->last_step = now;
+    } else {
+        // advance last frame manually
+        const long BILLION = 1000000000;
+        long sec = comp->last_step.tv_sec;
+        long nsec = comp->last_step.tv_nsec + (time_us * 1000);
+        if(nsec >= BILLION) {
+            nsec -= BILLION;
+            ++sec;
+        }
+        comp->last_step = (struct timespec) { .tv_sec = sec, .tv_nsec = nsec };
+    }
+
+    // step devices
+    size_t i = 0;
+    while(comp->cpu[i]) {
+        lvm_cpustep(comp->cpu[i++]);
+    }
+}
+
+
+// 
+// MEMORY MANAGEMENT
+//
 
 uint8_t 
 lvm_get(LVM_Computer* comp, uint32_t pos)
@@ -131,6 +176,10 @@ lvm_offset(LVM_Computer* comp)
     return comp->offset;
 }
 
+
+// 
+// CPU MANAGEMENT
+//
 
 LVM_CPU* 
 lvm_addcpu(LVM_Computer* comp)

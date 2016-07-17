@@ -11,11 +11,20 @@ luisavm.create_computer()      -> create a new computer
 Computer
 --------
 
-computer:get(pos)              -> read data from memory
+computer:get(pos)               -> read data from memory
 computer:get16(pos)
 computer:get32(pos)
-computer:set(pos, data)        -> white data to memory
+computer:set(pos, data)         -> white data to memory
 computer:set16(pos, data)
 computer:set32(pos, data)
-computer.physical_memory[x]    -> direct access to physical memory
-computer.offset                -> memory offset
+computer.physical_memory[x]     -> direct access to physical memory
+computer.offset                 -> read/write memory offset
+
+computer:add_cpu()              -> add a new cpu
+computer.cpu[]                  -> CPU list
+
+CPU
+---
+
+cpu.A                           -> set/return the register
+cpu.flags.Z                     -> set/return the flag
