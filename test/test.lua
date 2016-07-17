@@ -11,19 +11,11 @@ luisavm = require('luisavm')
 test_count = 0
 err_count = 0
 
-function equals(code, expect, text)
+function equals(tested, expect, text)
     test_count = test_count + 1
-    local f, err = load('return (' .. code .. ')')
-    if f == nil then
-        print("[\27[31merr\27[0m] compilation error: " .. err)
-        err_count = err_count + 1
-        return
-    end
-    local ok, tested = pcall(f)
-    if not ok then
-        print("[\27[31merr\27[0m] error executing " .. text .. " == " .. string.format('0x%X', expect) .. ": " .. tested)
-        err_count = err_count + 1
-    elseif tested ~= expect then
+    if type(tested) == 'boolean' then tested = tested and 1 or 0 end
+    if type(expect) == 'boolean' then expect = expect and 1 or 0 end
+    if tested ~= expect then
         print("[\27[31merr\27[0m] " .. text .. " == " .. string.format('0x%X', tested) .. " (expected " .. string.format('0x%X', expect) .. ')')
         err_count = err_count + 1
     else
@@ -81,8 +73,10 @@ function cpu_tests()
     equals(cpu.B, 0xBF, 'B')
     equals(cpu.A, 0x24, 'A')
 
-    print(cpu.flags)
-    --cpu.flags.Y = true
+    equals(cpu.flags.Z, false, "Z = false")
+    cpu.flags.Z = true
+    equals(cpu.flags.Z, true, "Z = true")
+    equals(cpu.FL & 0x4, 0x4, "FL = 0b100 (Z)")
 end
 
 --

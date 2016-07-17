@@ -194,6 +194,7 @@ static int cpu_set(lua_State* L)
                 return 0;
             }
         }
+        goto regular_set;
     } else {
 regular_set:
         lua_rawset(L, 1);
@@ -239,7 +240,6 @@ static int computer_addcpu(lua_State* L)
 
     // add CPU to computer
     lua_seti(L, -2, luaL_len(L, 1)+1);
-    dump_stack(L);
     lua_pop(L, 1);
 
     return 0;
