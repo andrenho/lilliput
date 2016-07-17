@@ -1,4 +1,4 @@
-luisavm = require('luisavm')
+luisavm = require("luisavm")
 
 --luisavm.debug_log(true)
 
@@ -13,13 +13,13 @@ err_count = 0
 
 function equals(tested, expect, text)
     test_count = test_count + 1
-    if type(tested) == 'boolean' then tested = tested and 1 or 0 end
-    if type(expect) == 'boolean' then expect = expect and 1 or 0 end
+    if type(tested) == "boolean" then tested = tested and 1 or 0 end
+    if type(expect) == "boolean" then expect = expect and 1 or 0 end
     if tested ~= expect then
-        print("[\27[31merr\27[0m] " .. text .. " == " .. string.format('0x%X', tested) .. " (expected " .. string.format('0x%X', expect) .. ')')
+        print("[\27[31merr\27[0m] " .. text .. " == " .. string.format("0x%X", tested) .. " (expected " .. string.format("0x%X", expect) .. ")")
         err_count = err_count + 1
     else
-        print("[\27[32mok\27[0m] " .. text .. " == " .. string.format('0x%X', expect))
+        print("[\27[32mok\27[0m] " .. text .. " == " .. string.format("0x%X", expect))
     end
 end
 
@@ -36,9 +36,9 @@ end
 --
 
 function computer_tests()
-    print('#')
-    print('# computer')
-    print('#')
+    print("#")
+    print("# computer")
+    print("#")
 
     local c = computer()
     
@@ -52,31 +52,36 @@ function computer_tests()
     equals(c:get(0x3), 0x12, "set32 (byte 3)")
 
     c.offset = 0x1000
-    equals(c.offset, 0x1000, 'offset')
+    equals(c.offset, 0x1000, "offset")
 
     c:set(0x12, 0xBB)
-    equals(c.physical_memory[0x1012], 0xBB, 'offset from physical memory')
-    equals(c:get(0x12), 0xBB, 'offset from offset')
+    equals(c.physical_memory[0x1012], 0xBB, "offset from physical memory")
+    equals(c:get(0x12), 0xBB, "offset from offset")
     c.offset = 0x0
-    equals(c:get(0x12), 0xAF, 'offset disabled')
+    equals(c:get(0x12), 0xAF, "offset disabled")
 end
 
 
 function cpu_tests()
-    print('#')
-    print('# cpu')
-    print('#')
+    print("#")
+    print("# cpu")
+    print("#")
 
-    local cpu = computer().cpu[1]
-    cpu.A = 0x24
-    cpu.B = 0xBF
-    equals(cpu.B, 0xBF, 'B')
-    equals(cpu.A, 0x24, 'A')
+    function sanity()
+        print("# sanity")
+        local cpu = computer().cpu[1]
+        cpu.A = 0x24
+        cpu.B = 0xBF
+        equals(cpu.B, 0xBF, "B")
+        equals(cpu.A, 0x24, "A")
 
-    equals(cpu.flags.Z, false, "Z = false")
-    cpu.flags.Z = true
-    equals(cpu.flags.Z, true, "Z = true")
-    equals(cpu.FL, 0x4, "FL = 0b100 (Z)")
+        equals(cpu.flags.Z, false, "Z = false")
+        cpu.flags.Z = true
+        equals(cpu.flags.Z, true, "Z = true")
+        equals(cpu.FL, 0x4, "FL = 0b100 (Z)")
+    end
+
+    sanity()
 end
 
 --
