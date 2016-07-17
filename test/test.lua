@@ -296,9 +296,9 @@ function cpu_tests()
         equals(cpu.flags.Z, true, "Z")
         equals(cpu.FL, 0x4, "FL")
 
-        compile(comp, "mov A, B")
-        equals(comp:get(0x0), 0x01, "mov A, B [0]")
-        equals(comp:get(0x1), 0x10, "mov A, B [1]")
+        compile(comp, "mov B, C")
+        equals(comp:get(0x0), 0x01, "mov B, C [0]")
+        equals(comp:get(0x1), 0x12, "mov B, C [1]")
     end
 
     sanity()
