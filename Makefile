@@ -112,6 +112,11 @@ test: TARGET_LDFLAGS = -g
 test: bindings/lua/luisavm.so
 	@LUA_CPATH="$LUA_CPATH;bindings/lua/?.so" lua test/test.lua
 
+debug-test: TARGET_CFLAGS = -g -ggdb3 -O0 -DDEBUG -fno-inline-functions
+debug-test: TARGET_LDFLAGS = -g
+debug-test: bindings/lua/luisavm.so
+	@LUA_CPATH="$LUA_CPATH;bindings/lua/?.so" gdb --args lua test/test.lua
+
 cloc:
 	cloc Makefile src/*.h src/*.c
 

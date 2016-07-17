@@ -29,10 +29,21 @@ static void inspect(lua_State* L, int i)
             printf("%g", lua_tonumber(L, i));
             break;
         case LUA_TTABLE: {
+                // print metatable name
+                if(lua_getmetatable(L, i) == 1) {
+                    lua_getfield(L, -1, "__name");
+                    if(lua_tostring(L, -1)) {
+                        printf("<%s>", lua_tostring(L, -1));
+                    }
+                    lua_pop(L, 2);
+                }
+
+                // print table
                 printf("{ ");
                 lua_pushnil(L);  // first key
                 while(lua_next(L, i) != 0) {
                     printf("["); inspect(L, lua_absindex(L, -2)); printf("] = "); inspect(L, lua_absindex(L, -1)); printf(", ");
+                    fflush(stdout);
                     lua_pop(L, 1);
                 }
                 printf("}");
@@ -228,6 +239,7 @@ static int computer_addcpu(lua_State* L)
 
     // add CPU to computer
     lua_seti(L, -2, luaL_len(L, 1)+1);
+    dump_stack(L);
     lua_pop(L, 1);
 
     return 0;
