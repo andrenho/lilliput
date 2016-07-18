@@ -329,7 +329,7 @@ function cpu_tests()
 
         comp:reset(); cpu.B = 0x42 ; run(comp, "mov A, B")
         equals(cpu.A, 0x42)
-        equals(cpu.PC, 3, "checking PC position")
+        equals(cpu.PC, 2, "checking PC position")
 
         comp:reset() ; run(comp, "mov A, 0x34") 
         equals(cpu.A, 0x34)

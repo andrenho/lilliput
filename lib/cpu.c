@@ -47,46 +47,40 @@ lvm_cpureset(LVM_CPU* cpu)
 typedef enum Instruction { MOV, INVALID } Instruction;
 
 typedef struct Parameter {
-    enum { REGISTER } type;
+    enum { REG, INDREG, V8, V16, V32 } type;
     uint32_t value;
 } Parameter;
 
 
 #define GET(pos) (lvm_get(cpu->computer, pos))
+#define GET16(pos) (lvm_get16(cpu->computer, pos))
+#define GET32(pos) (lvm_get32(cpu->computer, pos))
 #define rPC (cpu->reg[PC])
 
 
 inline static void
 _twin_registers(Parameter pars[2], uint8_t pos)
 {
-    pars[0] = (Parameter) { REGISTER, (pos >> 4) };
-    pars[1] = (Parameter) { REGISTER, (pos & 0xF) };
+    pars[0] = (Parameter) { REG, (pos >> 4) };
+    pars[1] = (Parameter) { REG, (pos & 0xF) };
 }
 
 
-inline static Instruction
-_parse_opcode(LVM_CPU* cpu, Parameter pars[2])
-{
-    uint8_t opcode = GET(rPC);
-    switch(opcode) {
-        case 0x01:
-            _twin_registers(pars, GET(rPC+1));
-            return MOV;
-        default:
-            return INVALID;
-    }
-}
+inline static Parameter _reg(LVM_CPU* cpu, uint32_t offset) { return (Parameter) { REG, GET(rPC+offset) }; }
+inline static Parameter _v8(LVM_CPU* cpu, uint32_t offset) { return (Parameter) { V8, GET(rPC+offset) }; }
+inline static Parameter _v16(LVM_CPU* cpu, uint32_t offset) { return (Parameter) { V16, GET16(rPC+offset) }; }
+inline static Parameter _v32(LVM_CPU* cpu, uint32_t offset) { return (Parameter) { V32, GET32(rPC+offset) }; }
 
 
 inline static void
 _apply(LVM_CPU* cpu, Parameter par, uint32_t value)
 {
     switch(par.type) {
-        case REGISTER:
+        case REG:
             assert(par.value < 16);
             cpu->reg[par.value] = value;
             break;
-        default:
+        case V8: case V16: case V32: default:
             abort();
     }
 }
@@ -97,12 +91,55 @@ inline static uint32_t
 _take(LVM_CPU* cpu, Parameter par)
 {
     switch(par.type) {
-        case REGISTER:
+        case REG:
             return cpu->reg[par.value];
+        case V8: case V16: case V32:
+            return par.value;
     }
     abort();
 }
 #define TAKE(par) (_take(cpu, par))
+
+
+inline static void
+_advance_pc(LVM_CPU* cpu, Parameter pars[2])
+{
+    if(((pars[0].type == REG) || (pars[0].type == INDREG)) && ((pars[1].type == REG) || (pars[1].type == INDREG))) {
+        cpu->reg[PC] += 2;
+    } else {
+        for(int i=0; i<2; ++i) {
+            switch(pars[i].type) {
+                case REG: case V8:
+                    cpu->reg[PC] += 1;
+                    break;
+                case V16:
+                    cpu->reg[PC] += 2;
+                    break;
+                case V32:
+                    cpu->reg[PC] += 4;
+                    break;
+                default:
+                    abort();
+            }
+        }
+    }
+}
+#define ADVANCE_PC(pars) (_advance_pc(cpu, pars))
+
+
+inline static Instruction
+_parse_opcode(LVM_CPU* cpu, Parameter pars[2])
+{
+    uint8_t opcode = GET(rPC);
+    switch(opcode) {
+        case 0x01: _twin_registers(pars, GET(rPC+1)); return MOV;
+        case 0x02: pars[0] = _reg(cpu, rPC+1); pars[1] = _v8(cpu, rPC+2); return MOV;
+        case 0x03: pars[0] = _reg(cpu, rPC+1); pars[1] = _v16(cpu, rPC+2); return MOV;
+        case 0x04: pars[0] = _reg(cpu, rPC+1); pars[1] = _v32(cpu, rPC+2); return MOV;
+        default:
+            return INVALID;
+    }
+}
 
 
 void 
@@ -111,7 +148,7 @@ lvm_cpustep(LVM_CPU* cpu)
     Parameter pars[2];
     switch(_parse_opcode(cpu, pars)) {
         case MOV:
-            APPLY(pars[0], TAKE(pars[1]));
+            APPLY(pars[0], TAKE(pars[1])); ADVANCE_PC(pars);
             break;
         case INVALID:
         default:
@@ -124,7 +161,7 @@ lvm_cpustep(LVM_CPU* cpu)
 
 #pragma GCC diagnostic pop
 
-// {{{ REGISTERS & FLAGS
+// {{{ REGS & FLAGS
 
 uint32_t 
 lvm_cpuregister(LVM_CPU* cpu, LVM_CPURegister r)
