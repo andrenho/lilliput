@@ -45,145 +45,145 @@ local opcodes = {  --{{{ ...  }
     [0x02] = { instruction = 'mov', parameters = { 'reg', 'v8' } },
     [0x03] = { instruction = 'mov', parameters = { 'reg', 'v16' } },
     [0x04] = { instruction = 'mov', parameters = { 'reg', 'v32' } },
+
     [0x05] = { instruction = 'movb', parameters = { 'reg', 'regind' } },
     [0x06] = { instruction = 'movb', parameters = { 'reg', 'indv32' } },
-    [0x07] = { instruction = 'movw', parameters = { 'reg', 'regind' } },
-    [0x08] = { instruction = 'movw', parameters = { 'reg', 'indv32' } },
-    [0x09] = { instruction = 'movd', parameters = { 'reg', 'regind' } },
-    [0x0A] = { instruction = 'movd', parameters = { 'reg', 'indv32' } },
+    [0x07] = { instruction = 'movb', parameters = { 'regind', 'reg' } },
+    [0x08] = { instruction = 'movb', parameters = { 'regind', 'v8' } },
+    [0x09] = { instruction = 'movb', parameters = { 'regind', 'regind' } },
+    [0x0A] = { instruction = 'movb', parameters = { 'regind', 'indv32' } },
+    [0x0B] = { instruction = 'movb', parameters = { 'indv32', 'reg' } },
+    [0x0C] = { instruction = 'movb', parameters = { 'indv32', 'v8' } },
+    [0x0D] = { instruction = 'movb', parameters = { 'indv32', 'regind' } },
+    [0x0E] = { instruction = 'movb', parameters = { 'indv32', 'indv32' } },
 
-    [0x0B] = { instruction = 'movb', parameters = { 'regind', 'reg' } },
-    [0x0C] = { instruction = 'movb', parameters = { 'regind', 'v8' } },
-    [0x0D] = { instruction = 'movb', parameters = { 'regind', 'regind' } },
-    [0x0E] = { instruction = 'movb', parameters = { 'regind', 'indv32' } },
-    [0x0F] = { instruction = 'movw', parameters = { 'regind', 'reg' } },
-    [0x1A] = { instruction = 'movw', parameters = { 'regind', 'v16' } },
-    [0x1B] = { instruction = 'movw', parameters = { 'regind', 'regind' } },
-    [0x1C] = { instruction = 'movw', parameters = { 'regind', 'indv32' } },
-    [0x1D] = { instruction = 'movd', parameters = { 'regind', 'reg' } },
-    [0x1E] = { instruction = 'movd', parameters = { 'regind', 'v32' } },
-    [0x1F] = { instruction = 'movd', parameters = { 'regind', 'regind' } },
-    [0x20] = { instruction = 'movd', parameters = { 'regind', 'indv32' } },
+    [0x0F] = { instruction = 'movw', parameters = { 'reg', 'regind' } },
+    [0x10] = { instruction = 'movw', parameters = { 'reg', 'indv32' } },
+    [0x11] = { instruction = 'movw', parameters = { 'regind', 'reg' } },
+    [0x12] = { instruction = 'movw', parameters = { 'regind', 'v16' } },
+    [0x13] = { instruction = 'movw', parameters = { 'regind', 'regind' } },
+    [0x14] = { instruction = 'movw', parameters = { 'regind', 'indv32' } },
+    [0x15] = { instruction = 'movw', parameters = { 'indv32', 'reg' } },
+    [0x16] = { instruction = 'movw', parameters = { 'indv32', 'v16' } },
+    [0x17] = { instruction = 'movw', parameters = { 'indv32', 'regind' } },
+    [0x18] = { instruction = 'movw', parameters = { 'indv32', 'indv32' } },
 
-    [0x21] = { instruction = 'movb', parameters = { 'indv32', 'reg' } },
-    [0x22] = { instruction = 'movb', parameters = { 'indv32', 'v8' } },
-    [0x23] = { instruction = 'movb', parameters = { 'indv32', 'regind' } },
-    [0x24] = { instruction = 'movb', parameters = { 'indv32', 'indv32' } },
-    [0x25] = { instruction = 'movw', parameters = { 'indv32', 'reg' } },
-    [0x26] = { instruction = 'movw', parameters = { 'indv32', 'v16' } },
-    [0x27] = { instruction = 'movw', parameters = { 'indv32', 'regind' } },
-    [0x28] = { instruction = 'movw', parameters = { 'indv32', 'indv32' } },
-    [0x29] = { instruction = 'movd', parameters = { 'indv32', 'reg' } },
-    [0x2A] = { instruction = 'movd', parameters = { 'indv32', 'v32' } },
-    [0x2B] = { instruction = 'movd', parameters = { 'indv32', 'regind' } },
-    [0x2C] = { instruction = 'movd', parameters = { 'indv32', 'indv32' } },
+    [0x19] = { instruction = 'movd', parameters = { 'reg', 'regind' } },
+    [0x1A] = { instruction = 'movd', parameters = { 'reg', 'indv32' } },
+    [0x1B] = { instruction = 'movd', parameters = { 'regind', 'reg' } },
+    [0x1C] = { instruction = 'movd', parameters = { 'regind', 'v32' } },
+    [0x1D] = { instruction = 'movd', parameters = { 'regind', 'regind' } },
+    [0x1E] = { instruction = 'movd', parameters = { 'regind', 'indv32' } },
+    [0x1F] = { instruction = 'movd', parameters = { 'indv32', 'reg' } },
+    [0x20] = { instruction = 'movd', parameters = { 'indv32', 'v32' } },
+    [0x21] = { instruction = 'movd', parameters = { 'indv32', 'regind' } },
+    [0x22] = { instruction = 'movd', parameters = { 'indv32', 'indv32' } },
 
-    [0x8A] = { instruction = 'swap', parameters = { 'reg', 'reg' } },
+    [0x23] = { instruction = 'swap', parameters = { 'reg', 'reg' } },
 
     -- logic
-    [0x2D] = { instruction = 'or', parameters = { 'reg', 'reg' } },
-    [0x2E] = { instruction = 'or', parameters = { 'reg', 'v8' } },
-    [0x2F] = { instruction = 'or', parameters = { 'reg', 'v16' } },
-    [0x30] = { instruction = 'or', parameters = { 'reg', 'v32' } },
-    [0x31] = { instruction = 'xor', parameters = { 'reg', 'reg' } },
-    [0x32] = { instruction = 'xor', parameters = { 'reg', 'v8' } },
-    [0x33] = { instruction = 'xor', parameters = { 'reg', 'v16' } },
-    [0x34] = { instruction = 'xor', parameters = { 'reg', 'v32' } },
-    [0x35] = { instruction = 'and', parameters = { 'reg', 'reg' } },
-    [0x36] = { instruction = 'and', parameters = { 'reg', 'v8' } },
-    [0x37] = { instruction = 'and', parameters = { 'reg', 'v16' } },
-    [0x38] = { instruction = 'and', parameters = { 'reg', 'v32' } },
-    [0x39] = { instruction = 'shl', parameters = { 'reg', 'reg' } },
-    [0x3A] = { instruction = 'shl', parameters = { 'reg', 'v8' } },
-    [0x3D] = { instruction = 'shr', parameters = { 'reg', 'reg' } },
-    [0x3E] = { instruction = 'shr', parameters = { 'reg', 'v8' } },
-    [0x41] = { instruction = 'not', parameters = { 'reg', } },
+    [0x24] = { instruction = 'or', parameters = { 'reg', 'reg' } },
+    [0x25] = { instruction = 'or', parameters = { 'reg', 'v8' } },
+    [0x26] = { instruction = 'or', parameters = { 'reg', 'v16' } },
+    [0x27] = { instruction = 'or', parameters = { 'reg', 'v32' } },
+    [0x28] = { instruction = 'xor', parameters = { 'reg', 'reg' } },
+    [0x29] = { instruction = 'xor', parameters = { 'reg', 'v8' } },
+    [0x2A] = { instruction = 'xor', parameters = { 'reg', 'v16' } },
+    [0x2B] = { instruction = 'xor', parameters = { 'reg', 'v32' } },
+    [0x2C] = { instruction = 'and', parameters = { 'reg', 'reg' } },
+    [0x2D] = { instruction = 'and', parameters = { 'reg', 'v8' } },
+    [0x2E] = { instruction = 'and', parameters = { 'reg', 'v16' } },
+    [0x2F] = { instruction = 'and', parameters = { 'reg', 'v32' } },
+    [0x30] = { instruction = 'shl', parameters = { 'reg', 'reg' } },
+    [0x31] = { instruction = 'shl', parameters = { 'reg', 'v8' } },
+    [0x32] = { instruction = 'shr', parameters = { 'reg', 'reg' } },
+    [0x33] = { instruction = 'shr', parameters = { 'reg', 'v8' } },
+    [0x34] = { instruction = 'not', parameters = { 'reg', } },
 
     -- arithmetic
-    [0x42] = { instruction = 'add', parameters = { 'reg', 'reg' } },
-    [0x43] = { instruction = 'add', parameters = { 'reg', 'v8' } },
-    [0x44] = { instruction = 'add', parameters = { 'reg', 'v16' } },
-    [0x45] = { instruction = 'add', parameters = { 'reg', 'v32' } },
-    [0x46] = { instruction = 'sub', parameters = { 'reg', 'reg' } },
-    [0x47] = { instruction = 'sub', parameters = { 'reg', 'v8' } },
-    [0x48] = { instruction = 'sub', parameters = { 'reg', 'v16' } },
-    [0x49] = { instruction = 'sub', parameters = { 'reg', 'v32' } },
-    [0x4A] = { instruction = 'cmp', parameters = { 'reg', 'reg' } },
-    [0x4B] = { instruction = 'cmp', parameters = { 'reg', 'v8' } },
-    [0x4C] = { instruction = 'cmp', parameters = { 'reg', 'v16' } },
-    [0x4D] = { instruction = 'cmp', parameters = { 'reg', 'v32' } },
-    [0x8B] = { instruction = 'cmp', parameters = { 'reg', } },
-    [0x4E] = { instruction = 'mul', parameters = { 'reg', 'reg' } },
-    [0x4F] = { instruction = 'mul', parameters = { 'reg', 'v8' } },
-    [0x50] = { instruction = 'mul', parameters = { 'reg', 'v16' } },
-    [0x51] = { instruction = 'mul', parameters = { 'reg', 'v32' } },
-    [0x52] = { instruction = 'idiv', parameters = { 'reg', 'reg' } },
-    [0x53] = { instruction = 'idiv', parameters = { 'reg', 'v8' } },
-    [0x54] = { instruction = 'idiv', parameters = { 'reg', 'v16' } },
-    [0x55] = { instruction = 'idiv', parameters = { 'reg', 'v32' } },
-    [0x56] = { instruction = 'mod', parameters = { 'reg', 'reg' } },
-    [0x57] = { instruction = 'mod', parameters = { 'reg', 'v8' } },
-    [0x58] = { instruction = 'mod', parameters = { 'reg', 'v16' } },
-    [0x59] = { instruction = 'mod', parameters = { 'reg', 'v32' } },
-    [0x5A] = { instruction = 'inc', parameters = { 'reg', } },
-    [0x5B] = { instruction = 'dec', parameters = { 'reg', } },
+    [0x35] = { instruction = 'add', parameters = { 'reg', 'reg' } },
+    [0x36] = { instruction = 'add', parameters = { 'reg', 'v8' } },
+    [0x37] = { instruction = 'add', parameters = { 'reg', 'v16' } },
+    [0x38] = { instruction = 'add', parameters = { 'reg', 'v32' } },
+    [0x39] = { instruction = 'sub', parameters = { 'reg', 'reg' } },
+    [0x3A] = { instruction = 'sub', parameters = { 'reg', 'v8' } },
+    [0x3B] = { instruction = 'sub', parameters = { 'reg', 'v16' } },
+    [0x3C] = { instruction = 'sub', parameters = { 'reg', 'v32' } },
+    [0x3D] = { instruction = 'cmp', parameters = { 'reg', 'reg' } },
+    [0x3E] = { instruction = 'cmp', parameters = { 'reg', 'v8' } },
+    [0x3F] = { instruction = 'cmp', parameters = { 'reg', 'v16' } },
+    [0x40] = { instruction = 'cmp', parameters = { 'reg', 'v32' } },
+    [0x41] = { instruction = 'cmp', parameters = { 'reg', } },
+    [0x42] = { instruction = 'mul', parameters = { 'reg', 'reg' } },
+    [0x43] = { instruction = 'mul', parameters = { 'reg', 'v8' } },
+    [0x44] = { instruction = 'mul', parameters = { 'reg', 'v16' } },
+    [0x45] = { instruction = 'mul', parameters = { 'reg', 'v32' } },
+    [0x46] = { instruction = 'idiv', parameters = { 'reg', 'reg' } },
+    [0x47] = { instruction = 'idiv', parameters = { 'reg', 'v8' } },
+    [0x48] = { instruction = 'idiv', parameters = { 'reg', 'v16' } },
+    [0x49] = { instruction = 'idiv', parameters = { 'reg', 'v32' } },
+    [0x4A] = { instruction = 'mod', parameters = { 'reg', 'reg' } },
+    [0x4B] = { instruction = 'mod', parameters = { 'reg', 'v8' } },
+    [0x4C] = { instruction = 'mod', parameters = { 'reg', 'v16' } },
+    [0x4D] = { instruction = 'mod', parameters = { 'reg', 'v32' } },
+    [0x4E] = { instruction = 'inc', parameters = { 'reg', } },
+    [0x4F] = { instruction = 'dec', parameters = { 'reg', } },
 
     -- jumps
-    [0x5C] = { instruction = 'bz', parameters = { 'reg', } },
-    [0x5D] = { instruction = 'bz', parameters = { 'v32', } },
-    [0x5C] = { instruction = 'beq', parameters = { 'reg', } },
-    [0x5D] = { instruction = 'beq', parameters = { 'v32', } },
-    [0x5E] = { instruction = 'bnz', parameters = { 'reg', } },
-    [0x5F] = { instruction = 'bnz', parameters = { 'v32', } },
-    [0x60] = { instruction = 'bneg', parameters = { 'reg', } },
-    [0x61] = { instruction = 'bneg', parameters = { 'v32', } },
-    [0x62] = { instruction = 'bpos', parameters = { 'reg', } },
-    [0x63] = { instruction = 'bpos', parameters = { 'v32', } },
-    [0x64] = { instruction = 'bgt', parameters = { 'reg', } },
-    [0x65] = { instruction = 'bgt', parameters = { 'v32', } },
-    [0x66] = { instruction = 'bgte', parameters = { 'reg', } },
-    [0x67] = { instruction = 'bgte', parameters = { 'v32', } },
-    [0x68] = { instruction = 'blt', parameters = { 'reg', } },
-    [0x69] = { instruction = 'blt', parameters = { 'v32', } },
-    [0x6A] = { instruction = 'blte', parameters = { 'reg', } },
-    [0x6B] = { instruction = 'blte', parameters = { 'v32', } },
-    [0x6C] = { instruction = 'bv', parameters = { 'reg', } },
-    [0x6D] = { instruction = 'bv', parameters = { 'v32', } },
-    [0x6E] = { instruction = 'bnv', parameters = { 'reg', } },
-    [0x6F] = { instruction = 'bnv', parameters = { 'v32', } },
-    [0x70] = { instruction = 'jmp', parameters = { 'reg', } },
-    [0x71] = { instruction = 'jmp', parameters = { 'v32', } },
-    [0x72] = { instruction = 'jsr', parameters = { 'reg', } },
-    [0x73] = { instruction = 'jsr', parameters = { 'v32', } },
-    [0x74] = { instruction = 'ret', parameters = {} },
-    [0x75] = { instruction = 'sys', parameters = { 'reg', } },
-    [0x76] = { instruction = 'sys', parameters = { 'v8', } },
-    [0x77] = { instruction = 'iret', parameters = {} },
-    [0x86] = { instruction = 'sret', parameters = {} },
+    [0x50] = { instruction = 'bz', parameters = { 'reg', } },
+    [0x51] = { instruction = 'bz', parameters = { 'v32', } },
+    [0x52] = { instruction = 'beq', parameters = { 'reg', } },
+    [0x53] = { instruction = 'beq', parameters = { 'v32', } },
+    [0x54] = { instruction = 'bnz', parameters = { 'reg', } },
+    [0x55] = { instruction = 'bnz', parameters = { 'v32', } },
+    [0x56] = { instruction = 'bneg', parameters = { 'reg', } },
+    [0x57] = { instruction = 'bneg', parameters = { 'v32', } },
+    [0x58] = { instruction = 'bpos', parameters = { 'reg', } },
+    [0x59] = { instruction = 'bpos', parameters = { 'v32', } },
+    [0x5A] = { instruction = 'bgt', parameters = { 'reg', } },
+    [0x5B] = { instruction = 'bgt', parameters = { 'v32', } },
+    [0x5C] = { instruction = 'bgte', parameters = { 'reg', } },
+    [0x5D] = { instruction = 'bgte', parameters = { 'v32', } },
+    [0x5E] = { instruction = 'blt', parameters = { 'reg', } },
+    [0x5F] = { instruction = 'blt', parameters = { 'v32', } },
+    [0x60] = { instruction = 'blte', parameters = { 'reg', } },
+    [0x61] = { instruction = 'blte', parameters = { 'v32', } },
+    [0x62] = { instruction = 'bv', parameters = { 'reg', } },
+    [0x63] = { instruction = 'bv', parameters = { 'v32', } },
+    [0x64] = { instruction = 'bnv', parameters = { 'reg', } },
+    [0x65] = { instruction = 'bnv', parameters = { 'v32', } },
+
+    [0x66] = { instruction = 'jmp', parameters = { 'reg', } },
+    [0x67] = { instruction = 'jmp', parameters = { 'v32', } },
+    [0x68] = { instruction = 'jsr', parameters = { 'reg', } },
+    [0x69] = { instruction = 'jsr', parameters = { 'v32', } },
+    [0x6A] = { instruction = 'ret', parameters = {} },
+    [0x6B] = { instruction = 'iret', parameters = {} },
 
     -- stack
-    [0x78] = { instruction = 'pushb', parameters = { 'reg', } },
-    [0x79] = { instruction = 'pushb', parameters = { 'v8', } },
-    [0x7A] = { instruction = 'pushw', parameters = { 'reg', } },
-    [0x7B] = { instruction = 'pushw', parameters = { 'v16', } },
-    [0x7C] = { instruction = 'pushd', parameters = { 'reg', } },
-    [0x7D] = { instruction = 'pushd', parameters = { 'v32', } },
-    [0x7E] = { instruction = 'push.a', parameters = {} },
-    [0x7F] = { instruction = 'popb', parameters = { 'reg', } },
-    [0x80] = { instruction = 'popw', parameters = { 'reg', } },
-    [0x81] = { instruction = 'popd', parameters = { 'reg', } },
-    [0x82] = { instruction = 'pop.a', parameters = {} },
-    [0x83] = { instruction = 'popx', parameters = { 'reg', } },
-    [0x84] = { instruction = 'popx', parameters = { 'v8', } },
-    [0x85] = { instruction = 'popx', parameters = { 'v16', } },
+    [0x6C] = { instruction = 'pushb', parameters = { 'reg', } },
+    [0x6D] = { instruction = 'pushb', parameters = { 'v8', } },
+    [0x6E] = { instruction = 'pushw', parameters = { 'reg', } },
+    [0x6F] = { instruction = 'pushw', parameters = { 'v16', } },
+    [0x70] = { instruction = 'pushd', parameters = { 'reg', } },
+    [0x71] = { instruction = 'pushd', parameters = { 'v32', } },
+    [0x72] = { instruction = 'push.a', parameters = {} },
+    [0x73] = { instruction = 'popb', parameters = { 'reg', } },
+    [0x74] = { instruction = 'popw', parameters = { 'reg', } },
+    [0x75] = { instruction = 'popd', parameters = { 'reg', } },
+    [0x76] = { instruction = 'pop.a', parameters = {} },
+    [0x77] = { instruction = 'popx', parameters = { 'reg', } },
+    [0x78] = { instruction = 'popx', parameters = { 'v8', } },
+    [0x79] = { instruction = 'popx', parameters = { 'v16', } },
 
     -- other
-    [0x87] = { instruction = 'nop', parameters = {} },
-    [0x88] = { instruction = 'halt', parameters = {} },
-    [0x89] = { instruction = 'dbg', parameters = {} },
+    [0x7A] = { instruction = 'nop', parameters = {} },
+    [0x7B] = { instruction = 'halt', parameters = {} },
+    [0x7C] = { instruction = 'dbg', parameters = {} },
 }  --}}}
 
 function compile(comp, code)
+    local ret = {}
     local registers = { A=0, B=1, C=2, D=3, E=4, F=5, G=6, H=7, I=8, J=9, K=10, L=11, FP=12, SP=13, PC=14, FL=15 }
 
     -- parse parameter
@@ -199,7 +199,7 @@ function compile(comp, code)
         elseif fst:match('%a') then
             return { type='reg', value={ assert(registers[par]) } }
         else
-            local v = assert(math.tointeger(par:sub(2, #par-1)))
+            local v = assert(math.tointeger(par))
             if v <= 0xFF then
                 return { type='v8', value={ v } }
             elseif v <= 0xFFFF then
@@ -225,7 +225,7 @@ function compile(comp, code)
                 if p ~= parameters[i].type then eq = false end
             end
             if eq then
-                comp:set(0, opcode)
+                ret[#ret+1] = opcode
                 goto found
             end
         end
@@ -235,23 +235,28 @@ function compile(comp, code)
     
     -- add parameters
     if parameters[1].type:sub(1, 3) == 'reg' and parameters[2].type:sub(1, 3) == 'reg' then
-        comp:set(1, (parameters[1].value[1] << 4) | parameters[2].value[1])
+        ret[#ret+1] = (parameters[1].value[1] << 4) | parameters[2].value[1]
     else
         local i = 1
         for _,p in ipairs(parameters) do
             for _,v in ipairs(p.value) do
                 assert(v <= 0xFF)
-                comp:set(i, v)
+                ret[#ret+1] = v
                 i = i+1
             end
         end
     end
+
+    return ret
 end
 
 
 function run(comp, code)
     last_run = code
-    compile(comp, code)
+    local bytes = compile(comp, code)
+    for i,b in ipairs(bytes) do
+        comp:set(i-1, b)
+    end
     comp:step()
 end
 
@@ -310,9 +315,9 @@ function cpu_tests()
         equals(cpu.flags.Z, true, "Z")
         equals(cpu.FL, 0x4, "FL")
 
-        compile(comp, "mov B, C")
-        equals(comp:get(0x0), 0x01, "mov B, C [0]")
-        equals(comp:get(0x1), 0x12, "mov B, C [1]")
+        local bytes = compile(comp, "mov B, C")
+        equals(bytes[1], 0x01, "mov B, C [0]")
+        equals(bytes[2], 0x12, "mov B, C [1]")
     end
 
 
@@ -352,6 +357,9 @@ function cpu_tests()
     function movb()
         print("# 8-bit movement (movb)")
 
+        local comp = computer()
+        local cpu = comp.cpu[1]
+
         comp:reset() ; cpu.B = 0x1000; comp:set(cpu.B, 0xAB) ; run(comp, "movb A, [B]") 
         equals(cpu.A, 0xAB)
   
@@ -376,12 +384,12 @@ function cpu_tests()
         comp:reset() ; run(comp, "movb [0x64], 0xF0")
         equals(comp:get(0x64), 0xF0)
   
-        cpu.A = 0xF000 ; comp:set(0xF000, 0x42)
-        comp:reset() ; run(comp, "movb [0xCC64], [A]")
+        comp:reset() ; cpu.A = 0xF000 ; comp:set(0xF000, 0x42)
+        run(comp, "movb [0xCC64], [A]")
         equals(comp:get(0xCC64), 0x42)
   
-        comp:set32(0xABF0, 0x1234); comp:set(0x1234, 0x3F);
-        comp:reset() ; run(comp, "movb [0x64], [0xABF0]")
+        comp:reset() ; comp:set32(0xABF0, 0x1234); comp:set(0x1234, 0x3F);
+        run(comp, "movb [0x64], [0xABF0]")
         equals(comp:get(0x64), 0x3F)
     end
 
@@ -389,6 +397,9 @@ function cpu_tests()
     function movw()
         print("# 16-bit movement (movw)")
   
+        local comp = computer()
+        local cpu = comp.cpu[1]
+
         comp:reset() ; cpu.B = 0x1000 ; comp:set16(cpu.B, 0xABCD) ; run(comp, "movw A, [B]") 
         equals(cpu.A, 0xABCD)
   
@@ -413,12 +424,12 @@ function cpu_tests()
         comp:reset() ; run(comp, "movw [0x64], 0xF0FA")
         equals(comp:get16(0x64), 0xF0FA)
   
-        cpu.A = 0xF000; comp:set16(0xF000, 0x4245); 
-        comp:reset() ; run(comp, "movw [0xCC64], [A]")
+        comp:reset() ; cpu.A = 0xF000; comp:set16(0xF000, 0x4245); 
+        run(comp, "movw [0xCC64], [A]")
         equals(comp:get16(0xCC64), 0x4245)
   
-        comp:set32(0xABF0, 0x1234); comp:set16(0x1234, 0x3F54);
-        comp:reset() ; run(comp, "movw [0x64], [0xABF0]")
+        comp:reset() ; comp:set32(0xABF0, 0x1234); comp:set16(0x1234, 0x3F54);
+        run(comp, "movw [0x64], [0xABF0]")
         equals(comp:get16(0x64), 0x3F54)
     end
 
@@ -426,6 +437,9 @@ function cpu_tests()
     function movd()
         print("# 32-bit movement (movd)")
   
+        local comp = computer()
+        local cpu = comp.cpu[1]
+
         comp:reset() ; cpu.B = 0x1000; comp:set32(cpu.B, 0xABCDEF01) ; run(comp, "movd A, [B]") 
         equals(cpu.A, 0xABCDEF01)
   
@@ -450,18 +464,32 @@ function cpu_tests()
         comp:reset() ; run(comp, "movd [0x64], 0xF0FA1234")
         equals(comp:get32(0x64), 0xF0FA1234)
   
-        cpu.A = 0xF000; comp:set32(0xF000, 0x4245AABB); 
-        comp:reset() ; run(comp, "movd [0xCC64], [A]")
+        comp:reset() ; cpu.A = 0xF000; comp:set32(0xF000, 0x4245AABB); 
+        run(comp, "movd [0xCC64], [A]")
         equals(comp:get32(0xCC64), 0x4245AABB)
   
-        comp:set32(0xABF0, 0x1234); comp:set32(0x1234, 0x3F54FABC);
-        comp:reset() ; run(comp, "movd [0x64], [0xABF0]")
+        comp:reset() ; comp:set32(0xABF0, 0x1234); comp:set32(0x1234, 0x3F54FABC);
+        run(comp, "movd [0x64], [0xABF0]")
         equals(comp:get32(0x64), 0x3F54FABC)
+    end
+
+
+    function swap()
+        print("# register swap")
+
+        local comp = computer()
+        local cpu = comp.cpu[1]
+
+        comp:reset() ; cpu.A = 0xA ; cpu.B = 0xB ; run(comp, "swap A, B")
+        equals(cpu.A == 0xB and cpu.B == 0xA, true)
     end
 
 
     function logic()
         print("# Logic operations")
+
+        local comp = computer()
+        local cpu = comp.cpu[1]
 
         comp:reset() ; cpu.A = b(1010); cpu.B = b(1100) ; run(comp, "or A, B")
         equals(cpu.A, b(1110))
@@ -525,6 +553,9 @@ function cpu_tests()
     function integer_math()
         print("# Integer arithmetic")
   
+        local comp = computer()
+        local cpu = comp.cpu[1]
+
         comp:reset() ; cpu.A = 0x12; cpu.B = 0x20 ; run(comp, "add A, B")
         equals(cpu.A, 0x32)
   
@@ -638,6 +669,9 @@ function cpu_tests()
     function branches()
         print("# Branch operations")
 
+        local comp = computer()
+        local cpu = comp.cpu[1]
+
         comp:reset() ; cpu.Z = true; cpu.A = 0x1000 ; run(comp, "bz A")
         equals(cpu.PC, 0x1000)
 
@@ -673,135 +707,118 @@ function cpu_tests()
     end
 
 
-    --[[
     function stack()
         print("# Stack operations")
+        
+        local comp = computer()
+        local cpu = comp.cpu[1]
 
-  mb.reset();
-  cpu.SP = 0xFFF; 
-  cpu.A = 0xABCDEF12;
+        cpu.SP = 0xFFF
+        cpu.A = 0xABCDEF12
 
-  comp:setArray(0x0, Debugger.encode('pushb A'));
-  comp:setArray(0x2, Debugger.encode('pushb 0x12'));
-  comp:setArray(0x4, Debugger.encode('pushw A'));
-  comp:setArray(0x6, Debugger.encode('pushd A'));
+        for i,b in ipairs(compile("pushb A")) do comp:set((i-1) + 0x0, b) end
+        for i,b in ipairs(compile("pushb 0x12")) do comp:set((i-1) + 0x2, b) end
+        for i,b in ipairs(compile("pushw A")) do comp:set((i-1) + 0x4, b) end
+        for i,b in ipairs(compile("pushd A")) do comp:set((i-1) + 0x6, b) end
 
-  comp:setArray(0x8, Debugger.encode('popd B'));
-  comp:setArray(0xA, Debugger.encode('popw B'));
-  comp:setArray(0xC, Debugger.encode('popb B'));
+        for i,b in ipairs(compile("popd B")) do comp:set((i-1) + 0x8, b) end
+        for i,b in ipairs(compile("popw B")) do comp:set((i-1) + 0xA, b) end
+        for i,b in ipairs(compile("popb B")) do comp:set((i-1) + 0xC, b) end
 
-  comp:setArray(0xE, Debugger.encode('popx 1'));
+        for i,b in ipairs(compile("popx 1")) do comp:set((i-1) + 0xE, b) end
 
-  mb.step();
+        comp:step()
         equals(comp:get(0xFFF), 0x12, "pushb A")
         equals(cpu.SP, 0xFFE, "SP = 0xFFE")
 
-  mb.step();
+        comp:step()
         equals(comp:get(0xFFE), 0x12, "pushb 0x12")
         equals(cpu.SP, 0xFFD, "SP = 0xFFD")
 
-  mb.step();
+        comp:step()
         equals(comp:get16(0xFFC), 0xEF12)
         equals(comp:get(0xFFD), 0xEF)
         equals(comp:get(0xFFC), 0x12)
         equals(cpu.SP, 0xFFB, "SP = 0xFFB")
 
-  mb.step();
-  t.equal(comp:get32(0xFF8), 0xABCDEF12);
+        comp:step()
+        equals(comp:get32(0xFF8), 0xABCDEF12);
         equals(cpu.SP, 0xFF7, "SP = 0xFF7")
 
-  mb.step();
+        comp:step()
         equals(cpu.B, 0xABCDEF12, "popd B")
 
-  mb.step();
+        comp:step()
         equals(cpu.B, 0xEF12, "popw B")
 
-  mb.step();
+        comp:step()
         equals(cpu.B, 0x12, "popb B")
 
-  mb.step();
+        comp:step()
         equals(cpu.SP, 0xFFF, "popx 1")
 
-  // all registers
-  s = opc('push.a', () => {
-    cpu.SP = 0xFFF;
-    cpu.A = 0xA1B2C3E4;
-    cpu.B = 0xFFFFFFFF;
-  });
+        -- all registers
+        comp:reset()
+        cpu.SP = 0xFFF
+        cpu.A = 0xA1B2C3E4
+        cpu.B = 0xFFFFFFFF
+        run(comp, "push.a")
         equals(cpu.SP, 0xFCF)
         equals(comp:get32(0xFFC), 0xA1B2C3E4, "A is saved")
         equals(comp:get32(0xFF8), 0xFFFFFFFF, "B is saved")
   
-  s = opc('pop.a', () => {
-    cpu.SP = 0xFCF;
-    comp:set32(0xFFC, 0xA1B2C3E4);
-    comp:set32(0xFF8, 0xFFFFFFFF);
-  });
+        comp:reset()
+        cpu.SP = 0xFCF
+        comp:set32(0xFFC, 0xA1B2C3E4)
+        comp:set32(0xFF8, 0xFFFFFFFF)
+        run(comp, "pop.a")
         equals(cpu.SP, 0xFFF)
         equals(cpu.A, 0xA1B2C3E4, "A is restored")
         equals(cpu.B, 0xFFFFFFFF, "B is restored")
     end
 
-  // others
+
+    function others()
         print("# Others")
 
-  opc('nop');
+        local comp = computer()
+        local cpu = comp.cpu[1]
+
+        comp:reset() ; run(comp, "nop")
   
-        comp:reset() ; run(comp, "dbg")
-        equals(cpu.activateDebugger, true)
+        -- TODO
+        --comp:reset() ; run(comp, "dbg")
+        --equals(cpu.activateDebugger, true)
 
-        comp:reset() ; run(comp, "halt")
-        equals(cpu.systemHalted, true)
+        --comp:reset() ; run(comp, "halt")
+        --equals(cpu.systemHalted, true)
+    end
 
-  s = opc('swap A, B', () => {
-    cpu.A = 0xA;
-    cpu.B = 0xB;
-  });
-        equals(cpu.A == 0xB and cpu.B == 0xA, true)
+    
+    function subroutines()
+        print("# Subroutines")
 
-  t.end();
+        local comp = computer()
+        local cpu = comp.cpu[1]
 
-});
-
-
-test('CPU: subroutines and system calls', t => {
-
-  let [mb, cpu] = makeCPU();
-
-  // jsr
-  mb.reset();
-  comp:setArray(0x200, Debugger.encode('jsr 0x1234'));
-  comp:setArray(0x1234, Debugger.encode('ret'));
-  cpu.PC = 0x200;
-  cpu.SP = 0xFFF;
-  mb.step();
+        for i,b in ipairs(compile("jsr 0x1234")) do comp:set((i-1) + 0x200, b) end
+        for i,b in ipairs(compile("ret")) do comp:set((i-1) + 0x1234, b) end
+        cpu.PC = 0x200
+        cpu.SP = 0xFFF
+        comp:step()
         equals(cpu.PC, 0x1234, "jsr 0x1234")
         equals(comp:get(0xFFC), 0x5, "[FFC] = 0x5")
         equals(comp:get(0xFFD), 0x2, "[FFD] = 0x2")
         equals(cpu.SP, 0xFFB, "SP = 0xFFB")
         equals(comp:get32(0xFFC), 0x200 + 5, "address in stack") 
 
-  mb.step();
+        comp:step()
         equals(cpu.PC, 0x205, "ret")
         equals(cpu.SP, 0xFFF, "SP = 0xFFF")
 
-  // sys
-  mb.reset();
-  cpu.SP = 0xFFF;
-  comp:setArray(0, Debugger.encode('sys 2'));
-  comp:set32(cpu.CPU_SYSCALL_VECT + 8, 0x1000);
-        equals(cpu._syscallVector[2], 0x1000, "syscall vector")
-  comp:setArray(0x1000, Debugger.encode('sret'));
+    end
 
-  mb.step();
-        equals(cpu.PC, 0x1000, "sys 2")
-        equals(cpu.SP, 0xFFB, "SP = 0xFFD")
-  mb.step();
-        equals(cpu.PC, 0x2, "sret")
-        equals(cpu.SP, 0xFFF, "SP = 0xFFF")
-
-  t.end();
---]]
+    -- TODO - interrupt
 
     sanity()
     mov()
