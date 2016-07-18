@@ -191,7 +191,7 @@ function compile(comp, code)
         local fst = par:sub(1, 1)
         if fst == '[' then
             if par:sub(2, 2):match('%a') then
-                return { type='regind', value={ assert(registers[par]) } }
+                return { type='regind', value={ assert(registers[par:sub(2, #par-1)]) } }
             else
                 local v = math.tointeger(par:sub(2, #par-1))
                 return { type='indv32', value={ (v & 0xFF), ((v >> 8) & 0xFF), ((v >> 16) & 0xFF), ((v >> 24) & 0xFF) } }
@@ -343,14 +343,12 @@ function cpu_tests()
         print("# Test movement flags")
   
         comp:reset() ; run(comp, "mov A, 0")
-        equals(cpu.Z, true, "cpu.Z = 1")
-        equals(cpu.P, true, "cpu.P = 1")
-        equals(cpu.S, false, "cpu.S = 0")
+        equals(cpu.flags.Z, true, "cpu.flags.Z")
+        equals(cpu.flags.S, false, "cpu.flags.S")
 
         comp:reset() ; run(comp, "mov A, 0xF0000001")
-        equals(cpu.Z, false, "cpu.Z = 0")
-        equals(cpu.P, false, "cpu.P = 0")
-        equals(cpu.S, true, "cpu.S = 1")
+        equals(cpu.flags.Z, false, "cpu.flags.Z")
+        equals(cpu.flags.S, true, "cpu.flags.S")
     end
 
 
@@ -493,10 +491,9 @@ function cpu_tests()
 
         comp:reset() ; cpu.A = b(1010); cpu.B = b(1100) ; run(comp, "or A, B")
         equals(cpu.A, b(1110))
-        equals(cpu.S, false, "cpu.S == 0")
-        equals(cpu.P, true, "cpu.P == 1")
-        equals(cpu.Z, false, "cpu.Z == 0")
-        equals(cpu.Y, false, "cpu.Y == 0")
+        equals(cpu.flags.S, false, "cpu.flags.S == 0")
+        equals(cpu.flags.Z, false, "cpu.flags.Z == 0")
+        equals(cpu.flags.Y, false, "cpu.Y == 0")
         equals(cpu.V, false, "cpu.V == 0")
 
         comp:reset() ; cpu.A = b(11) ; run(comp, "or A, 0x4")
@@ -522,7 +519,7 @@ function cpu_tests()
 
         comp:reset() ; cpu.A = b(11); cpu.B = b(1100) ; run(comp, "and A, B")
         equals(cpu.A, 0)
-        equals(cpu.Z, true, "cpu.Z == 1")
+        equals(cpu.flags.Z, true, "cpu.flags.Z == 1")
 
         comp:reset() ; cpu.A = b(11) ; run(comp, "and A, 0x7")
         equals(cpu.A, b(11))
@@ -570,15 +567,15 @@ function cpu_tests()
 
         comp:reset() ; cpu.A = 0x10000012 ; run(comp, "add A, 0xF0000000")
         equals(cpu.A, 0x12)
-        equals(cpu.Y, true, "cpu.Y == 1")
+        equals(cpu.flags.Y, true, "cpu.Y == 1")
 
         comp:reset() ; cpu.A = 0x30; cpu.B = 0x20 ; run(comp, "sub A, B")
         equals(cpu.A, 0x10)
-        equals(cpu.S, false, "cpu.S == 0")
+        equals(cpu.flags.S, false, "cpu.flags.S == 0")
 
         comp:reset() ; cpu.A = 0x20; cpu.B = 0x30 ; run(comp, "sub A, B")
         equals(cpu.A, 0xFFFFFFF0, "sub A, B (negative)")
-        equals(cpu.S, true, "cpu.S == 1")
+        equals(cpu.flags.S, true, "cpu.flags.S == 1")
 
         comp:reset() ; cpu.A = 0x22 ; run(comp, "sub A, 0x20")
         equals(cpu.A, 0x2)
@@ -588,27 +585,27 @@ function cpu_tests()
 
         comp:reset() ; cpu.A = 0x12 ; run(comp, "sub A, 0x2000")
         equals(cpu.A, 0xFFFFE012)
-        equals(cpu.S, true, "cpu.S == 1")
-        equals(cpu.Y, true, "cpu.Y == 1")
+        equals(cpu.flags.S, true, "cpu.flags.S == 1")
+        equals(cpu.flags.Y, true, "cpu.Y == 1")
 
         comp:reset() ; cpu.A = 0x10000012 ; run(comp, "sub A, 0xF0000000")
         equals(cpu.A, 0x20000012)
-        equals(cpu.Y, true, "cpu.Y == 1")
+        equals(cpu.flags.Y, true, "cpu.Y == 1")
 
         comp:reset() ; run(comp, "cmp A, B")
-        equals(cpu.Z, true)
+        equals(cpu.flags.Z, true)
 
         comp:reset() ; run(comp, "cmp A, 0x12")
-        equals(cpu.LT and not cpu.GT, true)
+        equals(cpu.LT and not cpu.flags.GT, true)
 
         comp:reset() ; cpu.A = 0x6000 ; run(comp, "cmp A, 0x1234")
-        equals(not cpu.LT and cpu.GT, true)
+        equals(not cpu.LT and cpu.flags.GT, true)
 
         comp:reset() ; cpu.A = 0xF0000000 ; run(comp, "cmp A, 0x12345678")
-        equals(not cpu.LT and cpu.GT, true)  -- because of the signal!
+        equals(not cpu.LT and cpu.flags.GT, true)  -- because of the signal!
 
         comp:reset() ; cpu.A = 0x0 ; run(comp, "cmp A")
-        equals(cpu.Z, true)
+        equals(cpu.flags.Z, true)
 
         comp:reset() ; cpu.A = 0xF0; cpu.B = 0xF000 ; run(comp, "mul A, B")
         equals(cpu.A, 0xE10000)
@@ -638,7 +635,7 @@ function cpu_tests()
 
         comp:reset() ; cpu.A = 0xF000; cpu.B = 0xF0 ; run(comp, "mod A, B")
         equals(cpu.A, 0x0)
-        equals(cpu.Z, true, "cpu.Z == 1")
+        equals(cpu.flags.Z, true, "cpu.flags.Z == 1")
 
         comp:reset() ; cpu.A = 0x1234 ; run(comp, "mod A, 0x12")
         equals(cpu.A, 0x10)
@@ -654,15 +651,15 @@ function cpu_tests()
 
         comp:reset() ; cpu.A = 0xFFFFFFFF ; run(comp, "inc A")
         equals(cpu.A, 0x0, "inc A (overflow)")
-        equals(cpu.Y, true, "cpu.Y == 1")
-        equals(cpu.Z, true, "cpu.Z == 1")
+        equals(cpu.flags.Y, true, "cpu.Y == 1")
+        equals(cpu.flags.Z, true, "cpu.flags.Z == 1")
 
         comp:reset() ; cpu.A = 0x42 ; run(comp, "dec A")
         equals(cpu.A, 0x41)
 
         comp:reset() ; cpu.A = 0x0 ; run(comp, "dec A")
         equals(cpu.A, 0xFFFFFFFF, "dec A (underflow)")
-        equals(cpu.Z, false, "cpu.Z == 0")
+        equals(cpu.flags.Z, false, "cpu.flags.Z == 0")
     end
 
 
@@ -672,13 +669,13 @@ function cpu_tests()
         local comp = computer()
         local cpu = comp.cpu[1]
 
-        comp:reset() ; cpu.Z = true; cpu.A = 0x1000 ; run(comp, "bz A")
+        comp:reset() ; cpu.flags.Z = true; cpu.A = 0x1000 ; run(comp, "bz A")
         equals(cpu.PC, 0x1000)
 
         comp:reset() ; cpu.A = 0x1000 ; run(comp, "bz A")
         equals(cpu.PC, 0x2, "bz A (false)")
 
-        comp:reset() ; cpu.Z = true ; run(comp, "bz 0x1000")
+        comp:reset() ; cpu.flags.Z = true ; run(comp, "bz 0x1000")
         equals(cpu.PC, 0x1000)
 
         comp:reset() ; cpu.A = 0x1000 ; run(comp, "bnz A")
@@ -687,13 +684,13 @@ function cpu_tests()
         comp:reset() ; run(comp, "bnz 0x1000")
         equals(cpu.PC, 0x1000)
 
-        comp:reset() ; cpu.S = true; cpu.A = 0x1000 ; run(comp, "bneg A")
+        comp:reset() ; cpu.flags.S = true; cpu.A = 0x1000 ; run(comp, "bneg A")
         equals(cpu.PC, 0x1000)
 
         comp:reset() ; cpu.A = 0x1000 ; run(comp, "bneg A")
         equals(cpu.PC, 0x2, "bneg A (false)")
 
-        comp:reset() ; cpu.S = true ; run(comp, "bneg 0x1000")
+        comp:reset() ; cpu.flags.S = true ; run(comp, "bneg 0x1000")
         equals(cpu.PC, 0x1000)
 
         comp:reset() ; cpu.A = 0x1000 ; run(comp, "bpos A")
@@ -822,6 +819,17 @@ function cpu_tests()
 
     sanity()
     mov()
+    movb()
+    movw()
+    movd()
+    swap()
+    logic()
+    integer_math()
+    branches()
+    stack()
+    others()
+    subroutines()
+
 end
 
 --

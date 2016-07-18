@@ -128,7 +128,7 @@ lvm_get16(LVM_Computer* comp, uint32_t pos)
 {
     uint16_t b1 = lvm_get(comp, pos),
              b2 = lvm_get(comp, pos+1);
-    return b1 | (b2 >> 8);
+    return b1 | (uint16_t)(b2 << 8);
 }
 
 
