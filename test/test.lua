@@ -230,6 +230,13 @@ function compile(comp, code)
         parameters[#parameters+1] = parse_parameter(w)
     end
 
+    -- upgrade parameter (HACK)
+    if instruction:sub(1,1) == 'b' then  -- is a branch
+        if parameters[1].type == 'v8' or parameters[1].type == 'v16' then
+            parameters[1].type = 'v32'
+        end
+    end
+
     -- find operator
     for opcode, op in pairs(opcodes) do
         if op.instruction == instruction and #op.parameters == #parameters then
@@ -532,7 +539,7 @@ function cpu_tests()
 
         comp:reset() ; cpu.A = b(11); cpu.B = b(1100) ; run(comp, "and A, B")
         equals(cpu.A, 0)
-        equals(cpu.flags.Z, true, "cpu.flags.Z == 1")
+        equals(cpu.flags.Z, true, "cpu.flags.Z")
 
         comp:reset() ; cpu.A = b(11) ; run(comp, "and A, 0x7")
         equals(cpu.A, b(11))
@@ -584,11 +591,11 @@ function cpu_tests()
 
         comp:reset() ; cpu.A = 0x30; cpu.B = 0x20 ; run(comp, "sub A, B")
         equals(cpu.A, 0x10)
-        equals(cpu.flags.S, false, "cpu.flags.S == 0")
+        equals(cpu.flags.S, false, "cpu.flags.S")
 
         comp:reset() ; cpu.A = 0x20; cpu.B = 0x30 ; run(comp, "sub A, B")
         equals(cpu.A, 0xFFFFFFF0, "sub A, B (negative)")
-        equals(cpu.flags.S, true, "cpu.flags.S == 1")
+        equals(cpu.flags.S, true, "cpu.flags.S")
 
         comp:reset() ; cpu.A = 0x22 ; run(comp, "sub A, 0x20")
         equals(cpu.A, 0x2)
@@ -598,24 +605,24 @@ function cpu_tests()
 
         comp:reset() ; cpu.A = 0x12 ; run(comp, "sub A, 0x2000")
         equals(cpu.A, 0xFFFFE012)
-        equals(cpu.flags.S, true, "cpu.flags.S == 1")
-        equals(cpu.flags.Y, true, "cpu.flags.Y == 1")
+        equals(cpu.flags.S, true, "cpu.flags.S")
+        equals(cpu.flags.Y, true, "cpu.flags.Y")
 
         comp:reset() ; cpu.A = 0x10000012 ; run(comp, "sub A, 0xF0000000")
         equals(cpu.A, 0x20000012)
-        equals(cpu.flags.Y, true, "cpu.flags.Y == 1")
+        equals(cpu.flags.Y, true, "cpu.flags.Y")
 
         comp:reset() ; run(comp, "cmp A, B")
         equals(cpu.flags.Z, true)
 
         comp:reset() ; run(comp, "cmp A, 0x12")
-        equals(cpu.LT and not cpu.flags.GT, true)
+        equals(cpu.flags.LT and not cpu.flags.GT, true)
 
         comp:reset() ; cpu.A = 0x6000 ; run(comp, "cmp A, 0x1234")
-        equals(not cpu.LT and cpu.flags.GT, true)
+        equals(not cpu.flags.LT and cpu.flags.GT, true)
 
         comp:reset() ; cpu.A = 0xF0000000 ; run(comp, "cmp A, 0x12345678")
-        equals(not cpu.LT and cpu.flags.GT, true)  -- because of the signal!
+        equals(not cpu.flags.LT and cpu.flags.GT, true)  -- because of the signal!
 
         comp:reset() ; cpu.A = 0x0 ; run(comp, "cmp A")
         equals(cpu.flags.Z, true)
@@ -648,7 +655,7 @@ function cpu_tests()
 
         comp:reset() ; cpu.A = 0xF000; cpu.B = 0xF0 ; run(comp, "mod A, B")
         equals(cpu.A, 0x0)
-        equals(cpu.flags.Z, true, "cpu.flags.Z == 1")
+        equals(cpu.flags.Z, true, "cpu.flags.Z")
 
         comp:reset() ; cpu.A = 0x1234 ; run(comp, "mod A, 0x12")
         equals(cpu.A, 0x10)
@@ -664,15 +671,15 @@ function cpu_tests()
 
         comp:reset() ; cpu.A = 0xFFFFFFFF ; run(comp, "inc A")
         equals(cpu.A, 0x0, "inc A (overflow)")
-        equals(cpu.flags.Y, true, "cpu.flags.Y == 1")
-        equals(cpu.flags.Z, true, "cpu.flags.Z == 1")
+        equals(cpu.flags.Y, true, "cpu.flags.Y")
+        equals(cpu.flags.Z, true, "cpu.flags.Z")
 
         comp:reset() ; cpu.A = 0x42 ; run(comp, "dec A")
         equals(cpu.A, 0x41)
 
         comp:reset() ; cpu.A = 0x0 ; run(comp, "dec A")
         equals(cpu.A, 0xFFFFFFFF, "dec A (underflow)")
-        equals(cpu.flags.Z, false, "cpu.flags.Z == 0")
+        equals(cpu.flags.Z, false, "cpu.flags.Z")
     end
 
 

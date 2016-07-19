@@ -188,7 +188,7 @@ _advance_pc(LVM_CPU* cpu, Parameter pars[2])
 typedef enum Instruction { 
     MOV, MOVB, MOVW, MOVD, SWAP,
     OR, XOR, AND, SHL, SHR, NOT,
-    ADD, SUB, CMP, MUL, IDIV, MOD, INC, DEC,
+    ADD, SUB, CMP, CMPR, MUL, IDIV, MOD, INC, DEC,
     BZ, BEQ, BNZ, BNEG, BPOS, BGT, BGTE, BLT, BLTE, BV, BNV,
     JMP, JSR, RET, IRET,
     PUSHB, PUSHW, PUSHD, PUSH_A, POPB, POPW, POPD, POP_A, POPX,
@@ -265,6 +265,7 @@ _parse_opcode(LVM_CPU* cpu, Parameter pars[2])
         PACK_4(0x35, ADD)
         PACK_4(0x39, SUB)
         PACK_4(0x3D, CMP)
+        PACK_REG(0x41, CMPR)
         PACK_4(0x42, MUL)
         PACK_4(0x46, IDIV)
         PACK_4(0x4A, MOD)
@@ -336,9 +337,64 @@ lvm_cpustep(LVM_CPU* cpu)
         case SHR:  APPLY(pars[0], TAKE(pars[0]) >> TAKE(pars[1])); break;
         case NOT:  APPLY(pars[0], !TAKE(pars[0])); break;
         case ADD: {
-                bool y = ((uint64_t)TAKE(pars[0]) + (uint64_t)TAKE(pars[1])) > 0xFFFFFFFF;
-                APPLY(pars[0], TAKE(pars[0]) + TAKE(pars[1]) + lvm_cpuflag(cpu, Y)); 
+                uint64_t value = (uint64_t)TAKE(pars[0]) + (uint64_t)TAKE(pars[1]) + (uint64_t)lvm_cpuflag(cpu, Y);
+                bool y = value > 0xFFFFFFFF;
+                APPLY(pars[0], (uint32_t)value);
                 lvm_cpusetflag(cpu, Y, y);
+            }
+            break;
+        case SUB: {
+                int64_t value = (int64_t)TAKE(pars[0]) - (int64_t)TAKE(pars[1]) - (int64_t)lvm_cpuflag(cpu, Y);
+                bool y = value < 0;
+                APPLY(pars[0], (uint32_t)value);
+                lvm_cpusetflag(cpu, Y, y);
+            }
+            break;
+        case CMP: {
+                uint32_t p0 = TAKE(pars[0]), p1 = TAKE(pars[1]), diff = p0 - p1 - (int64_t)lvm_cpuflag(cpu, Y);
+                lvm_cpusetflag(cpu, Z, diff == 0);
+                lvm_cpusetflag(cpu, S, (diff >> 31) & 1);
+                lvm_cpusetflag(cpu, V, false);
+                lvm_cpusetflag(cpu, Y, ((int64_t)p0 - (int64_t)p1 - (int64_t)lvm_cpuflag(cpu, Y)) < 0);
+                lvm_cpusetflag(cpu, GT, p0 > p1);
+                lvm_cpusetflag(cpu, LT, p1 > p0);
+            }
+            break;
+        case CMPR: {
+                uint32_t p0 = TAKE(pars[0]);
+                lvm_cpusetflag(cpu, Z, true);
+                lvm_cpusetflag(cpu, S, (p0 >> 31) & 1);
+                lvm_cpusetflag(cpu, V, false);
+                lvm_cpusetflag(cpu, Y, false);
+                lvm_cpusetflag(cpu, GT, false);
+                lvm_cpusetflag(cpu, LT, false);
+            }
+            break;
+        case MUL: {
+                uint64_t value = (uint64_t)TAKE(pars[0]) * (uint64_t)TAKE(pars[1]);
+                bool v = value > 0xFFFFFFFF;
+                APPLY(pars[0], (uint32_t)value);
+                lvm_cpusetflag(cpu, V, v);
+            }
+            break;
+        case IDIV: APPLY(pars[0], TAKE(pars[0]) / TAKE(pars[1])); break;
+        case MOD:  APPLY(pars[0], TAKE(pars[0]) % TAKE(pars[1])); break;
+        case INC: {
+                bool y = ((uint64_t)TAKE(pars[0]) + 1) > 0xFFFFFFFF;
+                APPLY(pars[0], TAKE(pars[0])+1);
+                lvm_cpusetflag(cpu, Y, y);
+            }
+            break;
+        case DEC: {
+                bool y = ((int64_t)TAKE(pars[0]) + 1) < 0;
+                APPLY(pars[0], TAKE(pars[0])-1);
+                lvm_cpusetflag(cpu, Y, y);
+            }
+            break;
+        case BZ:
+            if(lvm_cpuflag(cpu, Z)) {
+                cpu->reg[PC] = TAKE(pars[0]);
+                return;
             }
             break;
         case INVALID:
