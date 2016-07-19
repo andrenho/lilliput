@@ -1,4 +1,5 @@
 use std::rc::Rc;
+use std::cell::Ref;
 use std::cell::RefCell;
 use std::cell::RefMut;
 
@@ -81,7 +82,11 @@ impl Computer {
         }
     }
 
-    pub fn borrow_cpu(&mut self) -> RefMut<CPU> {
+    pub fn cpu(&self) -> Ref<CPU> {
+        self.cpu.as_ref().unwrap().borrow()
+    }
+
+    pub fn cpu_mut(&mut self) -> RefMut<CPU> {
         self.cpu.as_mut().unwrap().borrow_mut()
     }
 

@@ -1,6 +1,6 @@
 use device::*;
 
-enum Register { A, B, C, D, E, F, G, H, I, J, K, L, FP, SP, PC, FL }
+pub enum Register { A, B, C, D, E, F, G, H, I, J, K, L, FP, SP, PC, FL }
 pub enum Flag { Y, V, Z, S, GT, LT, P, T }
 
 pub struct CPU {
@@ -40,7 +40,9 @@ mod tests {
     use computer::*;
 
     fn add_code(computer: &mut Computer, code: &str) {
+// {{{
         // TODO
+// }}}
     }
 
     fn prepare_cpu<F>(preparation: F, code: &str) -> Computer
@@ -61,7 +63,18 @@ mod tests {
     }
 
     #[test]
-    fn MOV() {
-        let computer = prepare_cpu(|comp| comp.set(0, 0), "mov A, B");
+    fn parser() {
+        let computer = prepare_cpu(|_|(), "add B, 0xBF");
+        assert_eq!(computer.get(0x0), 0x43);
+        assert_eq!(computer.get(0x1), 0x01);
+        assert_eq!(computer.get(0x2), 0xBF);
     }
+
+    /*
+    #[test]
+    fn MOV() {
+        let computer = prepare_cpu(|comp| comp.cpu_mut().register[Register::B as usize] = 0x42, "mov A, B");
+        assert_eq!(computer.cpu().register[Register::A as usize], 0x42);
+    }
+    */
 }
