@@ -43,6 +43,32 @@ lvm_cpureset(LVM_CPU* cpu)
     }
 }
 
+// 
+// stack operations
+//
+inline static void
+_push8(LVM_CPU* cpu, uint8_t value)
+{
+    lvm_set(cpu->computer, cpu->reg[SP], value);
+    cpu->reg[SP] -= 1;
+}
+
+inline static void
+_push16(LVM_CPU* cpu, uint16_t value)
+{
+    cpu->reg[SP] -= 1;
+    lvm_set16(cpu->computer, cpu->reg[SP], value);
+    cpu->reg[SP] -= 1;
+}
+
+inline static void
+_push32(LVM_CPU* cpu, uint32_t value)
+{
+    cpu->reg[SP] -= 3;
+    lvm_set32(cpu->computer, cpu->reg[SP], value);
+    cpu->reg[SP] -= 1;
+}
+
 //
 // shortcuts
 //
@@ -159,6 +185,7 @@ _advance_pc(LVM_CPU* cpu, Parameter pars[2])
     if(((pars[0].type == REG) || (pars[0].type == INDREG)) && ((pars[1].type == REG) || (pars[1].type == INDREG))) {
         cpu->reg[PC] += 2;
     } else {
+        ++cpu->reg[PC];
         for(int i=0; i<2; ++i) {
             switch(pars[i].type) {
                 case REG: case INDREG: case V8:
@@ -189,7 +216,7 @@ typedef enum Instruction {
     MOV, MOVB, MOVW, MOVD, SWAP,
     OR, XOR, AND, SHL, SHR, NOT,
     ADD, SUB, CMP, CMPR, MUL, IDIV, MOD, INC, DEC,
-    BZ, BEQ, BNZ, BNEG, BPOS, BGT, BGTE, BLT, BLTE, BV, BNV,
+    BZ, BNZ, BNEG, BPOS, BGT, BGTE, BLT, BLTE, BV, BNV,
     JMP, JSR, RET, IRET,
     PUSHB, PUSHW, PUSHD, PUSH_A, POPB, POPW, POPD, POP_A, POPX,
     NOP, HALT, DBG,
@@ -274,36 +301,35 @@ _parse_opcode(LVM_CPU* cpu, Parameter pars[2])
         PACK_REG(0x4F, DEC)
 
         PACK_BRANCH(0x50, BZ)
-        PACK_BRANCH(0x52, BEQ)
-        PACK_BRANCH(0x54, BNZ)
-        PACK_BRANCH(0x56, BNEG)
-        PACK_BRANCH(0x58, BPOS)
-        PACK_BRANCH(0x5A, BGT)
-        PACK_BRANCH(0x5C, BGTE)
-        PACK_BRANCH(0x5E, BLT)
-        PACK_BRANCH(0x60, BLTE)
-        PACK_BRANCH(0x62, BV)
-        PACK_BRANCH(0x64, BNV)
+        PACK_BRANCH(0x52, BNZ)
+        PACK_BRANCH(0x54, BNEG)
+        PACK_BRANCH(0x56, BPOS)
+        PACK_BRANCH(0x58, BGT)
+        PACK_BRANCH(0x5A, BGTE)
+        PACK_BRANCH(0x5C, BLT)
+        PACK_BRANCH(0x5E, BLTE)
+        PACK_BRANCH(0x60, BV)
+        PACK_BRANCH(0x62, BNV)
 
-        PACK_BRANCH(0x66, JMP)
-        PACK_BRANCH(0x68, JSR)
+        PACK_BRANCH(0x64, JMP)
+        PACK_BRANCH(0x66, JSR)
 
-        PACK_NONE(0x6A, RET)
-        PACK_NONE(0x6B, IRET)
+        PACK_NONE(0x68, RET)
+        PACK_NONE(0x69, IRET)
 
-        PACK_PUSH(0x6C, PUSHB, 8)
-        PACK_PUSH(0x6E, PUSHW, 16)
-        PACK_PUSH(0x70, PUSHD, 32)
-        PACK_NONE(0x72, PUSH_A)
-        PACK_REG(0x73, POPB)
-        PACK_REG(0x74, POPW)
-        PACK_REG(0x75, POPD)
-        PACK_NONE(0x76, PUSH_A)
-        PACK_POPX(0x77, POPX)
+        PACK_PUSH(0x6A, PUSHB, 8)
+        PACK_PUSH(0x6C, PUSHW, 16)
+        PACK_PUSH(0x6E, PUSHD, 32)
+        PACK_NONE(0x70, PUSH_A)
+        PACK_REG(0x71, POPB)
+        PACK_REG(0x72, POPW)
+        PACK_REG(0x73, POPD)
+        PACK_NONE(0x74, PUSH_A)
+        PACK_POPX(0x75, POPX)
 
-        PACK_NONE(0x7A, NOP)
-        PACK_NONE(0x7B, HALT)
-        PACK_NONE(0x7C, DBG)
+        PACK_NONE(0x78, NOP)
+        PACK_NONE(0x79, HALT)
+        PACK_NONE(0x7A, DBG)
 
         default:
             return INVALID;
@@ -391,12 +417,23 @@ lvm_cpustep(LVM_CPU* cpu)
                 lvm_cpusetflag(cpu, Y, y);
             }
             break;
-        case BZ:
-            if(lvm_cpuflag(cpu, Z)) {
-                cpu->reg[PC] = TAKE(pars[0]);
-                return;
-            }
-            break;
+        case BZ:    if(lvm_cpuflag(cpu, Z)) { cpu->reg[PC] = TAKE(pars[0]); return; } break;
+        case BNZ:   if(!lvm_cpuflag(cpu, Z)) { cpu->reg[PC] = TAKE(pars[0]); return; } break;
+        case BNEG:  if(lvm_cpuflag(cpu, S)) { cpu->reg[PC] = TAKE(pars[0]); return; } break;
+        case BPOS:  if(!lvm_cpuflag(cpu, S)) { cpu->reg[PC] = TAKE(pars[0]); return; } break;
+        case BGT:   if(lvm_cpuflag(cpu, GT) && !lvm_cpuflag(cpu, Z)) { cpu->reg[PC] = TAKE(pars[0]); return; } break;
+        case BGTE:  if(lvm_cpuflag(cpu, GT) && lvm_cpuflag(cpu, Z)) { cpu->reg[PC] = TAKE(pars[0]); return; } break;
+        case BLT:   if(lvm_cpuflag(cpu, LT) && !lvm_cpuflag(cpu, Z)) { cpu->reg[PC] = TAKE(pars[0]); return; } break;
+        case BLTE:  if(lvm_cpuflag(cpu, LT) && lvm_cpuflag(cpu, Z)) { cpu->reg[PC] = TAKE(pars[0]); return; } break;
+        case BV:    if(lvm_cpuflag(cpu, V)) { cpu->reg[PC] = TAKE(pars[0]); return; } break;
+        case BNV:   if(!lvm_cpuflag(cpu, V)) { cpu->reg[PC] = TAKE(pars[0]); return; } break;
+        case JMP:   cpu->reg[PC] = TAKE(pars[0]); return;
+        case JSR:   _push32(cpu, cpu->reg[PC]); cpu->reg[PC] = TAKE(pars[0]); return;
+        case RET:   abort();  // TODO
+        case IRET:  abort();  // TODO
+        case PUSHB: _push8(cpu, (uint8_t)TAKE(pars[0])); break;
+        case PUSHW: _push16(cpu, (uint16_t)TAKE(pars[0])); break;
+        case PUSHD: _push32(cpu, TAKE(pars[0])); break;
         case INVALID:
         default:
             syslog(LOG_ERR, "Invalid opcode 0x%02X", GET(cpu->reg[PC]));

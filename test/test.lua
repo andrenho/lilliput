@@ -145,54 +145,52 @@ local opcodes = {  --{{{ ...  }
     -- jumps
     [0x50] = { instruction = 'bz', parameters = { 'reg', } },
     [0x51] = { instruction = 'bz', parameters = { 'v32', } },
-    [0x52] = { instruction = 'beq', parameters = { 'reg', } },
-    [0x53] = { instruction = 'beq', parameters = { 'v32', } },
-    [0x54] = { instruction = 'bnz', parameters = { 'reg', } },
-    [0x55] = { instruction = 'bnz', parameters = { 'v32', } },
-    [0x56] = { instruction = 'bneg', parameters = { 'reg', } },
-    [0x57] = { instruction = 'bneg', parameters = { 'v32', } },
-    [0x58] = { instruction = 'bpos', parameters = { 'reg', } },
-    [0x59] = { instruction = 'bpos', parameters = { 'v32', } },
-    [0x5A] = { instruction = 'bgt', parameters = { 'reg', } },
-    [0x5B] = { instruction = 'bgt', parameters = { 'v32', } },
-    [0x5C] = { instruction = 'bgte', parameters = { 'reg', } },
-    [0x5D] = { instruction = 'bgte', parameters = { 'v32', } },
-    [0x5E] = { instruction = 'blt', parameters = { 'reg', } },
-    [0x5F] = { instruction = 'blt', parameters = { 'v32', } },
-    [0x60] = { instruction = 'blte', parameters = { 'reg', } },
-    [0x61] = { instruction = 'blte', parameters = { 'v32', } },
-    [0x62] = { instruction = 'bv', parameters = { 'reg', } },
-    [0x63] = { instruction = 'bv', parameters = { 'v32', } },
-    [0x64] = { instruction = 'bnv', parameters = { 'reg', } },
-    [0x65] = { instruction = 'bnv', parameters = { 'v32', } },
+    [0x52] = { instruction = 'bnz', parameters = { 'reg', } },
+    [0x53] = { instruction = 'bnz', parameters = { 'v32', } },
+    [0x54] = { instruction = 'bneg', parameters = { 'reg', } },
+    [0x55] = { instruction = 'bneg', parameters = { 'v32', } },
+    [0x56] = { instruction = 'bpos', parameters = { 'reg', } },
+    [0x57] = { instruction = 'bpos', parameters = { 'v32', } },
+    [0x58] = { instruction = 'bgt', parameters = { 'reg', } },
+    [0x59] = { instruction = 'bgt', parameters = { 'v32', } },
+    [0x5A] = { instruction = 'bgte', parameters = { 'reg', } },
+    [0x5B] = { instruction = 'bgte', parameters = { 'v32', } },
+    [0x5C] = { instruction = 'blt', parameters = { 'reg', } },
+    [0x5D] = { instruction = 'blt', parameters = { 'v32', } },
+    [0x5E] = { instruction = 'blte', parameters = { 'reg', } },
+    [0x5F] = { instruction = 'blte', parameters = { 'v32', } },
+    [0x60] = { instruction = 'bv', parameters = { 'reg', } },
+    [0x61] = { instruction = 'bv', parameters = { 'v32', } },
+    [0x62] = { instruction = 'bnv', parameters = { 'reg', } },
+    [0x63] = { instruction = 'bnv', parameters = { 'v32', } },
 
-    [0x66] = { instruction = 'jmp', parameters = { 'reg', } },
-    [0x67] = { instruction = 'jmp', parameters = { 'v32', } },
-    [0x68] = { instruction = 'jsr', parameters = { 'reg', } },
-    [0x69] = { instruction = 'jsr', parameters = { 'v32', } },
-    [0x6A] = { instruction = 'ret', parameters = {} },
-    [0x6B] = { instruction = 'iret', parameters = {} },
+    [0x64] = { instruction = 'jmp', parameters = { 'reg', } },
+    [0x65] = { instruction = 'jmp', parameters = { 'v32', } },
+    [0x66] = { instruction = 'jsr', parameters = { 'reg', } },
+    [0x67] = { instruction = 'jsr', parameters = { 'v32', } },
+    [0x68] = { instruction = 'ret', parameters = {} },
+    [0x69] = { instruction = 'iret', parameters = {} },
 
     -- stack
-    [0x6C] = { instruction = 'pushb', parameters = { 'reg', } },
-    [0x6D] = { instruction = 'pushb', parameters = { 'v8', } },
-    [0x6E] = { instruction = 'pushw', parameters = { 'reg', } },
-    [0x6F] = { instruction = 'pushw', parameters = { 'v16', } },
-    [0x70] = { instruction = 'pushd', parameters = { 'reg', } },
-    [0x71] = { instruction = 'pushd', parameters = { 'v32', } },
-    [0x72] = { instruction = 'push.a', parameters = {} },
-    [0x73] = { instruction = 'popb', parameters = { 'reg', } },
-    [0x74] = { instruction = 'popw', parameters = { 'reg', } },
-    [0x75] = { instruction = 'popd', parameters = { 'reg', } },
-    [0x76] = { instruction = 'pop.a', parameters = {} },
-    [0x77] = { instruction = 'popx', parameters = { 'reg', } },
-    [0x78] = { instruction = 'popx', parameters = { 'v8', } },
-    [0x79] = { instruction = 'popx', parameters = { 'v16', } },
+    [0x6A] = { instruction = 'pushb', parameters = { 'reg', } },
+    [0x6B] = { instruction = 'pushb', parameters = { 'v8', } },
+    [0x6C] = { instruction = 'pushw', parameters = { 'reg', } },
+    [0x6D] = { instruction = 'pushw', parameters = { 'v16', } },
+    [0x6E] = { instruction = 'pushd', parameters = { 'reg', } },
+    [0x6F] = { instruction = 'pushd', parameters = { 'v32', } },
+    [0x70] = { instruction = 'push.a', parameters = {} },
+    [0x71] = { instruction = 'popb', parameters = { 'reg', } },
+    [0x72] = { instruction = 'popw', parameters = { 'reg', } },
+    [0x73] = { instruction = 'popd', parameters = { 'reg', } },
+    [0x74] = { instruction = 'pop.a', parameters = {} },
+    [0x75] = { instruction = 'popx', parameters = { 'reg', } },
+    [0x76] = { instruction = 'popx', parameters = { 'v8', } },
+    [0x77] = { instruction = 'popx', parameters = { 'v16', } },
 
     -- other
-    [0x7A] = { instruction = 'nop', parameters = {} },
-    [0x7B] = { instruction = 'halt', parameters = {} },
-    [0x7C] = { instruction = 'dbg', parameters = {} },
+    [0x78] = { instruction = 'nop', parameters = {} },
+    [0x79] = { instruction = 'halt', parameters = {} },
+    [0x7A] = { instruction = 'dbg', parameters = {} },
 }  --}}}
 
 function compile(comp, code)
@@ -733,19 +731,20 @@ function cpu_tests()
         cpu.SP = 0xFFF
         cpu.A = 0xABCDEF12
 
-        for i,b in ipairs(compile("pushb A")) do comp:set((i-1) + 0x0, b) end
-        for i,b in ipairs(compile("pushb 0x12")) do comp:set((i-1) + 0x2, b) end
-        for i,b in ipairs(compile("pushw A")) do comp:set((i-1) + 0x4, b) end
-        for i,b in ipairs(compile("pushd A")) do comp:set((i-1) + 0x6, b) end
+        for i,b in ipairs(compile(code, "pushb A")) do comp:set((i-1) + 0x0, b) end
+        for i,b in ipairs(compile(code, "pushb 0x12")) do comp:set((i-1) + 0x2, b) end
+        for i,b in ipairs(compile(code, "pushw A")) do comp:set((i-1) + 0x4, b) end
+        for i,b in ipairs(compile(code, "pushd A")) do comp:set((i-1) + 0x6, b) end
 
-        for i,b in ipairs(compile("popd B")) do comp:set((i-1) + 0x8, b) end
-        for i,b in ipairs(compile("popw B")) do comp:set((i-1) + 0xA, b) end
-        for i,b in ipairs(compile("popb B")) do comp:set((i-1) + 0xC, b) end
+        for i,b in ipairs(compile(code, "popd B")) do comp:set((i-1) + 0x8, b) end
+        for i,b in ipairs(compile(code, "popw B")) do comp:set((i-1) + 0xA, b) end
+        for i,b in ipairs(compile(code, "popb B")) do comp:set((i-1) + 0xC, b) end
 
-        for i,b in ipairs(compile("popx 1")) do comp:set((i-1) + 0xE, b) end
+        for i,b in ipairs(compile(code, "popx 1")) do comp:set((i-1) + 0xE, b) end
 
         comp:step()
         equals(comp:get(0xFFF), 0x12, "pushb A")
+        equals(cpu.PC, 0x2, "PC = 2")
         equals(cpu.SP, 0xFFE, "SP = 0xFFE")
 
         comp:step()
@@ -818,8 +817,8 @@ function cpu_tests()
         local comp = computer()
         local cpu = comp.cpu[1]
 
-        for i,b in ipairs(compile("jsr 0x1234")) do comp:set((i-1) + 0x200, b) end
-        for i,b in ipairs(compile("ret")) do comp:set((i-1) + 0x1234, b) end
+        for i,b in ipairs(compile(code, "jsr 0x1234")) do comp:set((i-1) + 0x200, b) end
+        for i,b in ipairs(compile(code, "ret")) do comp:set((i-1) + 0x1234, b) end
         cpu.PC = 0x200
         cpu.SP = 0xFFF
         comp:step()
