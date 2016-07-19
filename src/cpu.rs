@@ -1,18 +1,30 @@
 use device::*;
 
-enum Register { A, B, C, D, E, F, G, H, I, J, K, L, FP, SP, PC, FL, }
-enum Flag { Y, V, Z, S, GT, LT, P, T, }
+enum Register { A, B, C, D, E, F, G, H, I, J, K, L, FP, SP, PC, FL }
+pub enum Flag { Y, V, Z, S, GT, LT, P, T }
 
 pub struct CPU {
     register: [u32; 16],
 }
 
 impl CPU {
+
     pub fn new() -> CPU {
         CPU { 
             register: [0; 16],
         }
     }
+
+    fn flag(&self, f: Flag) -> bool {
+        (self.register[Register::FL as usize] >> f as usize) & 1 != 0
+    }
+
+    fn set_flag(&mut self, f: Flag, value: bool) {
+        let x = if value { 1 } else { 0 };
+        self.register[Register::FL as usize] ^= (!x ^ self.register[Register::FL as usize]) & (1 << (f as usize));
+    }
+
+    
 }
 
 impl Device for CPU {
@@ -24,7 +36,7 @@ impl Device for CPU {
 
 #[cfg(test)]
 mod tests {
-    use super::CPU;
+    use super::*;
     use computer::*;
 
     fn add_code(computer: &mut Computer, code: &str) {
@@ -41,8 +53,15 @@ mod tests {
     }
 
     #[test]
+    fn flags() {
+        let mut cpu = CPU::new();
+        assert_eq!(cpu.flag(Flag::GT), false);
+        cpu.set_flag(Flag::GT, true);
+        assert_eq!(cpu.flag(Flag::GT), true);
+    }
+
+    #[test]
     fn MOV() {
-        let mut computer = prepare_cpu(|comp| comp.set(0, 0), "mov A, B");
-        let mut computer2 = prepare_cpu(|comp| { comp.borrow_cpu().register[0] = 0x42; }, "mov A, B");
+        let computer = prepare_cpu(|comp| comp.set(0, 0), "mov A, B");
     }
 }
