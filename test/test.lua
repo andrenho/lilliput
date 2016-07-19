@@ -506,7 +506,7 @@ function cpu_tests()
         equals(cpu.A, b(1110))
         equals(cpu.flags.S, false, "cpu.flags.S")
         equals(cpu.flags.Z, false, "cpu.flags.Z")
-        equals(cpu.flags.Y, false, "cpu.Y")
+        equals(cpu.flags.Y, false, "cpu.flags.Y")
         equals(cpu.flags.V, false, "cpu.flags.V")
 
         comp:reset() ; cpu.A = b(11) ; run(comp, "or A, 0x4")
@@ -572,7 +572,7 @@ function cpu_tests()
         comp:reset() ; cpu.A = 0x12 ; run(comp, "add A, 0x20")
         equals(cpu.A, 0x32)
 
-        comp:reset() ; cpu.A = 0x12 ; cpu.Y = true ; run(comp, "add A, 0x20")
+        comp:reset() ; cpu.A = 0x12 ; cpu.flags.Y = true ; run(comp, "add A, 0x20")
         equals(cpu.A, 0x33, "add A, 0x20 (with carry)")
 
         comp:reset() ; cpu.A = 0x12 ; run(comp, "add A, 0x2000")
@@ -580,7 +580,7 @@ function cpu_tests()
 
         comp:reset() ; cpu.A = 0x10000012 ; run(comp, "add A, 0xF0000000")
         equals(cpu.A, 0x12)
-        equals(cpu.flags.Y, true, "cpu.Y == 1")
+        equals(cpu.flags.Y, true, "cpu.flags.Y")
 
         comp:reset() ; cpu.A = 0x30; cpu.B = 0x20 ; run(comp, "sub A, B")
         equals(cpu.A, 0x10)
@@ -593,17 +593,17 @@ function cpu_tests()
         comp:reset() ; cpu.A = 0x22 ; run(comp, "sub A, 0x20")
         equals(cpu.A, 0x2)
 
-        comp:reset() ; cpu.A = 0x22; cpu.Y = true ; run(comp, "sub A, 0x20")
+        comp:reset() ; cpu.A = 0x22; cpu.flags.Y = true ; run(comp, "sub A, 0x20")
         equals(cpu.A, 0x1, "sub A, 0x20 (with carry)")
 
         comp:reset() ; cpu.A = 0x12 ; run(comp, "sub A, 0x2000")
         equals(cpu.A, 0xFFFFE012)
         equals(cpu.flags.S, true, "cpu.flags.S == 1")
-        equals(cpu.flags.Y, true, "cpu.Y == 1")
+        equals(cpu.flags.Y, true, "cpu.flags.Y == 1")
 
         comp:reset() ; cpu.A = 0x10000012 ; run(comp, "sub A, 0xF0000000")
         equals(cpu.A, 0x20000012)
-        equals(cpu.flags.Y, true, "cpu.Y == 1")
+        equals(cpu.flags.Y, true, "cpu.flags.Y == 1")
 
         comp:reset() ; run(comp, "cmp A, B")
         equals(cpu.flags.Z, true)
@@ -664,7 +664,7 @@ function cpu_tests()
 
         comp:reset() ; cpu.A = 0xFFFFFFFF ; run(comp, "inc A")
         equals(cpu.A, 0x0, "inc A (overflow)")
-        equals(cpu.flags.Y, true, "cpu.Y == 1")
+        equals(cpu.flags.Y, true, "cpu.flags.Y == 1")
         equals(cpu.flags.Z, true, "cpu.flags.Z == 1")
 
         comp:reset() ; cpu.A = 0x42 ; run(comp, "dec A")

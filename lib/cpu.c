@@ -188,9 +188,57 @@ _advance_pc(LVM_CPU* cpu, Parameter pars[2])
 typedef enum Instruction { 
     MOV, MOVB, MOVW, MOVD, SWAP,
     OR, XOR, AND, SHL, SHR, NOT,
+    ADD, SUB, CMP, MUL, IDIV, MOD, INC, DEC,
+    BZ, BEQ, BNZ, BNEG, BPOS, BGT, BGTE, BLT, BLTE, BV, BNV,
+    JMP, JSR, RET, IRET,
+    PUSHB, PUSHW, PUSHD, PUSH_A, POPB, POPW, POPD, POP_A, POPX,
+    NOP, HALT, DBG,
     INVALID 
 } Instruction;
 
+#define PACK_NONE(pos, inst) \
+        case pos: pars[0] = (Parameter){ NONE, 0 }; pars[1] = (Parameter){ NONE, 0 }; return inst;
+
+#define PACK_REG(pos, inst) \
+        case pos: pars[0] = _reg(cpu, rPC+1); pars[1] = (Parameter){ NONE, 0 }; return inst;
+
+#define PACK_RR(pos, inst) \
+        case pos: _twin_registers_rr(pars, GET(rPC+1)); return inst;
+
+#define PACK_2(pos, inst) \
+        case pos+0: _twin_registers_rr(pars, GET(rPC+1));                            return inst; \
+        case pos+1: pars[0] = _reg(cpu, rPC+1); pars[1] = _v8(cpu, rPC+2);           return inst; \
+
+#define PACK_4(pos, inst) \
+        case pos+0: _twin_registers_rr(pars, GET(rPC+1));                            return inst; \
+        case pos+1: pars[0] = _reg(cpu, rPC+1); pars[1] = _v8(cpu, rPC+2);           return inst; \
+        case pos+2: pars[0] = _reg(cpu, rPC+1); pars[1] = _v16(cpu, rPC+2);          return inst; \
+        case pos+3: pars[0] = _reg(cpu, rPC+1); pars[1] = _v32(cpu, rPC+2);          return inst;
+
+#define PACK_MOV(pos, inst, sz) \
+        case pos+0: _twin_registers_ri(pars, GET(rPC+1));                            return inst; \
+        case pos+1: pars[0] = _reg(cpu, rPC+1); pars[1] = _indv32(cpu, rPC+2);       return inst; \
+        case pos+2: _twin_registers_ir(pars, GET(rPC+1));                            return inst; \
+        case pos+3: pars[0] = _indreg(cpu, rPC+1); pars[1] = _v ## sz(cpu, rPC+2);   return inst; \
+        case pos+4: _twin_registers_ii(pars, GET(rPC+1));                            return inst; \
+        case pos+5: pars[0] = _indreg(cpu, rPC+1); pars[1] = _indv32(cpu, rPC+2);    return inst; \
+        case pos+6: pars[0] = _indv32(cpu, rPC+1); pars[1] = _reg(cpu, rPC+5);       return inst; \
+        case pos+7: pars[0] = _indv32(cpu, rPC+1); pars[1] = _v ## sz(cpu, rPC+5);   return inst; \
+        case pos+8: pars[0] = _indv32(cpu, rPC+1); pars[1] = _indreg(cpu, rPC+5);    return inst; \
+        case pos+9: pars[0] = _indv32(cpu, rPC+1); pars[1] = _indv32(cpu, rPC+5);    return inst;
+
+#define PACK_BRANCH(pos, inst) \
+        case pos+0: pars[0] = _reg(cpu, rPC+1); pars[1] = (Parameter){ NONE, 0 }; return inst; \
+        case pos+1: pars[0] = _v32(cpu, rPC+1); pars[1] = (Parameter){ NONE, 0 }; return inst;
+
+#define PACK_PUSH(pos, inst, sz) \
+        case pos+0: pars[0] = _reg(cpu, rPC+1); pars[1] = (Parameter){ NONE, 0 }; return inst; \
+        case pos+1: pars[0] = _v ## sz(cpu, rPC+1); pars[1] = (Parameter){ NONE, 0 }; return inst;
+
+#define PACK_POPX(pos, inst) \
+        case pos+0: pars[0] = _reg(cpu, rPC+1); pars[1] = (Parameter){ NONE, 0 }; return inst; \
+        case pos+1: pars[0] = _v8(cpu, rPC+1); pars[1] = (Parameter){ NONE, 0 }; return inst; \
+        case pos+2: pars[0] = _v16(cpu, rPC+1); pars[1] = (Parameter){ NONE, 0 }; return inst;
 
 inline static Instruction
 _parse_opcode(LVM_CPU* cpu, Parameter pars[2])
@@ -198,68 +246,63 @@ _parse_opcode(LVM_CPU* cpu, Parameter pars[2])
     uint8_t opcode = GET(rPC);
     switch(opcode) {
 
-        case 0x01: _twin_registers_rr(pars, GET(rPC+1));                            return MOV;
-        case 0x02: pars[0] = _reg(cpu, rPC+1); pars[1] = _v8(cpu, rPC+2);           return MOV;
-        case 0x03: pars[0] = _reg(cpu, rPC+1); pars[1] = _v16(cpu, rPC+2);          return MOV;
-        case 0x04: pars[0] = _reg(cpu, rPC+1); pars[1] = _v32(cpu, rPC+2);          return MOV;
+        PACK_4(0x01, MOV)
+        PACK_MOV(0x05, MOVB, 8)
+        PACK_MOV(0x0F, MOVW, 16)
+        PACK_MOV(0x19, MOVD, 32)
 
-        case 0x05: _twin_registers_ri(pars, GET(rPC+1));                            return MOVB;
-        case 0x06: pars[0] = _reg(cpu, rPC+1); pars[1] = _indv32(cpu, rPC+2);       return MOVB;
-        case 0x07: _twin_registers_ir(pars, GET(rPC+1));                            return MOVB;
-        case 0x08: pars[0] = _indreg(cpu, rPC+1); pars[1] = _v8(cpu, rPC+2);        return MOVB;
-        case 0x09: _twin_registers_ii(pars, GET(rPC+1));                            return MOVB;
-        case 0x0A: pars[0] = _indreg(cpu, rPC+1); pars[1] = _indv32(cpu, rPC+2);    return MOVB;
-        case 0x0B: pars[0] = _indv32(cpu, rPC+1); pars[1] = _reg(cpu, rPC+5);       return MOVB;
-        case 0x0C: pars[0] = _indv32(cpu, rPC+1); pars[1] = _v8(cpu, rPC+5);        return MOVB;
-        case 0x0D: pars[0] = _indv32(cpu, rPC+1); pars[1] = _indreg(cpu, rPC+5);    return MOVB;
-        case 0x0E: pars[0] = _indv32(cpu, rPC+1); pars[1] = _indv32(cpu, rPC+5);    return MOVB;
+        PACK_RR(0x23, SWAP)
 
-        case 0x0F: _twin_registers_ri(pars, GET(rPC+1));                            return MOVW;
-        case 0x10: pars[0] = _reg(cpu, rPC+1); pars[1] = _indv32(cpu, rPC+2);       return MOVW;
-        case 0x11: _twin_registers_ir(pars, GET(rPC+1));                            return MOVW;
-        case 0x12: pars[0] = _indreg(cpu, rPC+1); pars[1] = _v16(cpu, rPC+2);       return MOVW;
-        case 0x13: _twin_registers_ii(pars, GET(rPC+1));                            return MOVW;
-        case 0x14: pars[0] = _indreg(cpu, rPC+1); pars[1] = _indv32(cpu, rPC+2);    return MOVW;
-        case 0x15: pars[0] = _indv32(cpu, rPC+1); pars[1] = _reg(cpu, rPC+5);       return MOVW;
-        case 0x16: pars[0] = _indv32(cpu, rPC+1); pars[1] = _v16(cpu, rPC+5);       return MOVW;
-        case 0x17: pars[0] = _indv32(cpu, rPC+1); pars[1] = _indreg(cpu, rPC+5);    return MOVW;
-        case 0x18: pars[0] = _indv32(cpu, rPC+1); pars[1] = _indv32(cpu, rPC+5);    return MOVW;
+        PACK_4(0x24, OR)
+        PACK_4(0x28, XOR)
+        PACK_4(0x2C, AND)
 
-        case 0x19: _twin_registers_ri(pars, GET(rPC+1));                            return MOVD;
-        case 0x1A: pars[0] = _reg(cpu, rPC+1); pars[1] = _indv32(cpu, rPC+2);       return MOVD;
-        case 0x1B: _twin_registers_ir(pars, GET(rPC+1));                            return MOVD;
-        case 0x1C: pars[0] = _indreg(cpu, rPC+1); pars[1] = _v32(cpu, rPC+2);       return MOVD;
-        case 0x1D: _twin_registers_ii(pars, GET(rPC+1));                            return MOVD;
-        case 0x1E: pars[0] = _indreg(cpu, rPC+1); pars[1] = _indv32(cpu, rPC+2);    return MOVD;
-        case 0x1F: pars[0] = _indv32(cpu, rPC+1); pars[1] = _reg(cpu, rPC+5);       return MOVD;
-        case 0x20: pars[0] = _indv32(cpu, rPC+1); pars[1] = _v32(cpu, rPC+5);       return MOVD;
-        case 0x21: pars[0] = _indv32(cpu, rPC+1); pars[1] = _indreg(cpu, rPC+5);    return MOVD;
-        case 0x22: pars[0] = _indv32(cpu, rPC+1); pars[1] = _indv32(cpu, rPC+5);    return MOVD;
+        PACK_2(0x30, SHL)
+        PACK_2(0x32, SHR)
 
-        case 0x23: _twin_registers_rr(pars, GET(rPC+1));                            return SWAP;
+        PACK_REG(0x34, NOT)
 
-        case 0x24: _twin_registers_rr(pars, GET(rPC+1));                            return OR;
-        case 0x25: pars[0] = _reg(cpu, rPC+1); pars[1] = _v8(cpu, rPC+2);           return OR;
-        case 0x26: pars[0] = _reg(cpu, rPC+1); pars[1] = _v16(cpu, rPC+2);          return OR;
-        case 0x27: pars[0] = _reg(cpu, rPC+1); pars[1] = _v32(cpu, rPC+2);          return OR;
+        PACK_4(0x35, ADD)
+        PACK_4(0x39, SUB)
+        PACK_4(0x3D, CMP)
+        PACK_4(0x42, MUL)
+        PACK_4(0x46, IDIV)
+        PACK_4(0x4A, MOD)
 
-        case 0x28: _twin_registers_rr(pars, GET(rPC+1));                            return XOR;
-        case 0x29: pars[0] = _reg(cpu, rPC+1); pars[1] = _v8(cpu, rPC+2);           return XOR;
-        case 0x2A: pars[0] = _reg(cpu, rPC+1); pars[1] = _v16(cpu, rPC+2);          return XOR;
-        case 0x2B: pars[0] = _reg(cpu, rPC+1); pars[1] = _v32(cpu, rPC+2);          return XOR;
+        PACK_REG(0x4E, INC)
+        PACK_REG(0x4F, DEC)
 
-        case 0x2C: _twin_registers_rr(pars, GET(rPC+1));                            return AND;
-        case 0x2D: pars[0] = _reg(cpu, rPC+1); pars[1] = _v8(cpu, rPC+2);           return AND;
-        case 0x2E: pars[0] = _reg(cpu, rPC+1); pars[1] = _v16(cpu, rPC+2);          return AND;
-        case 0x2F: pars[0] = _reg(cpu, rPC+1); pars[1] = _v32(cpu, rPC+2);          return AND;
+        PACK_BRANCH(0x50, BZ)
+        PACK_BRANCH(0x52, BEQ)
+        PACK_BRANCH(0x54, BNZ)
+        PACK_BRANCH(0x56, BNEG)
+        PACK_BRANCH(0x58, BPOS)
+        PACK_BRANCH(0x5A, BGT)
+        PACK_BRANCH(0x5C, BGTE)
+        PACK_BRANCH(0x5E, BLT)
+        PACK_BRANCH(0x60, BLTE)
+        PACK_BRANCH(0x62, BV)
+        PACK_BRANCH(0x64, BNV)
 
-        case 0x30: _twin_registers_rr(pars, GET(rPC+1));                            return SHL;
-        case 0x31: pars[0] = _reg(cpu, rPC+1); pars[1] = _v8(cpu, rPC+2);           return SHL;
+        PACK_BRANCH(0x66, JMP)
+        PACK_BRANCH(0x68, JSR)
 
-        case 0x32: _twin_registers_rr(pars, GET(rPC+1));                            return SHR;
-        case 0x33: pars[0] = _reg(cpu, rPC+1); pars[1] = _v8(cpu, rPC+2);           return SHR;
+        PACK_NONE(0x6A, RET)
+        PACK_NONE(0x6B, IRET)
 
-        case 0x34: pars[0] = _reg(cpu, rPC+1); pars[1] = (Parameter){ NONE, 0 };    return NOT;
+        PACK_PUSH(0x6C, PUSHB, 8)
+        PACK_PUSH(0x6E, PUSHW, 16)
+        PACK_PUSH(0x70, PUSHD, 32)
+        PACK_NONE(0x72, PUSH_A)
+        PACK_REG(0x73, POPB)
+        PACK_REG(0x74, POPW)
+        PACK_REG(0x75, POPD)
+        PACK_NONE(0x76, PUSH_A)
+        PACK_POPX(0x77, POPX)
+
+        PACK_NONE(0x7A, NOP)
+        PACK_NONE(0x7B, HALT)
+        PACK_NONE(0x7C, DBG)
 
         default:
             return INVALID;
@@ -276,41 +319,27 @@ lvm_cpustep(LVM_CPU* cpu)
 {
     Parameter pars[2];
     switch(_parse_opcode(cpu, pars)) {
-        case MOV:
-            APPLY(pars[0], TAKE(pars[1]));
-            break;
-        case MOVB:
-            APPLY_SZ(pars[0], (uint8_t)TAKE(pars[1]), 8);
-            break;
-        case MOVW:
-            APPLY_SZ(pars[0], (uint16_t)TAKE(pars[1]), 16);
-            break;
-        case MOVD:
-            APPLY_SZ(pars[0], TAKE(pars[1]), 32);
-            break;
+        case MOV:  APPLY(pars[0], TAKE(pars[1])); break;
+        case MOVB: APPLY_SZ(pars[0], (uint8_t)TAKE(pars[1]), 8); break;
+        case MOVW: APPLY_SZ(pars[0], (uint16_t)TAKE(pars[1]), 16); break;
+        case MOVD: APPLY_SZ(pars[0], TAKE(pars[1]), 32); break;
         case SWAP: {
                 uint32_t tmp = TAKE(pars[1]);
                 APPLY(pars[1], TAKE(pars[0]));
                 APPLY(pars[0], tmp);
             }
             break;
-        case OR: 
-            APPLY(pars[0], TAKE(pars[0]) | TAKE(pars[1]));
-            break;
-        case XOR: 
-            APPLY(pars[0], TAKE(pars[0]) ^ TAKE(pars[1]));
-            break;
-        case AND: 
-            APPLY(pars[0], TAKE(pars[0]) & TAKE(pars[1]));
-            break;
-        case SHL: 
-            APPLY(pars[0], TAKE(pars[0]) << TAKE(pars[1]));
-            break;
-        case SHR: 
-            APPLY(pars[0], TAKE(pars[0]) >> TAKE(pars[1]));
-            break;
-        case NOT:
-            APPLY(pars[0], !TAKE(pars[0]));
+        case OR:   APPLY(pars[0], TAKE(pars[0]) | TAKE(pars[1])); break;
+        case XOR:  APPLY(pars[0], TAKE(pars[0]) ^ TAKE(pars[1])); break;
+        case AND:  APPLY(pars[0], TAKE(pars[0]) & TAKE(pars[1])); break;
+        case SHL:  APPLY(pars[0], TAKE(pars[0]) << TAKE(pars[1])); break;
+        case SHR:  APPLY(pars[0], TAKE(pars[0]) >> TAKE(pars[1])); break;
+        case NOT:  APPLY(pars[0], !TAKE(pars[0])); break;
+        case ADD: {
+                bool y = ((uint64_t)TAKE(pars[0]) + (uint64_t)TAKE(pars[1])) > 0xFFFFFFFF;
+                APPLY(pars[0], TAKE(pars[0]) + TAKE(pars[1]) + lvm_cpuflag(cpu, Y)); 
+                lvm_cpusetflag(cpu, Y, y);
+            }
             break;
         case INVALID:
         default:
