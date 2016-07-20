@@ -223,13 +223,14 @@ function compile(comp, code)
     end
 
     -- get instruction and parameters
-    local instruction, parameters = code:match("(%w+)%s.*"), {}
+    local instruction, parameters = code:match("([%w%.]+)%s?.*"), {}
     for w in code:gmatch("[%s,]([%w%[%]]+)") do
         parameters[#parameters+1] = parse_parameter(w)
     end
+    assert(instruction)
 
     -- upgrade parameter (HACK)
-    if instruction:sub(1,1) == 'b' then  -- is a branch
+    if instruction:sub(1,1) == 'b' or instruction:sub(1,1) == 'j' then  -- is a branch
         if parameters[1].type == 'v8' or parameters[1].type == 'v16' then
             parameters[1].type = 'v32'
         end
@@ -252,7 +253,7 @@ function compile(comp, code)
 ::found::
     
     -- add parameters
-    if parameters[1].type:sub(1, 3) == 'reg' and parameters[2] and parameters[2].type:sub(1, 3) == 'reg' then
+    if (parameters[1] and parameters[1].type:sub(1, 3) == 'reg') and (parameters[2] and parameters[2].type:sub(1, 3) == 'reg') then
         ret[#ret+1] = (parameters[1].value[1] << 4) | parameters[2].value[1]
     else
         local i = 1
@@ -561,7 +562,7 @@ function cpu_tests()
         equals(cpu.A, b(1010))
 
         comp:reset() ; cpu.A = b(11001010) ; run(comp, "not A")
-        equals(cpu.A, b(0xFFFFFF35))
+        equals(cpu.A, 0xFFFFFF35)
     end
 
 
@@ -744,22 +745,22 @@ function cpu_tests()
 
         comp:step()
         equals(comp:get(0xFFF), 0x12, "pushb A")
-        equals(cpu.PC, 0x2, "PC = 2")
-        equals(cpu.SP, 0xFFE, "SP = 0xFFE")
+        equals(cpu.PC, 0x2, "PC")
+        equals(cpu.SP, 0xFFE, "SP")
 
         comp:step()
         equals(comp:get(0xFFE), 0x12, "pushb 0x12")
-        equals(cpu.SP, 0xFFD, "SP = 0xFFD")
+        equals(cpu.SP, 0xFFD, "SP")
 
         comp:step()
         equals(comp:get16(0xFFC), 0xEF12)
         equals(comp:get(0xFFD), 0xEF)
         equals(comp:get(0xFFC), 0x12)
-        equals(cpu.SP, 0xFFB, "SP = 0xFFB")
+        equals(cpu.SP, 0xFFB, "SP")
 
         comp:step()
         equals(comp:get32(0xFF8), 0xABCDEF12);
-        equals(cpu.SP, 0xFF7, "SP = 0xFF7")
+        equals(cpu.SP, 0xFF7, "SP")
 
         comp:step()
         equals(cpu.B, 0xABCDEF12, "popd B")
@@ -801,6 +802,7 @@ function cpu_tests()
         local cpu = comp.cpu[1]
 
         comp:reset() ; run(comp, "nop")
+        equals(cpu.PC, 1, "nop; PC")
   
         -- TODO
         --comp:reset() ; run(comp, "dbg")
@@ -823,14 +825,14 @@ function cpu_tests()
         cpu.SP = 0xFFF
         comp:step()
         equals(cpu.PC, 0x1234, "jsr 0x1234")
-        equals(comp:get(0xFFC), 0x5, "[FFC] = 0x5")
-        equals(comp:get(0xFFD), 0x2, "[FFD] = 0x2")
-        equals(cpu.SP, 0xFFB, "SP = 0xFFB")
+        equals(comp:get(0xFFC), 0x5, "[FFC]")
+        equals(comp:get(0xFFD), 0x2, "[FFD]")
+        equals(cpu.SP, 0xFFB, "SP")
         equals(comp:get32(0xFFC), 0x200 + 5, "address in stack") 
 
         comp:step()
         equals(cpu.PC, 0x205, "ret")
-        equals(cpu.SP, 0xFFF, "SP = 0xFFF")
+        equals(cpu.SP, 0xFFF, "SP")
 
     end
 

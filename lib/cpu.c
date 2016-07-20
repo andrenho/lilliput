@@ -69,6 +69,28 @@ _push32(LVM_CPU* cpu, uint32_t value)
     cpu->reg[SP] -= 1;
 }
 
+inline static uint8_t
+_pop8(LVM_CPU* cpu) {
+    cpu->reg[SP] += 1;
+    return lvm_get(cpu->computer, cpu->reg[SP]);
+}
+
+inline static uint16_t
+_pop16(LVM_CPU* cpu) {
+    cpu->reg[SP] += 1;
+    uint16_t value = lvm_get16(cpu->computer, cpu->reg[SP]);
+    cpu->reg[SP] += 1;
+    return value;
+}
+
+inline static uint32_t
+_pop32(LVM_CPU* cpu) {
+    cpu->reg[SP] += 1;
+    uint32_t value = lvm_get32(cpu->computer, cpu->reg[SP]);
+    cpu->reg[SP] += 3;
+    return value;
+}
+
 //
 // shortcuts
 //
@@ -115,12 +137,12 @@ _twin_registers_ii(Parameter pars[2], uint8_t pos)
     pars[1] = (Parameter) { INDREG, (pos & 0xF) };
 }
 
-inline static Parameter _reg(LVM_CPU* cpu, uint32_t offset) { return (Parameter) { REG, GET(rPC+offset) }; }
-inline static Parameter _indreg(LVM_CPU* cpu, uint32_t offset) { return (Parameter) { INDREG, GET(rPC+offset) }; }
-inline static Parameter _v8(LVM_CPU* cpu, uint32_t offset) { return (Parameter) { V8, GET(rPC+offset) }; }
-inline static Parameter _v16(LVM_CPU* cpu, uint32_t offset) { return (Parameter) { V16, GET16(rPC+offset) }; }
-inline static Parameter _v32(LVM_CPU* cpu, uint32_t offset) { return (Parameter) { V32, GET32(rPC+offset) }; }
-inline static Parameter _indv32(LVM_CPU* cpu, uint32_t offset) { return (Parameter) { INDV32, GET32(rPC+offset) }; }
+inline static Parameter _reg(LVM_CPU* cpu, uint32_t offset) { return (Parameter) { REG, GET(offset) }; }
+inline static Parameter _indreg(LVM_CPU* cpu, uint32_t offset) { return (Parameter) { INDREG, GET(offset) }; }
+inline static Parameter _v8(LVM_CPU* cpu, uint32_t offset) { return (Parameter) { V8, GET(offset) }; }
+inline static Parameter _v16(LVM_CPU* cpu, uint32_t offset) { return (Parameter) { V16, GET16(offset) }; }
+inline static Parameter _v32(LVM_CPU* cpu, uint32_t offset) { return (Parameter) { V32, GET32(offset) }; }
+inline static Parameter _indv32(LVM_CPU* cpu, uint32_t offset) { return (Parameter) { INDV32, GET32(offset) }; }
 
 
 //
@@ -324,7 +346,7 @@ _parse_opcode(LVM_CPU* cpu, Parameter pars[2])
         PACK_REG(0x71, POPB)
         PACK_REG(0x72, POPW)
         PACK_REG(0x73, POPD)
-        PACK_NONE(0x74, PUSH_A)
+        PACK_NONE(0x74, POP_A)
         PACK_POPX(0x75, POPX)
 
         PACK_NONE(0x78, NOP)
@@ -361,7 +383,7 @@ lvm_cpustep(LVM_CPU* cpu)
         case AND:  APPLY(pars[0], TAKE(pars[0]) & TAKE(pars[1])); break;
         case SHL:  APPLY(pars[0], TAKE(pars[0]) << TAKE(pars[1])); break;
         case SHR:  APPLY(pars[0], TAKE(pars[0]) >> TAKE(pars[1])); break;
-        case NOT:  APPLY(pars[0], !TAKE(pars[0])); break;
+        case NOT:  APPLY(pars[0], ~TAKE(pars[0])); break;
         case ADD: {
                 uint64_t value = (uint64_t)TAKE(pars[0]) + (uint64_t)TAKE(pars[1]) + (uint64_t)lvm_cpuflag(cpu, Y);
                 bool y = value > 0xFFFFFFFF;
@@ -417,23 +439,30 @@ lvm_cpustep(LVM_CPU* cpu)
                 lvm_cpusetflag(cpu, Y, y);
             }
             break;
-        case BZ:    if(lvm_cpuflag(cpu, Z)) { cpu->reg[PC] = TAKE(pars[0]); return; } break;
-        case BNZ:   if(!lvm_cpuflag(cpu, Z)) { cpu->reg[PC] = TAKE(pars[0]); return; } break;
-        case BNEG:  if(lvm_cpuflag(cpu, S)) { cpu->reg[PC] = TAKE(pars[0]); return; } break;
-        case BPOS:  if(!lvm_cpuflag(cpu, S)) { cpu->reg[PC] = TAKE(pars[0]); return; } break;
-        case BGT:   if(lvm_cpuflag(cpu, GT) && !lvm_cpuflag(cpu, Z)) { cpu->reg[PC] = TAKE(pars[0]); return; } break;
-        case BGTE:  if(lvm_cpuflag(cpu, GT) && lvm_cpuflag(cpu, Z)) { cpu->reg[PC] = TAKE(pars[0]); return; } break;
-        case BLT:   if(lvm_cpuflag(cpu, LT) && !lvm_cpuflag(cpu, Z)) { cpu->reg[PC] = TAKE(pars[0]); return; } break;
-        case BLTE:  if(lvm_cpuflag(cpu, LT) && lvm_cpuflag(cpu, Z)) { cpu->reg[PC] = TAKE(pars[0]); return; } break;
-        case BV:    if(lvm_cpuflag(cpu, V)) { cpu->reg[PC] = TAKE(pars[0]); return; } break;
-        case BNV:   if(!lvm_cpuflag(cpu, V)) { cpu->reg[PC] = TAKE(pars[0]); return; } break;
-        case JMP:   cpu->reg[PC] = TAKE(pars[0]); return;
-        case JSR:   _push32(cpu, cpu->reg[PC]); cpu->reg[PC] = TAKE(pars[0]); return;
-        case RET:   abort();  // TODO
-        case IRET:  abort();  // TODO
-        case PUSHB: _push8(cpu, (uint8_t)TAKE(pars[0])); break;
-        case PUSHW: _push16(cpu, (uint16_t)TAKE(pars[0])); break;
-        case PUSHD: _push32(cpu, TAKE(pars[0])); break;
+        case BZ:     if(lvm_cpuflag(cpu, Z)) { cpu->reg[PC] = TAKE(pars[0]); return; } break;
+        case BNZ:    if(!lvm_cpuflag(cpu, Z)) { cpu->reg[PC] = TAKE(pars[0]); return; } break;
+        case BNEG:   if(lvm_cpuflag(cpu, S)) { cpu->reg[PC] = TAKE(pars[0]); return; } break;
+        case BPOS:   if(!lvm_cpuflag(cpu, S)) { cpu->reg[PC] = TAKE(pars[0]); return; } break;
+        case BGT:    if(lvm_cpuflag(cpu, GT) && !lvm_cpuflag(cpu, Z)) { cpu->reg[PC] = TAKE(pars[0]); return; } break;
+        case BGTE:   if(lvm_cpuflag(cpu, GT) && lvm_cpuflag(cpu, Z)) { cpu->reg[PC] = TAKE(pars[0]); return; } break;
+        case BLT:    if(lvm_cpuflag(cpu, LT) && !lvm_cpuflag(cpu, Z)) { cpu->reg[PC] = TAKE(pars[0]); return; } break;
+        case BLTE:   if(lvm_cpuflag(cpu, LT) && lvm_cpuflag(cpu, Z)) { cpu->reg[PC] = TAKE(pars[0]); return; } break;
+        case BV:     if(lvm_cpuflag(cpu, V)) { cpu->reg[PC] = TAKE(pars[0]); return; } break;
+        case BNV:    if(!lvm_cpuflag(cpu, V)) { cpu->reg[PC] = TAKE(pars[0]); return; } break;
+        case JMP:    cpu->reg[PC] = TAKE(pars[0]); return;
+        case JSR:    ADVANCE_PC(pars); _push32(cpu, cpu->reg[PC]); cpu->reg[PC] = TAKE(pars[0]); return;
+        case RET:    cpu->reg[PC] = _pop32(cpu); return;
+        case IRET:   abort();  // TODO
+        case PUSHB:  _push8(cpu, (uint8_t)TAKE(pars[0])); break;
+        case PUSHW:  _push16(cpu, (uint16_t)TAKE(pars[0])); break;
+        case PUSHD:  _push32(cpu, TAKE(pars[0])); break;
+        case PUSH_A: for(int i=0; i<=11; ++i) _push32(cpu, cpu->reg[i]); break;
+        case POPB:   APPLY(pars[0], _pop8(cpu)); break;
+        case POPW:   APPLY(pars[0], _pop16(cpu)); break;
+        case POPD:   APPLY(pars[0], _pop32(cpu)); break;
+        case POP_A:  for(int i=11; i>=0; --i) cpu->reg[i] = _pop32(cpu); break;
+        case POPX:   for(int i=0; i<TAKE(pars[0]); ++i) _pop8(cpu); break;
+        case NOP:    break;
         case INVALID:
         default:
             syslog(LOG_ERR, "Invalid opcode 0x%02X", GET(cpu->reg[PC]));
