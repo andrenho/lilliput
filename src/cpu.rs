@@ -65,6 +65,8 @@ impl CPU {
         match computer.get(pc) {
             0x01 => (Instruction::MOV, vec![Par::Reg(computer.get(pc+1) >> 4), Par::Reg(computer.get(pc+1) & 0xFF) ], 2),
             0x02 => (Instruction::MOV, vec![Par::Reg(computer.get(pc+1)), Par::V8(computer.get(pc+2)) ], 3),
+            0x03 => (Instruction::MOV, vec![Par::Reg(computer.get(pc+1)), Par::V16(computer.get16(pc+2)) ], 4),
+            0x04 => (Instruction::MOV, vec![Par::Reg(computer.get(pc+1)), Par::V32(computer.get32(pc+2)) ], 6),
             _    => panic!(format!("Invalid instruction 0x{:02x}", computer.get(pc)))
         }
     }
@@ -73,14 +75,21 @@ impl CPU {
         match par {
             &Par::Reg(v) => self.register[v as usize],
             &Par::V8(v)  => v as u32,
+            &Par::V16(v) => v as u32,
+            &Par::V32(v) => v,
             _            => unimplemented!()
         }
     }
 
-    fn affect(&mut self, value: u32) {
-    }
-
     fn apply(&mut self, par: &Par, value: u32, cmds: &mut Vec<Command>) {
+        self.set_flag(Flag::Z, value == 0);
+        self.set_flag(Flag::P, (value % 2) == 0);
+        self.set_flag(Flag::S, ((value >> 31) & 1) == 1);
+        self.set_flag(Flag::V, false);
+        self.set_flag(Flag::Y, false);
+        self.set_flag(Flag::GT, false);
+        self.set_flag(Flag::LT, false);
+
         match par {
             &Par::Reg(v) => self.register[v as usize] = value,
             _            => unimplemented!()
@@ -90,9 +99,9 @@ impl CPU {
 }
 
 impl Device for CPU {
-    fn get(&self, _pos: u32) -> u8 { return 0x0; }
+    fn get(&self, _pos: u32) -> u8 { 0x0 }
     fn set(&mut self, _pos: u32, _data: u8) {}
-    fn size(&self) -> u32 { return 0x0; }
+    fn size(&self) -> u32 { 0x0 }
 
     fn step(&mut self, computer: &Computer, _dt: &Duration, cmds: &mut Vec<Command>) {
 
@@ -100,7 +109,6 @@ impl Device for CPU {
         match instruction {
             Instruction::MOV => { 
                 let value = self.take(&pars[1]);
-                self.affect(value);
                 self.apply(&pars[0], value, cmds);
             },
         }
@@ -151,7 +159,7 @@ mod tests {
         }
 
         fn parse_u32(par: &str) -> u32 {
-            if &par[0..2] == "0x" {
+            if par.len() >= 2 && &par[0..2] == "0x" {
                 u32::from_str_radix(&par[2..], 16).unwrap()
             } else {
                 par.parse::<u32>().unwrap()
@@ -402,7 +410,23 @@ mod tests {
         assert_eq!(reg!(computer.cpu(), A), 0x42);
 
         let computer2 = prepare_cpu(|_|(), "mov A, 0x34");
-        assert_eq!(reg!(computer.cpu(), A), 0x34);
+        assert_eq!(reg!(computer2.cpu(), A), 0x34);
+
+        let computer3 = prepare_cpu(|_|(), "mov A, 0x1234");
+        assert_eq!(reg!(computer3.cpu(), A), 0x1234);
+
+        let computer4 = prepare_cpu(|_|(), "mov A, 0xFABC1234");
+        assert_eq!(reg!(computer4.cpu(), A), 0xFABC1234);
+
+        let computer5 = prepare_cpu(|_|(), "mov A, 0");
+        assert_eq!(computer5.cpu().flag(Flag::Z), true);
+        assert_eq!(computer5.cpu().flag(Flag::P), true);
+        assert_eq!(computer5.cpu().flag(Flag::S), false);
+
+        let computer6 = prepare_cpu(|_|(), "mov A, 0xF0000001");
+        assert_eq!(computer5.cpu().flag(Flag::Z), false);
+        assert_eq!(computer6.cpu().flag(Flag::P), false);
+        assert_eq!(computer6.cpu().flag(Flag::S), true);
     }
 }
 // }}}
