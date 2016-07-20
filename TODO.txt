@@ -1,6 +1,8 @@
-dgb instruction
+dbg instruction
 ROM loader
 Debugger
+Documentation
+---
 Interrupts
 Pending opcodes: halt, iret
 Timers
