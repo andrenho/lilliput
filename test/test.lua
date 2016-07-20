@@ -833,7 +833,24 @@ function cpu_tests()
         comp:step()
         equals(cpu.PC, 0x205, "ret")
         equals(cpu.SP, 0xFFF, "SP")
+    end
 
+
+    function breakpoints()
+        print("# breakpoints")
+
+        local comp = computer()
+        local cpu = comp.cpu[1]
+
+        cpu:add_breakpoint(0xFF)
+        equals(cpu:is_breakpoint(0x00), false, "breakpoint in 0x00")
+        equals(cpu:is_breakpoint(0xFF), true, "breakpoint in 0xFF (added)")
+
+        cpu:remove_breakpoint(0xFF)
+        equals(cpu:is_breakpoint(0xFF), false, "breakpoint in 0xFF (removed)")
+
+        run(comp, "dbg")
+        equals(cpu:is_breakpoint(0x1), true)
     end
 
     -- TODO - interrupt
@@ -850,6 +867,7 @@ function cpu_tests()
     stack()
     others()
     subroutines()
+    breakpoints()
 
 end
 
