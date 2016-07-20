@@ -9,6 +9,7 @@ pub enum Register { A, B, C, D, E, F, G, H, I, J, K, L, FP, SP, PC, FL }
 pub enum Flag { Y, V, Z, S, GT, LT, P, T }
 
 // parameters
+#[derive(Debug)]
 enum Par { Reg(u8), IndReg(u8), V8(u8), V16(u16), V32(u32), IndV32(u32) }
 impl PartialEq for Par { // {{{ PartialEq
     /* I couldn't find any better way to do that in Rust. This sucks. */
@@ -24,6 +25,10 @@ impl PartialEq for Par { // {{{ PartialEq
         }
     }
 } // }}}
+
+enum Instruction {
+    MOV
+}
 
 //
 // CPU
@@ -55,9 +60,31 @@ impl CPU {
         self.register[Register::FL as usize] ^= (!x ^ self.register[Register::FL as usize]) & (1 << (f as usize));
     }
 
-    fn parse_opcode(&self, computer: &mut Computer) {
+    fn parse_opcode(&self, computer: &Computer) -> (Instruction, Vec<Par>, u32) {
         let pc = reg!(self, PC);
+        match computer.get(pc) {
+            0x01 => (Instruction::MOV, vec![Par::Reg(computer.get(pc+1) >> 4), Par::Reg(computer.get(pc+1) & 0xFF) ], 2),
+            _    => panic!(format!("Invalid instruction 0x{:02x}", computer.get(pc)))
+        }
     }
+
+    fn take(&self, par: &Par) -> u32 {
+        match par {
+            &Par::Reg(v) => self.register[v as usize],
+            _            => unimplemented!()
+        }
+    }
+
+    fn affect(&mut self, value: u32) {
+    }
+
+    fn apply(&mut self, par: &Par, value: u32, cmds: &mut Vec<Command>) {
+        match par {
+            &Par::Reg(v) => self.register[v as usize] = value,
+            _            => unimplemented!()
+        };
+    }
+
 }
 
 impl Device for CPU {
@@ -65,8 +92,16 @@ impl Device for CPU {
     fn set(&mut self, _pos: u32, _data: u8) {}
     fn size(&self) -> u32 { return 0x0; }
 
-    fn step(&mut self, _computer: &mut Computer, _dt: &Duration) {
-        
+    fn step(&mut self, computer: &Computer, _dt: &Duration, cmds: &mut Vec<Command>) {
+
+        let (instruction, pars, sz) = self.parse_opcode(computer);
+        match instruction {
+            Instruction::MOV => { 
+                let value = self.take(&pars[1]);
+                self.affect(value);
+                self.apply(&pars[0], value, cmds);
+            },
+        }
     }
 }
 
@@ -358,7 +393,7 @@ mod tests {
 
     #[test]
     fn MOV() {
-        let computer = prepare_cpu(|comp| reg!(comp.cpu_mut(), A = 0x42), "mov A, B");
+        let computer = prepare_cpu(|comp| reg!(comp.cpu_mut(), B = 0x42), "mov A, B");
         assert_eq!(reg!(computer.cpu(), A), 0x42);
     }
 }

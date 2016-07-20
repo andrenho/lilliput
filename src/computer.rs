@@ -9,6 +9,12 @@ use cpu::*;
 
 const PHYSICAL_MEMORY_LIMIT: u32 = 0xF0000000;
 
+pub enum Command {
+    Set8(u32, u8),
+    Set16(u32, u16),
+    Set32(u32, u32),
+}
+
 struct MemoryLocation {
     location: u32,
     size: u32,
@@ -149,8 +155,17 @@ impl Computer {
         };
         self.last_time = now;
 
-        for dev in &mut self.devices {
-            dev.device.borrow_mut().step(&mut self, &frame_time);
+        let mut cmds : Vec<Command> = vec![];
+        for dev in &self.devices {
+            dev.device.borrow_mut().step(&self, &frame_time, &mut cmds);
+        }
+
+        for cmd in cmds {
+            match cmd {
+                Command::Set8(pos, data)  => self.set(pos, data),
+                Command::Set16(pos, data) => self.set16(pos, data),
+                Command::Set32(pos, data) => self.set32(pos, data),
+            }
         }
     }
 }
@@ -162,7 +177,7 @@ mod tests { // {{{
     use std::cell::RefCell;
     use std::time::Duration;
 
-    use super::Computer;
+    use super::*;
     use device::Device;
 
     #[test]
@@ -197,7 +212,7 @@ mod tests { // {{{
         fn get(&self, pos: u32) -> u8 { return pos as u8; }
         fn set(&mut self, _pos: u32, _data: u8) {}
         fn size(&self) -> u32 { return 0x100; }
-        fn step(&mut self, _computer: &mut Computer, _dt: &Duration) {}
+        fn step(&mut self, _computer: &Computer, _dt: &Duration, cmds: &mut Vec<Command>) {}
     }
 
     #[test]
