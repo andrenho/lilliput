@@ -64,6 +64,7 @@ impl CPU {
         let pc = reg!(self, PC);
         match computer.get(pc) {
             0x01 => (Instruction::MOV, vec![Par::Reg(computer.get(pc+1) >> 4), Par::Reg(computer.get(pc+1) & 0xFF) ], 2),
+            0x02 => (Instruction::MOV, vec![Par::Reg(computer.get(pc+1)), Par::V8(computer.get(pc+2)) ], 3),
             _    => panic!(format!("Invalid instruction 0x{:02x}", computer.get(pc)))
         }
     }
@@ -71,6 +72,7 @@ impl CPU {
     fn take(&self, par: &Par) -> u32 {
         match par {
             &Par::Reg(v) => self.register[v as usize],
+            &Par::V8(v)  => v as u32,
             _            => unimplemented!()
         }
     }
@@ -102,6 +104,9 @@ impl Device for CPU {
                 self.apply(&pars[0], value, cmds);
             },
         }
+
+        let pc = reg!(self, PC);
+        reg!(self, PC = pc + sz);
     }
 }
 
@@ -395,6 +400,9 @@ mod tests {
     fn MOV() {
         let computer = prepare_cpu(|comp| reg!(comp.cpu_mut(), B = 0x42), "mov A, B");
         assert_eq!(reg!(computer.cpu(), A), 0x42);
+
+        let computer2 = prepare_cpu(|_|(), "mov A, 0x34");
+        assert_eq!(reg!(computer.cpu(), A), 0x34);
     }
 }
 // }}}
