@@ -427,6 +427,13 @@ static int destroy_computer(lua_State* L)
 }
 
 
+static int computer_loadrom(lua_State* L)
+{
+    lua_pushboolean(L, lvm_loadromfile(get_object_ptr(L, 1), luaL_checkstring(L, 2)));
+    return 1;
+}
+
+
 static int create_computer(lua_State* L)
 {
     int n_args = lua_gettop(L);
@@ -434,15 +441,16 @@ static int create_computer(lua_State* L)
     uint32_t sz = luaL_checkinteger(L, 1);
     LVM_Computer* comp = lvm_computercreate(sz);
     create_object(L, "LVM_Computer", comp, (struct luaL_Reg[]) {
-        { "get",     computer_get    },
-        { "get16",   computer_get16  },
-        { "get32",   computer_get32  },
-        { "set",     computer_set    },
-        { "set16",   computer_set16  },
-        { "set32",   computer_set32  },
-        { "add_cpu", computer_addcpu },
-        { "step",    computer_step   },
-        { "reset",   computer_reset  },
+        { "get",      computer_get     },
+        { "get16",    computer_get16   },
+        { "get32",    computer_get32   },
+        { "set",      computer_set     },
+        { "set16",    computer_set16   },
+        { "set32",    computer_set32   },
+        { "add_cpu",  computer_addcpu  },
+        { "step",     computer_step    },
+        { "reset",    computer_reset   },
+        { "load_rom", computer_loadrom }, 
         { NULL, NULL },
     });
 

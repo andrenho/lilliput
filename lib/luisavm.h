@@ -41,6 +41,9 @@ uint32_t      lvm_offset(LVM_Computer* comp);
 LVM_CPU*      lvm_addcpu(LVM_Computer* comp);
 LVM_CPU*      lvm_cpu(LVM_Computer* comp, size_t n);
 
+void          lvm_loadrom(LVM_Computer* comp, uint32_t sz, uint8_t* data);
+bool          lvm_loadromfile(LVM_Computer* comp, const char* filename);
+
 // 
 // CPU
 //
