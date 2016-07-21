@@ -48,13 +48,16 @@ static uint32_t upload_sprite(uint16_t w, uint16_t h, uint8_t* data)
     Uint32 amask = 0x000000ff;
 
     SDL_Surface* sf = SDL_CreateRGBSurface(0, w, h, 32, rmask, gmask, bmask, amask);
+    SDL_SetColorKey(sf, SDL_TRUE, 0x00000000);
     for(size_t x=0; x<w; ++x) {
         for(size_t y=0; y<h; ++y) {
-            // TODO - draw points directly
             uint8_t idx = data[x+(y*w)];
-            SDL_FillRect(sf, 
-                    &(SDL_Rect) { (int)x, (int)y, 1, 1 },
-                    ((Uint32)pal[idx].r << 24) | ((Uint32)pal[idx].g << 16) | ((Uint32)pal[idx].b << 8) | 0xFF);
+            Uint32* target = (Uint32*)((Uint8*)sf->pixels + (y * (size_t)sf->pitch) + (x * 4));
+            if(idx != 0xFF) {
+                *target = ((Uint32)pal[idx].r << 24) | ((Uint32)pal[idx].g << 16) | ((Uint32)pal[idx].b << 8) | 0xFF;
+            } else {
+                *target = 0x00000000;
+            }
         }
     }
 
@@ -69,6 +72,7 @@ static uint32_t upload_sprite(uint16_t w, uint16_t h, uint8_t* data)
 
 static void draw_sprite(uint32_t sprite_idx, uint16_t pos_x, uint16_t pos_y)
 {
+    assert(sprite_idx > 0);
     assert(sprites.sprite[sprite_idx-1]);
 
     Uint32 format;
