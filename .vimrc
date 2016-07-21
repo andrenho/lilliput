@@ -11,7 +11,7 @@ set foldmethod=marker
 set makeprg=clear\ \&\&\ make
 nnoremap <Leader>T :!clear && make test<cr>
 nnoremap <Leader>C :make! clean<cr>
-nnoremap <Leader>r :!clear && ./lilliput<cr>
+nnoremap <Leader>r :!clear && make debug && ./luisavm<cr>
 nnoremap <Leader>G :!git commit -a && git push<CR>
 
 " open all files
