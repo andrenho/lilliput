@@ -16,6 +16,8 @@ typedef struct Video {
     uint32_t char_bg[16];
 } Video;
 
+extern uint32_t default_palette[255];
+
 static void video_draw_char(Video* video, uint8_t c, uint16_t x, uint16_t y, uint8_t fg, uint8_t bg);
 
 // 
@@ -27,11 +29,14 @@ video_init(VideoCallbacks cbs)
 {
     Video* video = calloc(sizeof(Video), 1);
     video->cb = cbs;
-    
-    // initialize palette (TODO)
-    video->cb.setpal(0, 0, 0, 0);
-    video->cb.setpal(1, 255, 255, 255);
-    video->cb.setpal(2, 64, 0, 0);
+
+    // initialize palette
+    for(uint8_t i=0; i<255; ++i) {
+        video->cb.setpal(i, 
+                (uint8_t)(default_palette[i] >> 16),
+                (uint8_t)((default_palette[i] >> 8) & 0xFF),
+                (uint8_t)(default_palette[i] & 0xFF));
+    }
     video->cb.clrscr(0);
 
     // create backgrounds
@@ -40,6 +45,7 @@ video_init(VideoCallbacks cbs)
         memset(bg, i, CHAR_W * CHAR_H);
         video->char_bg[i] = video->cb.upload_sprite(CHAR_W, CHAR_H, bg);
     }
+    video_draw_char(video, '0', 0, 0, 10, 0);
 
     syslog(LOG_DEBUG, "Video created.");
 

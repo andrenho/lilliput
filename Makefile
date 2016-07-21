@@ -3,7 +3,7 @@ VERSION = 0.0.1
 VPATH := src lib
 
 OBJS_EXE := main.o
-OBJS_LIB := log.o cpu.o computer.o device.o rom.o video.o
+OBJS_LIB := log.o cpu.o computer.o device.o rom.o video.o palette.o
 
 #
 # compilation options
