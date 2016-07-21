@@ -22,15 +22,12 @@ e src/main.c
 args Makefile
 args src/*.h
 args src/*.c
-args test/tests.py
+args lib/luisavm.h
+args lib/*.c
 args .vimrc
 b 1
 map <Leader>x   :b src/main.c<CR>
-map <Leader>c   :b src/cpu.c<CR>
-map <Leader>m   :b src/memory.c<CR>
-map <Leader>v   :b src/video.c<CR>
-map <Leader>d   :b src/debugger.c<CR>
-map <Leader>t   :b test/tests.py<CR>
+map <Leader>m   :b lib/computer.c<CR>
 map <Leader>M   :b Makefile<CR>
 map <Leader>V   :b .vimrc<CR>
 

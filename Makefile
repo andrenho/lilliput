@@ -1,23 +1,26 @@
 VERSION = 0.0.1
 
-VPATH := src
-OBJS := main.o config.o video.o chars.o memory.o rom.o cpu.o debugger.o
+VPATH := src lib
+
+OBJS_EXE := main.o
+OBJS_LIB := computer.o
 
 #
 # compilation options
 #
-CPPFLAGS = -std=c11 -DVERSION=\"$(VERSION)\" -D_GNU_SOURCE
+CFLAGS = -std=c11 -DVERSION=\"$(VERSION)\" -D_GNU_SOURCE
 ifdef FORCE_COLOR
-  CPPFLAGS += -fdiagnostics-color=always
+  CFLAGS += -fdiagnostics-color=always
 else
-  CPPFLAGS += -fdiagnostics-color
+  CFLAGS += -fdiagnostics-color
 endif
 
 #
 # add cflags/libraries
 #
-CPPFLAGS += `pkg-config --cflags sdl2`
-LDFLAGS  += -fuse-ld=gold `pkg-config --libs sdl2`
+CFLAGS += -fpic -Ilib
+#CFLAGS += `pkg-config --cflags sdl2`
+#LDFLAGS  += -fuse-ld=gold `pkg-config --libs sdl2`
 
 #
 # add warnings
@@ -37,15 +40,15 @@ all:
 
 debug: TARGET_CFLAGS = -g -ggdb3 -O0 -DDEBUG -fno-inline-functions
 debug: TARGET_LDFLAGS = -g
-debug: lilliput
+debug: luisavm libluisavm.so
 
 release: TARGET_CFLAGS = -DNDEBUG -Ofast -fomit-frame-pointer -ffast-math -mfpmath=sse -fPIC -msse -msse2 -msse3 -mssse3 -msse4 -flto
 release: TARGET_LDFLAGS = -flto -Wl,--strip-all
-release: lilliput
+release: luisavm libluisavm.so
 
 profile: TARGET_CFLAGS = -g -ggdb3 -O0 -DDEBUG -fno-inline-functions -pg
 profile: TARGET_LDFLAGS = -g -pg
-profile: lilliput
+profile: luisavm
 
 #
 # pull dependence info from existing .o files
@@ -56,8 +59,8 @@ profile: lilliput
 # compile source files
 #
 %.o: %.c
-	$(CC) -c $(CPPFLAGS) $(CFLAGS) $(WARNINGS) $(TARGET_CFLAGS) $<
-	$(CC) -MM $(CPPFLAGS) $(CFLAGS) $< > $*.d
+	$(CC) -c $(CFLAGS) $(WARNINGS) $(TARGET_CFLAGS) $<
+	@$(CC) -MM $(CFLAGS) $< > $*.d
 	@mv -f $*.d $*.d.tmp
 	@sed -e 's|.*:|$*.o:|' < $*.d.tmp > $*.d
 	@cp -f $*.d $*.d.tmp
@@ -74,40 +77,50 @@ data/font.bmp: data/font.png
 src/font.h: data/font.bmp
 	xxd -i $< > $@
 
-src/chars.c: src/font.h
 
 #
 # link
 #
-lilliput: $(OBJS)
-	$(CC) $^ -o $@ $(TARGET_LDFLAGS) $(LDFLAGS)
+luisavm: libluisavm.so $(OBJS_EXE)
+	$(CC) $(OBJS_EXE) -o $@ $(TARGET_LDFLAGS) $(LDFLAGS) -Wl,-rpath=. -L. -lluisavm
+
+libluisavm.so: $(OBJS_LIB)
+	$(CC) -shared $^ -o $@ $(TARGET_LDFLAGS) $(LDFLAGS)
+
+bindings/lua/luisavm.so: bindings/lua/luisavm.c
+	$(CC) $^ -shared -o $@ -fpic `pkg-config --cflags --libs lua`
 
 # 
 # install
 #
-install: lilliput
-	cp lilliput /usr/local/bin/
+install: luisavm
+	cp libluisavm.so /usr/lib
+	cp luisavm /usr/local/bin/
+	cp lib/luisavm.h /usr/local/include
+	ldconfig
 
 uninstall:
-	rm /usr/local/bin/lilliput
+	rm /usr/lib/libluisavm.so
+	rm /usr/local/bin/luisavm
+	rm /usr/local/include/luisavm.h
 
 #
 # other rules
 #
-test: debug
-	@python3 test/tests.py
+test: bindings/lua/luisavm.so
+	@LUA_CPATH="$LUA_CPATH;bindings/lua/?.so" lua test/test.lua
 
 cloc:
 	cloc Makefile src/*.h src/*.c
 
 check-leaks: debug
-	valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes --suppressions=build/lilliput.supp ./lilliput -D
+	valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes --suppressions=build/luisavm.supp ./luisavm -D
 
 gen-suppressions: debug
-	valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes --error-limit=no --gen-suppressions=all --log-file=build/lilliput.supp ./lilliput -D
-	sed -i -e '/^==.*$$/d' build/lilliput.supp
+	valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes --error-limit=no --gen-suppressions=all --log-file=build/luisavm.supp ./luisavm -D
+	sed -i -e '/^==.*$$/d' build/luisavm.supp
 
 clean:
-	rm -f lilliput *.o *.d
+	rm -f luisavm libluisavm.so *.o *.d
 
-.PHONY: debug release profile cloc check-leaks gen-suppressions clean install
+.PHONY: debug release profile cloc check-leaks gen-suppressions clean install test
