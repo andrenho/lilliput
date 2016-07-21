@@ -11,6 +11,7 @@
 #define BORDER  10
 #define ZOOM     3
 
+static SDL_Window* window = NULL;
 static SDL_Renderer* ren = NULL;
 static SDL_Color pal[256] = { 0 };
 
@@ -37,6 +38,17 @@ static void clrscr(uint8_t color)
 {
     SDL_SetRenderDrawColor(ren, pal[color].r, pal[color].g, pal[color].b, SDL_ALPHA_OPAQUE);
     SDL_RenderFillRect(ren, &(SDL_Rect) { BORDER * ZOOM, BORDER * ZOOM, WIDTH * ZOOM, HEIGHT * ZOOM });
+}
+
+
+static void change_border_color(uint8_t color)
+{
+    int w, h; SDL_GetWindowSize(window, &w, &h);
+    SDL_SetRenderDrawColor(ren, pal[color].r, pal[color].g, pal[color].b, SDL_ALPHA_OPAQUE);
+    SDL_RenderFillRect(ren, &(SDL_Rect) { 0, 0, w, BORDER * ZOOM });
+    SDL_RenderFillRect(ren, &(SDL_Rect) { 0, h - (BORDER * ZOOM), w, BORDER * ZOOM });
+    SDL_RenderFillRect(ren, &(SDL_Rect) { 0, 0, BORDER * ZOOM, h });
+    SDL_RenderFillRect(ren, &(SDL_Rect) { w - (BORDER * ZOOM), 0, BORDER * ZOOM, h });
 }
 
 
@@ -114,7 +126,7 @@ int main()
         exit(EXIT_FAILURE);
     }
 
-    SDL_Window* window = SDL_CreateWindow("luisavm " VERSION, 
+    window = SDL_CreateWindow("luisavm " VERSION, 
             SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
             (WIDTH + (2*BORDER)) * ZOOM, (HEIGHT + (2 * BORDER)) * ZOOM, 0);
     if(!window) {
@@ -139,6 +151,7 @@ int main()
     lvm_setupvideo(computer, (VideoCallbacks) {
         CB(setpal),
         CB(clrscr),
+        CB(change_border_color),
         CB(upload_sprite),
         CB(draw_sprite),
     });

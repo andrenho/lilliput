@@ -37,6 +37,7 @@ video_init(VideoCallbacks cbs)
                 (uint8_t)((default_palette[i] >> 8) & 0xFF),
                 (uint8_t)(default_palette[i] & 0xFF));
     }
+    video->cb.change_border_color(0);
     video->cb.clrscr(0);
 
     // create backgrounds
@@ -45,7 +46,6 @@ video_init(VideoCallbacks cbs)
         memset(bg, i, CHAR_W * CHAR_H);
         video->char_bg[i] = video->cb.upload_sprite(CHAR_W, CHAR_H, bg);
     }
-    video_draw_char(video, '0', 0, 0, 10, 0);
 
     syslog(LOG_DEBUG, "Video created.");
 

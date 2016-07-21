@@ -47,6 +47,7 @@ bool          lvm_loadromfile(LVM_Computer* comp, const char* filename);
 typedef struct VideoCallbacks {
     void    (*setpal)(uint8_t idx, uint8_t r, uint8_t g, uint8_t b);
     void    (*clrscr)(uint8_t color);
+    void    (*change_border_color)(uint8_t color);
     uint32_t(*upload_sprite)(uint16_t w, uint16_t h, uint8_t* data);
     void    (*draw_sprite)(uint32_t sprite, uint16_t pos_x, uint16_t pos_y);
 } VideoCallbacks;
