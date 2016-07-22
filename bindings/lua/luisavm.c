@@ -32,7 +32,7 @@ static void inspect(lua_State* L, int i)
                 printf("{ ");
                 lua_pushnil(L);  // first key
                 while(lua_next(L, i) != 0) {
-                    printf("["); inspect(L, -2); printf("] = "); inspect(L, -1); printf(", ");
+                    printf("["); inspect(L, lua_absindex(L, -2)); printf("] = "); inspect(L, lua_absindex(L, -1)); printf(", ");
                     lua_pop(L, 1);
                 }
                 printf("}");
@@ -53,6 +53,7 @@ static void dump_stack(lua_State *L)
         inspect(L, i);
         printf("\n");
     }
+    printf("---------------------\n");
 }
 
 static int assert_stack(lua_State* L, int n, int extra)
@@ -100,14 +101,25 @@ void* get_object_ptr(lua_State* L, int n)
 // CPU
 //
 
+// {{{
+
 static int computer_addcpu(lua_State* L)
 {
-    LVM_CPU* cpu = lvm_addcpu((LVM_Computer*)get_object_ptr(L, 1));
+    LVM_Computer* comp = get_object_ptr(L, 1);
+    LVM_CPU* cpu = lvm_addcpu(comp);
+    
+    lua_getfield(L, 1, "cpu");
     create_object(L, "LVM_CPU", cpu, (struct luaL_Reg[]) {
         { NULL, NULL }
     });
-    return 1;
+
+    lua_seti(L, -2, luaL_len(L, 1)+1);
+    lua_pop(L, 1);
+
+    return 0;
 }
+
+// }}}
 
 // 
 // PHYSICAL MEMORY
@@ -272,6 +284,10 @@ static int create_computer(lua_State* L)
     lua_setfield(L, -2, "__sz");
     luaL_setmetatable(L, "LVM_PhysicalMemory");
     lua_setfield(L, -2, "physical_memory");
+
+    // cpus
+    lua_newtable(L);
+    lua_setfield(L, -2, "cpu");
 
     return assert_stack(L, 1, n_args);
 }
