@@ -84,16 +84,18 @@ static void
 logical_update(Debugger* dbg)
 {
     print(dbg, 0, 0, 10, 0, "Logical memory");
-    draw_box(dbg, 0, 1, 48, 24, 10, 0);
+    draw_box(dbg, 1, 1, 49, 23, 10, 0);
 
     // addresses
-    for(uint32_t addr=0; addr<22; ++addr) {
-        print(dbg, 2, addr+2, 10, 0, "%08X:", addr);
+    for(uint32_t addr=0; addr<21; ++addr) {
+        print(dbg, 3, addr+2, 10, 0, "%08X:", addr);
         for(int i=0; i<8; ++i) {
-            print(dbg, 13 + (i*3), addr+2, 10, 0, "%02X", 0);
-            print(dbg, 39 + i, addr+2, 10, 0, ".");
+            print(dbg, 14 + (i*3), addr+2, 10, 0, "%02X", 0);
+            print(dbg, 40 + i, addr+2, 10, 0, ".");
         }
     }
+
+    print(dbg, 34, 24, 10, 0, "Offset: %08X", 0);
 }
 
 // }}}
