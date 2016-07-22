@@ -76,4 +76,10 @@ void        lvm_addbreakpoint(LVM_CPU* cpu, uint32_t pos);
 void        lvm_removebreakpoint(LVM_CPU* cpu, uint32_t pos);
 bool        lvm_isbreakpoint(LVM_CPU* cpu, uint32_t pos);
 
+//
+// DEBUGGER
+//
+bool        lvm_debuggeractive(LVM_Computer* computer);
+void        lvm_debuggerupdate(LVM_Computer* computer);
+
 #endif

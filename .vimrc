@@ -30,6 +30,7 @@ map <Leader>h   :b lib/luisavm.h<CR>
 map <Leader>m   :b lib/computer.c<CR>
 map <Leader>c   :b lib/cpu.c<CR>
 map <Leader>v   :b lib/video.c<CR>
+map <Leader>d   :b lib/debugger.c<CR>
 map <Leader>t   :b test/test.lua<CR>
 map <Leader>l   :b bindings/lua/luisavm.c<CR>
 map <Leader>M   :b Makefile<CR>

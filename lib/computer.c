@@ -8,6 +8,7 @@
 #include <time.h>
 
 #include "device.h"
+#include "debugger.h"
 
 #define ROM_POSITION 0xEF000000
 #define VIDEO_POSITION 0xF8000000
@@ -21,8 +22,6 @@ extern void lvm_cpustep(LVM_CPU* cpu);
 extern void lvm_cpureset(LVM_CPU* cpu);
 extern LVM_Device* rom_dev_init(uint32_t sz, uint8_t* data_new_ownership);
 extern LVM_Device* video_dev_init(VideoCallbacks cbs);
-extern LVM_Device* debugger_dev_init(bool active);
-static void lvm_adddevice(LVM_Computer* comp, LVM_Device* dev, uint32_t pos);
 
 typedef struct Device {
     LVM_Device* device;
@@ -35,6 +34,8 @@ typedef struct LVM_Computer {
     uint32_t  offset;
     Device**  device;
     LVM_CPU** cpu;
+    Video*    video;
+    Debugger* debugger;
     struct timespec last_step;
 } LVM_Computer;
 
@@ -48,9 +49,8 @@ lvm_computercreate(uint32_t physical_memory_size, bool debugger_active)
     comp->physical_memory_size = physical_memory_size;
     comp->device = calloc(1, sizeof(LVM_Device*));
     comp->cpu = calloc(1, sizeof(LVM_CPU*));
+    comp->debugger = debugger_init(comp, debugger_active);
     clock_gettime(CLOCK_MONOTONIC, &comp->last_step);
-
-    lvm_adddevice(comp, debugger_dev_init(debugger_active), 0);
 
     syslog(LOG_DEBUG, "Computer created with %d kB of physical memory.", physical_memory_size / 1024);
     return comp;
@@ -61,6 +61,7 @@ void
 lvm_computerdestroy(LVM_Computer* comp)
 {
     size_t i = 0;
+    debugger_free(comp->debugger);
     while(comp->device[i]) {
         device_free(comp->device[i]->device);
         free(comp->device[i++]);
@@ -354,7 +355,33 @@ lvm_loadromfile(LVM_Computer* comp, const char* filename)
 void lvm_setupvideo(LVM_Computer* comp, VideoCallbacks cbs)
 {
     LVM_Device* dev = video_dev_init(cbs);
+    comp->video = (Video*)dev->ptr;
     lvm_adddevice(comp, dev, VIDEO_POSITION);
+}
+
+void lvm_draw_char(LVM_Computer* comp, uint8_t c, uint16_t x, uint16_t y, uint8_t fg, uint8_t bg)
+{
+    extern void video_draw_char(Video* video, uint8_t c, uint16_t x, uint16_t y, uint8_t fg, uint8_t bg);
+    if(comp->video) {
+        video_draw_char(comp->video, c, x, y, fg, bg);
+    }
+}
+
+// }}}
+
+// {{{ DEBUGGER
+
+bool
+lvm_debuggeractive(LVM_Computer* computer)
+{
+    return debugger_active(computer->debugger);
+}
+
+
+void
+lvm_debuggerupdate(LVM_Computer* computer)
+{
+    debugger_update(computer->debugger);
 }
 
 // }}}

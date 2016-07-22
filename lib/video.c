@@ -18,8 +18,6 @@ typedef struct Video {
 
 extern uint32_t default_palette[255];
 
-static void video_draw_char(Video* video, uint8_t c, uint16_t x, uint16_t y, uint8_t fg, uint8_t bg);
-
 // 
 // CONSTRUCTORS
 //
@@ -97,7 +95,7 @@ load_char_sprite(Video* video, uint8_t c, uint8_t fg)
 }
 
 
-static void
+void
 video_draw_char(Video* video, uint8_t c, uint16_t x, uint16_t y, uint8_t fg, uint8_t bg)
 {
     video->cb.draw_sprite(video->char_bg[bg], (uint16_t)(x * CHAR_W), (uint16_t)(y * CHAR_H));

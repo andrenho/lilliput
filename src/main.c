@@ -9,11 +9,11 @@
 #define WIDTH  318
 #define HEIGHT 234
 #define BORDER  10
-#define ZOOM     3
+#define ZOOM     2
 
 static SDL_Window* window = NULL;
 static SDL_Renderer* ren = NULL;
-static SDL_Color pal[256] = { 0 };
+static SDL_Color pal[256];
 
 typedef struct Sprites {
     uint32_t n_sprites;
@@ -22,9 +22,7 @@ typedef struct Sprites {
 static Sprites sprites = { 0, NULL };
 
 
-//
-// CALLBACKS
-//
+// {{{ CALLBACKS
 
 static void setpal(uint8_t idx, uint8_t r, uint8_t g, uint8_t b)
 {
@@ -64,7 +62,10 @@ static uint32_t upload_sprite(uint16_t w, uint16_t h, uint8_t* data)
     for(size_t x=0; x<w; ++x) {
         for(size_t y=0; y<h; ++y) {
             uint8_t idx = data[x+(y*w)];
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wcast-align"
             Uint32* target = (Uint32*)((Uint8*)sf->pixels + (y * (size_t)sf->pitch) + (x * 4));
+#pragma GCC diagnostic pop
             if(idx != 0xFF) {
                 *target = ((Uint32)pal[idx].r << 24) | ((Uint32)pal[idx].g << 16) | ((Uint32)pal[idx].b << 8) | 0xFF;
             } else {
@@ -94,9 +95,9 @@ static void draw_sprite(uint32_t sprite_idx, uint16_t pos_x, uint16_t pos_y)
             &(SDL_Rect) { (pos_x+BORDER) * ZOOM, (pos_y+BORDER) * ZOOM, w * ZOOM, h * ZOOM });
 }
 
-// 
-// MAIN
-//
+// }}}
+
+// {{{ EVENTS
 
 static bool get_events(LVM_Computer* comp)
 {
@@ -112,6 +113,9 @@ static bool get_events(LVM_Computer* comp)
     return true;
 }
 
+// }}}
+
+// {{{ MAIN
 
 int main()
 {
@@ -145,7 +149,7 @@ int main()
     SDL_RenderPresent(ren);
 
     //
-    // setup video device
+    // setup devices
     //
 #define CB(name) .name = name
     lvm_setupvideo(computer, (VideoCallbacks) {
@@ -163,13 +167,22 @@ int main()
 
     Uint32 last_frame = SDL_GetTicks();
     while(1) {
-        lvm_step(computer, 0);
-        if(SDL_GetTicks() >= last_frame + 16) {
-            last_frame = SDL_GetTicks();
+        if(!lvm_debuggeractive(computer)) {
+            lvm_step(computer, 0);
+            if(SDL_GetTicks() >= last_frame + 16) {
+                last_frame = SDL_GetTicks();
+                SDL_RenderPresent(ren);
+                if(get_events(computer) == 0) {
+                    break;
+                }
+            }
+        } else {
+            lvm_debuggerupdate(computer);
             SDL_RenderPresent(ren);
             if(get_events(computer) == 0) {
                 break;
             }
+            SDL_Delay(1);
         }
     }
 
@@ -189,3 +202,5 @@ int main()
 
     lvm_computerdestroy(computer);
 }
+
+// }}}

@@ -11,7 +11,7 @@ uint32_t default_palette[255] = {
     0x707880,  // dark white  (light gray)
     0x373b41,  // light black (dark gray)
     0xcc6666,  // light red
-    0x35cd38,  // light green
+    0x25d048,  // light green
     0xf0c674,  // light yellow
     0x81a2be,  // light blue
     0xb294bb,  // light purple
