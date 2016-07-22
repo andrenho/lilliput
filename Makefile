@@ -87,8 +87,8 @@ luisavm: libluisavm.so $(OBJS_EXE)
 libluisavm.so: $(OBJS_LIB)
 	$(CC) -shared $^ -o $@ $(TARGET_LDFLAGS) $(LDFLAGS)
 
-bindings/lua/luisavm.so: bindings/lua/luisavm.c
-	$(CC) $^ -shared -o $@ -fpic `pkg-config --cflags --libs lua`
+bindings/lua/luisavm.so: bindings/lua/luisavm.c libluisavm.so
+	$(CC) $? -shared -o $@ $(CFLAGS) `pkg-config --cflags --libs lua` -Wl,-rpath=. -L. -lluisavm
 
 # 
 # install
@@ -121,6 +121,6 @@ gen-suppressions: debug
 	sed -i -e '/^==.*$$/d' build/luisavm.supp
 
 clean:
-	rm -f luisavm libluisavm.so *.o *.d
+	rm -f luisavm libluisavm.so *.o *.d bindings/lua/luisavm.so
 
 .PHONY: debug release profile cloc check-leaks gen-suppressions clean install test
