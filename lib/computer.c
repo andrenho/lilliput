@@ -10,8 +10,9 @@
 #include "device.h"
 #include "debugger.h"
 
-#define ROM_POSITION 0xEF000000
-#define VIDEO_POSITION 0xF8000000
+#define ROM_POSITION      0xEF000000
+#define KEYBOARD_POSITION 0xF0000000
+#define VIDEO_POSITION    0xF8000000
 
 typedef struct ROM ROM;
 typedef struct Video Video;
@@ -378,6 +379,33 @@ void
 lvm_debuggerupdate(LVM_Computer* computer)
 {
     debugger_update(computer->debugger);
+}
+
+// }}}
+
+// {{{ KEYBOARD
+
+void
+lvm_keypressed(LVM_Computer* comp, uint32_t chr, uint8_t modifiers)
+{
+    if(lvm_debuggeractive(comp)) {
+        debugger_keypressed(comp->debugger, chr, modifiers);
+    } else {
+        abort();  // TODO - not implemented
+    }
+}
+
+
+void
+lvm_keyreleased(LVM_Computer* comp, uint32_t chr, uint8_t modifiers)
+{
+    (void) comp;
+    (void) chr;
+    (void) modifiers;
+
+    if(!lvm_debuggeractive(comp)) {
+        abort();  // TODO - not implemented
+    }
 }
 
 // }}}

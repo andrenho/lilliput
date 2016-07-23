@@ -92,6 +92,7 @@ logical_update(Debugger* dbg)
     print(dbg, 0, 0, 10, 0, "Logical memory");
     print(dbg, 33, 0, 10, 8, "[F?]"); print(dbg, 38, 0, 10, 0, "- choose device");
     print(dbg, 0, 25, 10, 8, "[G]"); print(dbg, 4, 25, 10, 0, "- go to");
+    print(dbg, 13, 25, 10, 8, "[O]"); print(dbg, 17, 25, 10, 0, "- change offset");
 
     draw_box(dbg, 1, 1, 50, 24, 10, 0);
 
@@ -107,7 +108,47 @@ logical_update(Debugger* dbg)
         }
     }
 
-    print(dbg, 34, 25, 10, 0, "Offset: %08X", lvm_offset(dbg->comp));
+    print(dbg, 37, 25, 10, 0, "Offset: %08X", lvm_offset(dbg->comp));
+}
+
+// }}}
+
+// {{{ EVENTS
+
+static void 
+logical_keypressed(Debugger* debugger, uint32_t chr, uint8_t modifiers)
+{
+    (void) modifiers;
+
+    switch(chr) {
+        case DOWN:
+            if(debugger->logical.top_addr < 0xFFFFFF50) {
+                debugger->logical.top_addr += 0x8;
+                debugger->dirty = true;
+            }
+            break;
+        case UP:
+            if(debugger->logical.top_addr > 0) {
+                debugger->logical.top_addr -= 0x8;
+                debugger->dirty = true;
+            }
+            break;
+        case PGUP:
+            if(debugger->logical.top_addr < 0xFFFFFF50) {
+                debugger->logical.top_addr += 0xB0;
+                debugger->dirty = true;
+            }
+            break;
+        case PGDOWN:
+            if(debugger->logical.top_addr > 0xB0) {
+                debugger->logical.top_addr -= 0xB0;
+                debugger->dirty = true;
+            } else if(debugger->logical.top_addr > 0x0) {
+                debugger->logical.top_addr = 0x0;
+                debugger->dirty = true;
+            }
+            break;
+    }
 }
 
 // }}}
@@ -134,6 +175,17 @@ debugger_update(Debugger* dbg)
         }
         
         dbg->dirty = false;
+    }
+}
+
+void debugger_keypressed(Debugger* debugger, uint32_t chr, uint8_t modifiers)
+{
+    switch(debugger->state) {
+        case ST_LOGICAL:
+            logical_keypressed(debugger, chr, modifiers);
+            break;
+        default:
+            abort();
     }
 }
 

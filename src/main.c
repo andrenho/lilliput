@@ -108,6 +108,51 @@ static bool get_events(LVM_Computer* comp)
         switch(e.type) {
             case SDL_QUIT:
                 return false;
+            case SDL_KEYDOWN:
+            case SDL_KEYUP: {
+                    uint8_t mod = 0;
+                    uint32_t key = e.key.keysym.sym;
+                    switch(e.key.keysym.sym) {
+                        case SDLK_F1:  key = F1;  break;
+                        case SDLK_F2:  key = F2;  break;
+                        case SDLK_F3:  key = F3;  break;
+                        case SDLK_F4:  key = F4;  break;
+                        case SDLK_F5:  key = F5;  break;
+                        case SDLK_F6:  key = F6;  break;
+                        case SDLK_F7:  key = F7;  break;
+                        case SDLK_F8:  key = F8;  break;
+                        case SDLK_F9:  key = F9;  break;
+                        case SDLK_F10: key = F10; break;
+                        case SDLK_F11: key = F11; break;
+                        case SDLK_F12: key = F12; break;
+                        case SDLK_INSERT:   key = INSERT; break;
+                        case SDLK_HOME:     key = HOME;   break;
+                        case SDLK_DELETE:   key = DELETE; break;
+                        case SDLK_END:      key = END;    break;
+                        case SDLK_PAGEDOWN: key = PGUP;   break;
+                        case SDLK_PAGEUP:   key = PGDOWN; break;
+                        case SDLK_LEFT:     key = LEFT;   break;
+                        case SDLK_RIGHT:    key = RIGHT;  break;
+                        case SDLK_UP:       key = UP;     break;
+                        case SDLK_DOWN:     key = DOWN;   break;
+                        case SDLK_LSHIFT: case SDLK_RSHIFT: key = 0; mod = SHIFT; break;
+                        case SDLK_LCTRL: case SDLK_RCTRL:   key = 0; mod = CONTROL; break;
+                        case SDLK_LALT: case SDLK_RALT:     key = 0; mod = ALT; break;
+                            break;
+                    }
+                    if(key >= 0x40000000) {
+                        break;
+                    }
+                    if(e.key.keysym.mod & KMOD_CTRL)  mod |= CONTROL;
+                    if(e.key.keysym.mod & KMOD_SHIFT) mod |= SHIFT;
+                    if(e.key.keysym.mod & KMOD_ALT)   mod |= ALT;
+                    if(e.key.state == SDL_PRESSED) {
+                        lvm_keypressed(comp, key, mod);
+                    } else {
+                        lvm_keyreleased(comp, key, mod);
+                    }
+                }
+                break;
         }
     }
     return true;
