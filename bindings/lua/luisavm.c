@@ -103,6 +103,52 @@ void* get_object_ptr(lua_State* L, int n)
 
 // {{{
 
+static int cpu_get(lua_State* L)
+{
+    LVM_CPU* cpu = get_object_ptr(L, 1);
+
+    if(lua_type(L, 2) == LUA_TSTRING) {
+        if(strcmp(lua_tostring(L, 2), "offset") == 0) {
+        } else {
+            goto regular_get;
+        }
+    } else {
+regular_get:
+        lua_pushvalue(L, 2);
+        lua_rawget(L, 1);
+    }
+    return 1;
+}
+
+
+static int cpu_set(lua_State* L)
+{
+    LVM_CPU* cpu = get_object_ptr(L, 1);
+
+    if(lua_type(L, 2) == LUA_TSTRING) {
+        if(strcmp(lua_tostring(L, 2), "offset") == 0) {
+        } else {
+            goto regular_set;
+        }
+    } else {
+regular_set:
+        lua_rawset(L, 1);
+    }
+}
+
+
+
+static void create_cpu_metatable(lua_State* L)
+{
+    luaL_newmetatable(L, "LVM_CPU");
+    lua_pushcfunction(L, cpu_get);
+    lua_setfield(L, -2, "__index");
+    lua_pushcfunction(L, cpu_set);
+    lua_setfield(L, -2, "__newindex");
+    lua_pop(L, 1);
+}
+
+
 static int computer_addcpu(lua_State* L)
 {
     LVM_Computer* comp = get_object_ptr(L, 1);
@@ -322,6 +368,7 @@ int luaopen_luisavm(lua_State* L)
     ADD_GC("LVM_Computer", destroy_computer);
     create_physical_memory_metatable(L);
     create_offset_metatable(L);
+    create_cpu_metatable(L);
 
     // create library
     luaL_newlib(L, ((struct luaL_Reg[]) {

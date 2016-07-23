@@ -44,6 +44,10 @@ end
 --
 
 function computer_tests()
+    print('#')
+    print('# computer')
+    print('#')
+
     local c = computer()
     
     c:set(0x12, 0xAF)
@@ -65,11 +69,23 @@ function computer_tests()
     equals(c:get(0x12), 0xAF, 'offset disabled')
 end
 
+
+function cpu_tests()
+    print('#')
+    print('# cpu')
+    print('#')
+
+    local cpu = computer().cpu[1]
+    --cpu.A = 0x24
+    --equals(cpu.A, 0x24, 'A')
+end
+
 --
 -- MAIN
 --
 
 computer_tests()
+cpu_tests()
 
 if err_count == 0 then
     print("\27[32mSUCCESS\27[0m: " .. test_count .. " tests executed successfully.")
