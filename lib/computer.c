@@ -17,16 +17,11 @@ typedef struct ROM ROM;
 typedef struct Video Video;
 
 extern LVM_CPU* lvm_createcpu(LVM_Computer* comp);
-extern void lvm_destroycpu(LVM_CPU* cpu);
-extern void lvm_cpustep(LVM_CPU* cpu);
-extern void lvm_cpureset(LVM_CPU* cpu);
-extern LVM_Device* rom_dev_init(uint32_t sz, uint8_t* data_new_ownership);
-extern LVM_Device* video_dev_init(VideoCallbacks cbs);
-
-typedef struct Device {
-    LVM_Device* device;
-    uint32_t    pos;
-} Device;
+extern void     lvm_destroycpu(LVM_CPU* cpu);
+extern void     lvm_cpustep(LVM_CPU* cpu);
+extern void     lvm_cpureset(LVM_CPU* cpu);
+extern ROM*     rom_init(uint32_t sz, uint8_t* data_new_ownership);
+extern Video*   video_init(VideoCallbacks cbs);
 
 typedef struct LVM_Computer {
     uint8_t*  physical_memory;
@@ -47,7 +42,7 @@ lvm_computercreate(uint32_t physical_memory_size, bool debugger_active)
     LVM_Computer* comp = calloc(1, sizeof(LVM_Computer));
     comp->physical_memory = calloc(physical_memory_size, 1);
     comp->physical_memory_size = physical_memory_size;
-    comp->device = calloc(1, sizeof(LVM_Device*));
+    comp->device = calloc(1, sizeof(Device*));
     comp->cpu = calloc(1, sizeof(LVM_CPU*));
     comp->debugger = debugger_init(comp, debugger_active);
     clock_gettime(CLOCK_MONOTONIC, &comp->last_step);
@@ -63,8 +58,10 @@ lvm_computerdestroy(LVM_Computer* comp)
     size_t i = 0;
     debugger_free(comp->debugger);
     while(comp->device[i]) {
-        device_free(comp->device[i]->device);
-        free(comp->device[i++]);
+        if(comp->device[i]->free) {
+            comp->device[i]->free(comp->device[i]);
+        }
+        ++i;
     }
     free(comp->device);
     i = 0;
@@ -114,8 +111,8 @@ lvm_step(LVM_Computer* comp, size_t force_time_us)
     }
     
     for(size_t i=0; comp->device[i]; ++i) {
-        if(comp->device[i]->device->step) {
-            comp->device[i]->device->step(comp->device[i]->device->ptr, (size_t)time_us);
+        if(comp->device[i]->step) {
+            comp->device[i]->step(comp->device[i], (size_t)time_us);
         }
     }
 }
@@ -147,10 +144,10 @@ lvm_get(LVM_Computer* comp, uint32_t pos)
         return comp->physical_memory[pos];
     } else if(pos >= 0xEF000000) {
         for(size_t i=0; comp->device[i]; ++i) {
-            uint32_t sz = comp->device[i]->device->sz;
+            uint32_t sz = comp->device[i]->sz;
             if(pos >= comp->device[i]->pos && pos < (comp->device[i]->pos + sz)) {
-                if(comp->device[i]->device->get) {
-                    return comp->device[i]->device->get(comp->device[i]->device->ptr, pos - comp->device[i]->pos);
+                if(comp->device[i]->get) {
+                    return comp->device[i]->get(comp->device[i], pos - comp->device[i]->pos);
                 }
                 return 0;
             }
@@ -170,10 +167,10 @@ lvm_set(LVM_Computer* comp, uint32_t pos, uint8_t data)
         comp->physical_memory[pos] = data;
     } else if(pos >= 0xEF000000) {
         for(size_t i=0; comp->device[i]; ++i) {
-            uint32_t sz = comp->device[i]->device->sz;
+            uint32_t sz = comp->device[i]->sz;
             if(pos >= comp->device[i]->pos && pos < (comp->device[i]->pos + sz)) {
-                if(comp->device[i]->device->set) {
-                    comp->device[i]->device->set(comp->device[i]->device->ptr, pos - comp->device[i]->pos, data);
+                if(comp->device[i]->set) {
+                    comp->device[i]->set(comp->device[i], pos - comp->device[i]->pos, data);
                     return;
                 }
             }
@@ -256,11 +253,9 @@ lvm_offset(LVM_Computer* comp)
 // {{{ DEVICE MANAGEMENT
 
 static void
-lvm_adddevice(LVM_Computer* comp, LVM_Device* dev, uint32_t pos)
+lvm_adddevice(LVM_Computer* comp, Device* dev, uint32_t pos)
 {
-    Device* device = calloc(sizeof(Device), 1);
-    device->device = dev;
-    device->pos = pos;
+    dev->pos = pos;
 
     size_t i = 0;
     while(comp->device[i++]);
@@ -270,7 +265,7 @@ lvm_adddevice(LVM_Computer* comp, LVM_Device* dev, uint32_t pos)
     comp->device[i] = NULL;
 
     // add device
-    comp->device[i-1] = device;
+    comp->device[i-1] = dev;
     syslog(LOG_DEBUG, "New device added to computer.");
 }
 
@@ -309,14 +304,14 @@ void
 lvm_loadrom(LVM_Computer* comp, uint32_t sz, uint8_t* data)
 {
     for(int i=0; comp->device[i]; ++i) {
-        if(comp->device[i]->device->type == DEV_ROM) {
+        if(comp->device[i]->type == DEV_ROM) {
             syslog(LOG_ERR, "A ROM was already loaded.");
             return;
         }
     }
 
-    LVM_Device* dev = rom_dev_init(sz, data);
-    lvm_adddevice(comp, dev, ROM_POSITION);
+    ROM* rom = rom_init((uint32_t)sz, data);
+    lvm_adddevice(comp, (Device*)rom, ROM_POSITION);
     lvm_setoffset(comp, ROM_POSITION);
 }
 
@@ -342,6 +337,7 @@ lvm_loadromfile(LVM_Computer* comp, const char* filename)
         syslog(LOG_ERR, "Error loading ROM file '%s': %s", filename, strerror(errno));
         return false;
     }
+
     lvm_loadrom(comp, (uint32_t)sz, data);
 
     fclose(f);
@@ -354,9 +350,9 @@ lvm_loadromfile(LVM_Computer* comp, const char* filename)
 
 void lvm_setupvideo(LVM_Computer* comp, VideoCallbacks cbs)
 {
-    LVM_Device* dev = video_dev_init(cbs);
-    comp->video = (Video*)dev->ptr;
-    lvm_adddevice(comp, dev, VIDEO_POSITION);
+    Video* video = video_init(cbs);
+    comp->video = video;
+    lvm_adddevice(comp, (Device*)video, VIDEO_POSITION);
 }
 
 void lvm_draw_char(LVM_Computer* comp, uint8_t c, uint16_t x, uint16_t y, uint8_t fg, uint8_t bg)

@@ -11,12 +11,15 @@
 #define TRANSPARENT 0xFF
 
 typedef struct Video {
-    VideoCallbacks cb;
-    uint32_t char_sprite[16][256];  // TODO - too wasteful, use map
-    uint32_t char_bg[16];
+    Device          device;
+    VideoCallbacks  cb;
+    uint32_t        char_sprite[16][256];  // TODO - too wasteful, use map?
+    uint32_t        char_bg[16];
 } Video;
 
 extern uint32_t default_palette[255];
+
+static void video_free(Device* dev);
 
 // 
 // CONSTRUCTORS
@@ -26,6 +29,10 @@ Video*
 video_init(VideoCallbacks cbs)
 {
     Video* video = calloc(sizeof(Video), 1);
+
+    video->device.free = video_free;
+    video->device.type = DEV_VIDEO;
+
     video->cb = cbs;
 
     // initialize palette
@@ -52,16 +59,10 @@ video_init(VideoCallbacks cbs)
 
 
 static void
-video_free(void* ptr)
+video_free(Device* dev)
 {
-    Video* video = (Video*)ptr;
+    Video* video = (Video*)dev;
     free(video);
-}
-
-
-LVM_Device* video_dev_init(VideoCallbacks cbs)
-{
-    return device_init(video_init(cbs), NULL, NULL, NULL, video_free, DEV_VIDEO, 0);
 }
 
 

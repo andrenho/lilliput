@@ -4,27 +4,16 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-typedef enum { DEV_ROM, DEV_VIDEO, DEV_DEBUGGER } LVM_DeviceType;
+typedef enum { DEV_ROM, DEV_VIDEO } DeviceType;
 
-typedef struct LVM_Device {
-    void     *ptr;
-    void    (*step)(void*, size_t);
-    uint8_t (*get)(void*, uint32_t);
-    void    (*set)(void*, uint32_t, uint8_t);
-    void    (*free)(void*);
-    LVM_DeviceType type;
-    uint32_t sz;
-} LVM_Device;
-
-LVM_Device* device_init(
-        void* ptr,
-        void    (*step)(void*, size_t),
-        uint8_t (*get)(void*, uint32_t),
-        void    (*set)(void*, uint32_t, uint8_t),
-        void    (*free)(void*),
-        LVM_DeviceType type,
-        uint32_t sz);
-
-void device_free(LVM_Device* dev);
+typedef struct Device {
+    void        (*step)(struct Device*, size_t);
+    uint8_t     (*get)(struct Device*, uint32_t);
+    void        (*set)(struct Device*, uint32_t, uint8_t);
+    void        (*free)(struct Device*);
+    DeviceType  type;
+    uint32_t    sz;
+    uint32_t    pos;
+} Device;
 
 #endif
