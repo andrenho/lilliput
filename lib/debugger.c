@@ -3,6 +3,7 @@
 #include <stdarg.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include <syslog.h>
 
 #include "device.h"
@@ -19,6 +20,7 @@ typedef struct Logical {
 typedef struct Question {
     State    return_to;
     char*    text;
+    char*    buffer;
     uint32_t response;
 } Question;
 
@@ -100,6 +102,15 @@ draw_box(Debugger* dbg, uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2, uint
             }
         }
     }
+
+    if(shadow) {
+        for(uint16_t x=x1+1; x<=(x2+1); ++x) {
+            lvm_draw_char(dbg->comp, 176, x, y2+1, fg, bg);
+        }
+        for(uint16_t y=y1+1; y<=(y2+1); ++y) {
+            lvm_draw_char(dbg->comp, 176, x2+1, y, fg, bg);
+        }
+    }
 }
 
 // }}}
@@ -168,6 +179,7 @@ logical_keypressed(Debugger* debugger, uint32_t chr, uint8_t modifiers)
             debugger->question = (Question) {
                 .return_to = ST_LOGICAL,
                 .text = "Go to address:",
+                .buffer = calloc(8, 1),
                 .response = 0
             };
             debugger->state = ST_QUESTION;
@@ -188,7 +200,11 @@ question_update(Debugger* dbg)
     uint16_t width = strlen(q->text);
     if(width < 12) width = 12;
 
-    draw_box(dbg, (CH_COLUMNS/2) - (width/2) - 2, (CH_LINES/2 - 4), (CH_COLUMNS/2) + (width/2) + 2, (CH_LINES/2 + 4), 10, 0, true, true);
+    draw_box(dbg, (CH_COLUMNS/2) - (width/2) - 2, (CH_LINES/2 - 2), (CH_COLUMNS/2) + (width/2) + 2, (CH_LINES/2 + 2), 10, 0, true, true);
+    print(dbg, (CH_COLUMNS/2) - (width/2) - 1, (CH_LINES/2 - 1), 10, 0, "%s", q->text);
+
+    print(dbg, (CH_COLUMNS/2) - (width/2) - 1, (CH_LINES/2 + 1), 10, 8, "0x        ");
+    print(dbg, (CH_COLUMNS/2) - (width/2) + 1, (CH_LINES/2 + 1), 10, 8, "%s%c", q->buffer, 255);
 }
 
 static void 
