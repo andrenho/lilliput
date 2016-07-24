@@ -104,6 +104,49 @@ void* get_object_ptr(lua_State* L, int n)
 
 // {{{
 
+static const char* cpu_flags[] = {
+    "Y", "V", "Z", "S", "GT", "LT",
+};
+
+static int flag_get(lua_State* L)
+{
+    LVM_CPU* cpu = get_object_ptr(L, 1);
+
+    if(lua_type(L, 2) == LUA_TSTRING) {
+        for(size_t i=0; i < (sizeof(cpu_flags) / sizeof(cpu_flags[0])); ++i) {
+            if(strcmp(lua_tostring(L, 2), cpu_flags[i]) == 0) {
+                lua_pushboolean(L, lvm_cpuflag(cpu, i));
+                return 1;
+            }
+        }
+        goto regular_get;
+    } else {
+regular_get:
+        lua_pushvalue(L, 2);
+        lua_rawget(L, 1);
+    }
+    return 1;
+}
+
+
+static int flag_set(lua_State* L)
+{
+    LVM_CPU* cpu = get_object_ptr(L, 1);
+
+    if(lua_type(L, 2) == LUA_TSTRING) {
+        for(size_t i=0; i < (sizeof(cpu_flags) / sizeof(cpu_flags[0])); ++i) {
+            if(strcmp(lua_tostring(L, 2), cpu_flags[i]) == 0) {
+                lvm_cpusetflag(cpu, i, (bool)lua_toboolean(L, 3));
+                return 0;
+            }
+        }
+    } else {
+regular_set:
+        lua_rawset(L, 1);
+    }
+}
+
+
 static const char* cpu_regs[] = {
     "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "FP", "SP", "PC", "FL"
 };
@@ -156,6 +199,13 @@ static void create_cpu_metatable(lua_State* L)
     lua_pushcfunction(L, cpu_set);
     lua_setfield(L, -2, "__newindex");
     lua_pop(L, 1);
+
+    luaL_newmetatable(L, "LVM_Flag");
+    lua_pushcfunction(L, flag_get);
+    lua_setfield(L, -2, "__index");
+    lua_pushcfunction(L, flag_set);
+    lua_setfield(L, -2, "__newindex");
+    lua_pop(L, 1);
 }
 
 
@@ -168,6 +218,8 @@ static int computer_addcpu(lua_State* L)
     create_object(L, "LVM_CPU", cpu, (struct luaL_Reg[]) {
         { NULL, NULL }
     });
+
+    // TODO - add flags table
 
     lua_seti(L, -2, luaL_len(L, 1)+1);
     lua_pop(L, 1);

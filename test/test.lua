@@ -80,6 +80,8 @@ function cpu_tests()
     cpu.B = 0xBF
     equals(cpu.B, 0xBF, 'B')
     equals(cpu.A, 0x24, 'A')
+
+    cpu.flags.Y = true
 end
 
 --
