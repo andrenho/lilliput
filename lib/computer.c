@@ -364,6 +364,12 @@ void lvm_draw_char(LVM_Computer* comp, uint8_t c, uint16_t x, uint16_t y, uint8_
     }
 }
 
+void lvm_clrscr(LVM_Computer* comp)
+{
+    extern void video_clrscr(Video* video);
+    video_clrscr(comp->video);
+}
+
 // }}}
 
 // {{{ DEBUGGER

@@ -129,8 +129,8 @@ static bool get_events(LVM_Computer* comp)
                         case SDLK_HOME:     key = HOME;   break;
                         case SDLK_DELETE:   key = DELETE; break;
                         case SDLK_END:      key = END;    break;
-                        case SDLK_PAGEDOWN: key = PGUP;   break;
-                        case SDLK_PAGEUP:   key = PGDOWN; break;
+                        case SDLK_PAGEDOWN: key = PGDOWN; break;
+                        case SDLK_PAGEUP:   key = PGUP;   break;
                         case SDLK_LEFT:     key = LEFT;   break;
                         case SDLK_RIGHT:    key = RIGHT;  break;
                         case SDLK_UP:       key = UP;     break;
@@ -168,7 +168,7 @@ int main()
     // initialization
     //
 
-    LVM_Computer* computer = lvm_computercreate(128 * 1024, true);  // TODO
+    LVM_Computer* computer = lvm_computercreate(4 * 1024, true);  // TODO
     for(int i=0; i<10000; ++i) { lvm_set(computer, i, rand() % 0xFF); }
 
     if(SDL_Init(SDL_INIT_VIDEO) != 0) {

@@ -105,3 +105,10 @@ video_draw_char(Video* video, uint8_t c, uint16_t x, uint16_t y, uint8_t fg, uin
     video->cb.draw_sprite(video->char_bg[bg], (uint16_t)(x * CHAR_W), (uint16_t)(y * CHAR_H));
     video->cb.draw_sprite(load_char_sprite(video, c, fg), (uint16_t)(x * CHAR_W), (uint16_t)(y * CHAR_H));
 }
+
+
+void
+video_clrscr(Video* video)
+{
+    video->cb.clrscr(0);
+}
