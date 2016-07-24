@@ -5,6 +5,9 @@
 #include <stdint.h>
 #include <stdlib.h>
 
+#define CH_COLUMNS 53
+#define CH_LINES   26
+
 //
 // LOGS
 // 

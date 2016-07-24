@@ -9,11 +9,18 @@
 
 typedef enum State {
     ST_LOGICAL,
+    ST_QUESTION,
 } State;
 
 typedef struct Logical {
     uint32_t top_addr;
 } Logical;
+
+typedef struct Question {
+    State    return_to;
+    char*    text;
+    uint32_t response;
+} Question;
 
 typedef struct Debugger {
     bool          active;
@@ -21,6 +28,7 @@ typedef struct Debugger {
     State         state;
     bool          dirty;
     Logical       logical;
+    Question      question;
 } Debugger;
 
 // {{{ CONSTRUCTOR/DESTRUCTOR
@@ -49,7 +57,7 @@ debugger_free(Debugger* dbg)
 
 // }}}
 
-// {{{ DRAW
+// {{{ DRAW (GENERIC)
 
 extern void lvm_draw_char(LVM_Computer* comp, uint8_t c, uint16_t x, uint16_t y, uint8_t fg, uint8_t bg);
 static void print(Debugger* dbg, uint16_t x, uint16_t y, uint8_t fg, uint8_t bg, const char* fmt, ...) __attribute__((format(printf, 6, 7)));
@@ -70,7 +78,7 @@ print(Debugger* dbg, uint16_t x, uint16_t y, uint8_t fg, uint8_t bg, const char*
 }
 
 static void
-draw_box(Debugger* dbg, uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2, uint8_t fg, uint8_t bg)
+draw_box(Debugger* dbg, uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2, uint8_t fg, uint8_t bg, bool clear, bool shadow)
 {
     lvm_draw_char(dbg->comp, 218, x1, y1, fg, bg);
     lvm_draw_char(dbg->comp, 191, x2, y1, fg, bg);
@@ -84,7 +92,19 @@ draw_box(Debugger* dbg, uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2, uint
         lvm_draw_char(dbg->comp, 179, x1, y, fg, bg);
         lvm_draw_char(dbg->comp, 179, x2, y, fg, bg);
     }
+
+    if(clear) {
+        for(uint16_t x=x1+1; x<x2; ++x) {
+            for(uint16_t y=y1+1; y<y2; ++y) {
+                lvm_draw_char(dbg->comp, ' ', x, y, fg, bg);
+            }
+        }
+    }
 }
+
+// }}}
+
+// {{{ LOGICAL
 
 static void
 logical_update(Debugger* dbg)
@@ -93,14 +113,14 @@ logical_update(Debugger* dbg)
     print(dbg, 33, 0, 10, 8, "[F?]"); print(dbg, 38, 0, 10, 0, "- choose device");
     print(dbg, 0, 25, 10, 8, "[G]"); print(dbg, 4, 25, 10, 0, "- go to");
 
-    draw_box(dbg, 1, 1, 50, 24, 10, 0);
+    draw_box(dbg, 1, 1, 50, 24, 10, 0, false, false);
 
     // addresses
     for(uint32_t i=0; i<22; ++i) {
         uint32_t addr = dbg->logical.top_addr + (i*0x8);
         print(dbg, 3, i+2, 10, 0, "%08X:", addr);
         for(int j=0; j<8; ++j) {
-            uint8_t data = lvm_get(dbg->comp, addr);
+            uint8_t data = lvm_get(dbg->comp, addr+j);
             print(dbg, 15 + (j*3), i+2, 10, 0, "%02X", data);
             const char* printable = (data >= 32 && data < 127) ? (char[]) { data, '\0' } : ".";
             print(dbg, 41 + j, i+2, 10, 0, "%s", printable);
@@ -110,9 +130,6 @@ logical_update(Debugger* dbg)
     print(dbg, 37, 25, 10, 0, "Offset: %08X", lvm_offset(dbg->comp));
 }
 
-// }}}
-
-// {{{ EVENTS
 
 static void 
 logical_keypressed(Debugger* debugger, uint32_t chr, uint8_t modifiers)
@@ -147,7 +164,36 @@ logical_keypressed(Debugger* debugger, uint32_t chr, uint8_t modifiers)
                 debugger->dirty = true;
             }
             break;
+        case 'g':
+            debugger->question = (Question) {
+                .return_to = ST_LOGICAL,
+                .text = "Go to address:",
+                .response = 0
+            };
+            debugger->state = ST_QUESTION;
+            debugger->dirty = true;
+            break;
     }
+}
+
+// }}}
+
+// {{{ QUESTION
+
+static void 
+question_update(Debugger* dbg)
+{
+    Question* q = &dbg->question;
+
+    uint16_t width = strlen(q->text);
+    if(width < 12) width = 12;
+
+    draw_box(dbg, (CH_COLUMNS/2) - (width/2) - 2, (CH_LINES/2 - 4), (CH_COLUMNS/2) + (width/2) + 2, (CH_LINES/2 + 4), 10, 0, true, true);
+}
+
+static void 
+question_keypressed(Debugger* debugger, uint32_t chr)
+{
 }
 
 // }}}
@@ -169,6 +215,9 @@ debugger_update(Debugger* dbg)
             case ST_LOGICAL:
                 logical_update(dbg);
                 break;
+            case ST_QUESTION:
+                question_update(dbg);
+                break;
             default:
                 abort();
         }
@@ -182,6 +231,9 @@ void debugger_keypressed(Debugger* debugger, uint32_t chr, uint8_t modifiers)
     switch(debugger->state) {
         case ST_LOGICAL:
             logical_keypressed(debugger, chr, modifiers);
+            break;
+        case ST_QUESTION:
+            question_keypressed(debugger, chr);
             break;
         default:
             abort();

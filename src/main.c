@@ -9,7 +9,7 @@
 #define WIDTH  318
 #define HEIGHT 234
 #define BORDER  20
-#define ZOOM     4
+#define ZOOM     2
 
 static SDL_Window* window = NULL;
 static SDL_Renderer* ren = NULL;
@@ -169,6 +169,7 @@ int main()
     //
 
     LVM_Computer* computer = lvm_computercreate(128 * 1024, true);  // TODO
+    for(int i=0; i<10000; ++i) { lvm_set(computer, i, rand() % 0xFF); }
 
     if(SDL_Init(SDL_INIT_VIDEO) != 0) {
         fprintf(stderr, "SDL_Init error: %s\n", SDL_GetError());

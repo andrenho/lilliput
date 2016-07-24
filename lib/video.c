@@ -99,6 +99,9 @@ load_char_sprite(Video* video, uint8_t c, uint8_t fg)
 void
 video_draw_char(Video* video, uint8_t c, uint16_t x, uint16_t y, uint8_t fg, uint8_t bg)
 {
+    if(x >= CH_COLUMNS || y >= CH_LINES) {
+        return;
+    }
     video->cb.draw_sprite(video->char_bg[bg], (uint16_t)(x * CHAR_W), (uint16_t)(y * CHAR_H));
     video->cb.draw_sprite(load_char_sprite(video, c, fg), (uint16_t)(x * CHAR_W), (uint16_t)(y * CHAR_H));
 }
