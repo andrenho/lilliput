@@ -219,10 +219,16 @@ static int computer_addcpu(lua_State* L)
         { NULL, NULL }
     });
 
-    // TODO - add flags table
-
+    // add CPU
     lua_seti(L, -2, luaL_len(L, 1)+1);
     lua_pop(L, 1);
+
+    // add flags table
+    lua_newtable(L);
+    lua_pushstring(L, "__ptr");
+    lua_rawsetp(L, -2, cpu);
+    luaL_setmetatable(L, "LVM_Flag");
+    lua_setfield(L, -2, "flags");
 
     return 0;
 }

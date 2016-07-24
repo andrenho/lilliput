@@ -81,7 +81,8 @@ function cpu_tests()
     equals(cpu.B, 0xBF, 'B')
     equals(cpu.A, 0x24, 'A')
 
-    cpu.flags.Y = true
+    print(cpu.flags)
+    --cpu.flags.Y = true
 end
 
 --
