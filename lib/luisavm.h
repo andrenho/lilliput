@@ -93,7 +93,7 @@ typedef enum {
     F1=14, F2, F3, F4, F5, F6, F7, F8, F9, F10, F11, F12,
     INSERT, HOME, DELETE, END, PGUP, PGDOWN,
     LEFT, RIGHT, UP, DOWN,
-    ESC=27, TAB=9
+    ESC=27, TAB=9, BACKSPACE=8,
 } Key;
 void        lvm_keypressed(LVM_Computer* computer, uint32_t chr, uint8_t modifiers);
 void        lvm_keyreleased(LVM_Computer* computer, uint32_t chr, uint8_t modifiers);

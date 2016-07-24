@@ -1,5 +1,6 @@
 #include "luisavm.h"
 
+#include <ctype.h>
 #include <stdarg.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -19,9 +20,10 @@ typedef struct Logical {
 
 typedef struct Question {
     State    return_to;
-    char*    text;
-    char*    buffer;
+    const char* text;
+    char     buffer[9];
     uint32_t response;
+    bool     ok;
 } Question;
 
 typedef struct Debugger {
@@ -120,11 +122,20 @@ draw_box(Debugger* dbg, uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2, uint
 static void
 logical_update(Debugger* dbg)
 {
+    if(dbg->question.ok) {
+        uint32_t addr = dbg->question.response / 8;
+        dbg->logical.top_addr = addr * 8;
+        if(dbg->logical.top_addr > 0xFFFFFF50) {
+            dbg->logical.top_addr = 0xFFFFFF50;
+        }
+        dbg->question.ok = false;
+    }
+
     print(dbg, 0, 0, 10, 0, "Logical memory");
     print(dbg, 33, 0, 10, 8, "[F?]"); print(dbg, 38, 0, 10, 0, "- choose device");
     print(dbg, 0, 25, 10, 8, "[G]"); print(dbg, 4, 25, 10, 0, "- go to");
 
-    draw_box(dbg, 1, 1, 50, 24, 10, 0, false, false);
+    draw_box(dbg, 1, 1, 50, 24, 10, 0, true, false);
 
     // addresses
     for(uint32_t i=0; i<22; ++i) {
@@ -179,9 +190,10 @@ logical_keypressed(Debugger* debugger, uint32_t chr, uint8_t modifiers)
             debugger->question = (Question) {
                 .return_to = ST_LOGICAL,
                 .text = "Go to address:",
-                .buffer = calloc(8, 1),
-                .response = 0
+                .response = 0,
+                .ok = false,
             };
+            memset(debugger->question.buffer, 0, sizeof debugger->question.buffer);
             debugger->state = ST_QUESTION;
             debugger->dirty = true;
             break;
@@ -210,6 +222,23 @@ question_update(Debugger* dbg)
 static void 
 question_keypressed(Debugger* debugger, uint32_t chr)
 {
+    Question* q = &debugger->question;
+
+    if(isxdigit((char)chr) && strlen(q->buffer) < 8) {
+        q->buffer[strlen(q->buffer)] = toupper(chr);
+        debugger->dirty = true;
+    } else if(chr == BACKSPACE && q->buffer[0]) {
+        q->buffer[strlen(q->buffer)-1] = 0;
+        debugger->dirty = true;
+    } else if(chr == ESC) {
+        debugger->state = q->return_to;
+        debugger->dirty = true;
+    } else if(chr == '\r') {
+        q->response = (uint32_t)strtoll(q->buffer, NULL, 16);
+        q->ok = true;
+        debugger->state = q->return_to;
+        debugger->dirty = true;
+    }
 }
 
 // }}}
