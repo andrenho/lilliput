@@ -74,8 +74,9 @@ void* create_object(lua_State* L, const char* metatable_name, void* ptr, const l
 #pragma GCC diagnostic pop
     luaL_setfuncs(L, functions, 0);
     luaL_setmetatable(L, metatable_name);
+    lua_pushstring(L, "__ptr");
     lua_pushlightuserdata(L, ptr);
-    lua_setfield(L, -2, "__ptr");
+    lua_rawset(L, -3);
     return ptr;
 }
 
@@ -103,15 +104,22 @@ void* get_object_ptr(lua_State* L, int n)
 
 // {{{
 
+static const char* cpu_regs[] = {
+    "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "FP", "SP", "PC", "FL"
+};
+
 static int cpu_get(lua_State* L)
 {
     LVM_CPU* cpu = get_object_ptr(L, 1);
 
     if(lua_type(L, 2) == LUA_TSTRING) {
-        if(strcmp(lua_tostring(L, 2), "offset") == 0) {
-        } else {
-            goto regular_get;
+        for(size_t i=0; i < (sizeof(cpu_regs) / sizeof(cpu_regs[0])); ++i) {
+            if(strcmp(lua_tostring(L, 2), cpu_regs[i]) == 0) {
+                lua_pushinteger(L, lvm_cpuregister(cpu, i));
+                return 1;
+            }
         }
+        goto regular_get;
     } else {
 regular_get:
         lua_pushvalue(L, 2);
@@ -126,9 +134,11 @@ static int cpu_set(lua_State* L)
     LVM_CPU* cpu = get_object_ptr(L, 1);
 
     if(lua_type(L, 2) == LUA_TSTRING) {
-        if(strcmp(lua_tostring(L, 2), "offset") == 0) {
-        } else {
-            goto regular_set;
+        for(size_t i=0; i < (sizeof(cpu_regs) / sizeof(cpu_regs[0])); ++i) {
+            if(strcmp(lua_tostring(L, 2), cpu_regs[i]) == 0) {
+                lvm_cpusetregister(cpu, i, (uint32_t)luaL_checkinteger(L, 3));
+                return 0;
+            }
         }
     } else {
 regular_set:

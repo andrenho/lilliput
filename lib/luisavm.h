@@ -38,4 +38,22 @@ uint32_t lvm_offset(LVM_Computer* comp);
 LVM_CPU* lvm_addcpu(LVM_Computer* comp);
 LVM_CPU* lvm_cpu(LVM_Computer* comp, size_t n);
 
+// 
+// CPU
+//
+
+typedef enum LVM_CPURegister {
+    A, B, C, D, E, F, G, H, I, J, K, L, FP, SP, PC, FL
+} LVM_CPURegister;
+
+uint32_t lvm_cpuregister(LVM_CPU* cpu, LVM_CPURegister r);
+void     lvm_cpusetregister(LVM_CPU* cpu, LVM_CPURegister r, uint32_t data);
+
+typedef enum LVM_CPUFlag {
+    Y, V, Z, S, GT, LT,
+} LVM_CPUFlag;
+
+bool lvm_cpuflag(LVM_CPU* cpu, LVM_CPUFlag f);
+void lvm_cpusetflag(LVM_CPU* cpu, LVM_CPUFlag f, bool value);
+
 #endif

@@ -29,3 +29,40 @@ lvm_destroycpu(LVM_CPU* cpu)
 }
 
 #pragma GCC diagnostic pop
+
+uint32_t 
+lvm_cpuregister(LVM_CPU* cpu, LVM_CPURegister r)
+{
+    if(r > 15) {
+        syslog(LOG_ERR, "Invalid register %u, exiting...", r);
+        abort();
+    }
+    return cpu->reg[r];
+}
+
+
+void
+lvm_cpusetregister(LVM_CPU* cpu, LVM_CPURegister r, uint32_t data)
+{
+    if(r > 15) {
+        syslog(LOG_ERR, "Invalid register %u, exiting...", r);
+        abort();
+    }
+    cpu->reg[r] = data;
+}
+
+
+bool 
+lvm_cpuflag(LVM_CPU* cpu, LVM_CPUFlag f)
+{
+    return (bool)((lvm_cpuregister(cpu, FL) >> (int)f) & 1);
+}
+
+
+void 
+lvm_cpusetflag(LVM_CPU* cpu, LVM_CPUFlag f, bool value)
+{
+    int64_t new_value = lvm_cpuregister(cpu, FL);
+    new_value ^= (-value ^ new_value) & (1 << (int)f);
+    lvm_cpusetregister(cpu, FL, (uint32_t)new_value);
+}

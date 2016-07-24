@@ -24,7 +24,7 @@ function equals(code, expect, text)
         print("[\27[31merr\27[0m] error executing " .. text .. " == " .. string.format('0x%X', expect) .. ": " .. tested)
         err_count = err_count + 1
     elseif tested ~= expect then
-        print("[\27[31merr\27[0m] " .. text .. " == " .. string.format('0x%X', expect))
+        print("[\27[31merr\27[0m] " .. text .. " == " .. string.format('0x%X', tested) .. " (expected " .. string.format('0x%X', expect) .. ')')
         err_count = err_count + 1
     else
         print("[\27[32mok\27[0m] " .. text .. " == " .. string.format('0x%X', expect))
@@ -76,8 +76,10 @@ function cpu_tests()
     print('#')
 
     local cpu = computer().cpu[1]
-    --cpu.A = 0x24
-    --equals(cpu.A, 0x24, 'A')
+    cpu.A = 0x24
+    cpu.B = 0xBF
+    equals(cpu.B, 0xBF, 'B')
+    equals(cpu.A, 0x24, 'A')
 end
 
 --
