@@ -1,5 +1,6 @@
 #include "luisavm.h"
 
+#include <assert.h>
 #include <stdlib.h>
 #include <syslog.h>
 
@@ -43,10 +44,80 @@ lvm_cpureset(LVM_CPU* cpu)
 }
 
 
+typedef enum Instruction { MOV, INVALID } Instruction;
+
+typedef struct Parameter {
+    enum { REGISTER } type;
+    uint32_t value;
+} Parameter;
+
+
+#define GET(pos) (lvm_get(cpu->computer, pos))
+#define rPC (cpu->reg[PC])
+
+
+inline static void
+_twin_registers(Parameter pars[2], uint8_t pos)
+{
+    pars[0] = (Parameter) { REGISTER, (pos >> 4) };
+    pars[1] = (Parameter) { REGISTER, (pos & 0xF) };
+}
+
+
+inline static Instruction
+_parse_opcode(LVM_CPU* cpu, Parameter pars[2])
+{
+    uint8_t opcode = GET(rPC);
+    switch(opcode) {
+        case 0x01:
+            _twin_registers(pars, GET(rPC+1));
+            return MOV;
+        default:
+            return INVALID;
+    }
+}
+
+
+inline static void
+_apply(LVM_CPU* cpu, Parameter par, uint32_t value)
+{
+    switch(par.type) {
+        case REGISTER:
+            assert(par.value < 16);
+            cpu->reg[par.value] = value;
+            break;
+        default:
+            abort();
+    }
+}
+#define APPLY(par, value) (_apply(cpu, par, value))
+
+
+inline static uint32_t
+_take(LVM_CPU* cpu, Parameter par)
+{
+    switch(par.type) {
+        case REGISTER:
+            return cpu->reg[par.value];
+    }
+    abort();
+}
+#define TAKE(par) (_take(cpu, par))
+
+
 void 
 lvm_cpustep(LVM_CPU* cpu)
 {
-    (void) cpu;
+    Parameter pars[2];
+    switch(_parse_opcode(cpu, pars)) {
+        case MOV:
+            APPLY(pars[0], TAKE(pars[1]));
+            break;
+        case INVALID:
+        default:
+            syslog(LOG_ERR, "Invalid opcode 0x%02X", GET(cpu->reg[PC]));
+            abort();
+    }
 }
 
 // }}}

@@ -10,8 +10,10 @@ luisavm = require("luisavm")
 
 test_count = 0
 err_count = 0
+last_run = nil
 
 function equals(tested, expect, text)
+    text = text or last_run
     test_count = test_count + 1
     if type(tested) == "boolean" then tested = tested and 1 or 0 end
     if type(expect) == "boolean" then expect = expect and 1 or 0 end
@@ -248,6 +250,7 @@ end
 
 
 function run(comp, code)
+    last_run = code
     compile(comp, code)
     comp:step()
 end
@@ -314,11 +317,13 @@ function cpu_tests()
 
 
     function mov()
+        print("# mov")
+
         local comp = computer()
         local cpu = comp.cpu[1]
 
-        cpu.B = 0x42 ; run(comp, "mov A, B")
-        equals(cpu.A, 0x42, 'xxx')
+        comp:reset(); cpu.B = 0x42 ; run(comp, "mov A, B")
+        equals(cpu.A, 0x42)
     end
 
 
