@@ -57,10 +57,11 @@ debugger_init(LVM_Computer* comp, bool active)
     Debugger* dbg = calloc(sizeof(Debugger), 1);
     dbg->active = active;
     dbg->comp = comp;
-    dbg->state = ST_LOGICAL;
+    dbg->state = ST_CPU;
     dbg->dirty = true;
     dbg->logical = (Logical) { .top_addr = 0x0 };
     dbg->physical = (Physical) { .top_addr = 0x0 };
+    dbg->cpu = (CPU) { .code_start = 0x0, .top_addr = 0x0 };
 
     syslog(LOG_DEBUG, "Debugger created.");
 
@@ -499,7 +500,7 @@ cpu_inst_sz(LVM_Computer* comp, uint32_t addr)
         case 0x06: return 6;
         case 0x07: return 3;
         case 0x08: return 3;
-        case 0x09: return 3;
+        case 0x09: return 2;
         case 0x0A: return 6;
         case 0x0B: return 6;
         case 0x0C: return 6;
@@ -642,9 +643,9 @@ cpu_update(Debugger* dbg)
 
     print(dbg, 0, 0, 10, 0, "CPU");
     print(dbg, 33, 0, 10, 8, "[F?]"); print(dbg, 38, 0, 10, 0, "- choose device");
-    print(dbg, 0, 25, 10, 8, "[G]"); print(dbg, 4, 25, 10, 0, "- go to");
+    print(dbg, 0, 25, 10, 8, "[S]"); print(dbg, 4, 25, 10, 0, "- step");
 
-    draw_box(dbg, 1, 1, 45, 24, 10, 0, true, false);
+    draw_box(dbg, 0, 1, 46, 24, 10, 0, true, false);
 
     // registers
     for(size_t i=0; i<16; ++i) {
@@ -660,12 +661,16 @@ cpu_update(Debugger* dbg)
     // instructions
     uint32_t addr = 0;
     uint8_t y = 0;
-    for(uint32_t i=0; ; ++i) {
+    for(uint32_t i=dbg->cpu.code_start; ; ++i) {
         if(addr >= dbg->cpu.top_addr) {
             char buf[40];
-            print(dbg, 3, i+2, 10, 0, "%08X:", addr);
             cpu_inst(dbg->comp, addr, buf);
-            print(dbg, 15, i+2, 10, 0, "%s", buf);
+            if(addr != lvm_cpuregister(cpu, PC)) {
+                print(dbg, 2, y+2, 10, 0, "%08X:  %s", addr, buf);
+            } else {
+                print(dbg, 1, y+2, 0, 10, "%*s", 45, "");
+                print(dbg, 2, y+2, 0, 10, "%08X:  %s", addr, buf);
+            }
             ++y;
             if(y == 22)
                 break;
@@ -678,12 +683,25 @@ cpu_update(Debugger* dbg)
 static void
 cpu_advance(Debugger* debugger)
 {
+    debugger->cpu.top_addr += cpu_inst_sz(debugger->comp, debugger->cpu.top_addr);
+    debugger->dirty = true;
 }
 
 
 static void
-cpu_regress(Debugger* debugger)
+cpu_regress(Debugger* dbg)
 {
+    uint32_t addr = 0;
+    uint32_t last_addr = 0;
+    for(uint32_t i=dbg->cpu.code_start; ; ++i) {
+        if(addr >= dbg->cpu.top_addr) {
+            dbg->cpu.top_addr = last_addr;
+            dbg->dirty = true;
+            return;
+        }
+        last_addr = addr;
+        addr += cpu_inst_sz(dbg->comp, addr);
+    }
 }
 
 
@@ -707,18 +725,21 @@ cpu_keypressed(Debugger* debugger, uint32_t chr)
                 cpu_regress(debugger);
             }
             break;
-        case 'g':
-            /*
-            debugger->question = (Question) {
-                .return_to = ST_PHYSICAL,
-                .text = "Go to address:",
-                .response = 0,
-                .ok = false,
-            };
-            memset(debugger->question.buffer, 0, sizeof debugger->question.buffer);
-            debugger->state = ST_QUESTION;
-            debugger->dirty = true;
-            */
+        case 's': {
+                // step
+                LVM_CPU* cpu = lvm_cpu(debugger->comp, 0);
+                lvm_step(debugger->comp, 0);
+                // center position
+                uint32_t addr = debugger->cpu.top_addr;
+                for(uint32_t y=0; y<22; ++y) {
+                    addr += cpu_inst_sz(debugger->comp, addr);
+                }
+                uint32_t pc = lvm_cpuregister(cpu, PC);
+                if(pc < debugger->cpu.top_addr || pc >= addr) {
+                    debugger->cpu.top_addr = pc;
+                }
+                debugger->dirty = true;
+            }
             break;
     }
 }
@@ -805,17 +826,17 @@ void debugger_keypressed(Debugger* debugger, uint32_t chr, uint8_t modifiers)
     switch(chr) {
         case F1:
             lvm_clrscr(debugger->comp);
-            debugger->state = ST_LOGICAL;
+            debugger->state = ST_CPU;
             debugger->dirty = true;
             break;
         case F2:
             lvm_clrscr(debugger->comp);
-            debugger->state = ST_PHYSICAL;
+            debugger->state = ST_LOGICAL;
             debugger->dirty = true;
             break;
         case F3:
             lvm_clrscr(debugger->comp);
-            debugger->state = ST_CPU;
+            debugger->state = ST_PHYSICAL;
             debugger->dirty = true;
             break;
         default:

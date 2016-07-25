@@ -170,6 +170,7 @@ int main()
 
     LVM_Computer* computer = lvm_computercreate(4 * 1024, true);  // TODO
     lvm_addcpu(computer);
+    srand(3000);
     for(int i=0; i<10000; ++i) { lvm_set(computer, i, rand() % 0xFF); }
 
     if(SDL_Init(SDL_INIT_VIDEO) != 0) {
