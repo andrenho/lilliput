@@ -221,8 +221,8 @@ static int computer_addcpu(lua_State* L)
 
     // add flags table to CPU
     lua_newtable(L);
-    lua_pushstring(L, "__ptr");
-    lua_rawsetp(L, -2, cpu);
+    lua_pushlightuserdata(L, cpu);
+    lua_setfield(L, -2, "__ptr");
     luaL_setmetatable(L, "LVM_Flag");
     lua_setfield(L, -2, "flags");
 
