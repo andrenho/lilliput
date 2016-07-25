@@ -23,6 +23,9 @@ computer.offset                 -> read/write memory offset
 computer:add_cpu()              -> add a new cpu
 computer.cpu[]                  -> CPU list
 
+computer:step(n=0)              -> one step
+computer:reset()                -> reset the computer
+
 CPU
 ---
 

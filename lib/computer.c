@@ -8,6 +8,7 @@
 extern LVM_CPU* lvm_createcpu(LVM_Computer* comp);
 extern void lvm_destroycpu(LVM_CPU* cpu);
 extern void lvm_cpustep(LVM_CPU* cpu);
+extern void lvm_cpureset(LVM_CPU* cpu);
 
 typedef struct LVM_Computer {
     uint8_t*  physical_memory;
@@ -77,6 +78,21 @@ lvm_step(LVM_Computer* comp, size_t force_time_us)
     size_t i = 0;
     while(comp->cpu[i]) {
         lvm_cpustep(comp->cpu[i++]);
+    }
+}
+
+
+void
+lvm_reset(LVM_Computer* comp)
+{
+    comp->offset = 0;
+    for(uint32_t pos = 0; pos < comp->physical_memory_size; ++pos) {
+        comp->physical_memory[pos] = 0;
+    }
+
+    size_t i = 0;
+    while(comp->cpu[i]) {
+        lvm_cpureset(comp->cpu[i++]);
     }
 }
 

@@ -35,7 +35,9 @@ end
 -- COMPILATION
 --
 
-local opcodes = {
+-- {{{
+
+local opcodes = {  --{{{ ...  }
     -- movement
     [0x01] = { instruction = 'mov', parameters = { 'reg', 'reg' } },
     [0x02] = { instruction = 'mov', parameters = { 'reg', 'v8' } },
@@ -177,7 +179,7 @@ local opcodes = {
     [0x87] = { instruction = 'nop', parameters = {} },
     [0x88] = { instruction = 'halt', parameters = {} },
     [0x89] = { instruction = 'dbg', parameters = {} },
-}
+}  --}}}
 
 function compile(comp, code)
     local registers = { A=0, B=1, C=2, D=3, E=4, F=5, G=6, H=7, I=8, J=9, K=10, L=11, FP=12, SP=13, PC=14, FL=15 }
@@ -244,6 +246,15 @@ function compile(comp, code)
     end
 end
 
+
+function run(comp, code)
+    compile(comp, code)
+    comp:step()
+end
+
+
+-- }}}
+
 --
 -- COMPUTER TESTS
 --
@@ -301,7 +312,18 @@ function cpu_tests()
         equals(comp:get(0x1), 0x12, "mov B, C [1]")
     end
 
+
+    function mov()
+        local comp = computer()
+        local cpu = comp.cpu[1]
+
+        cpu.B = 0x42 ; run(comp, "mov A, B")
+        equals(cpu.A, 0x42, 'xxx')
+    end
+
+
     sanity()
+    mov()
 end
 
 --

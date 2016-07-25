@@ -22,6 +22,7 @@ LVM_Computer* lvm_computercreate(uint32_t physical_memory_size);
 void          lvm_computerdestroy(LVM_Computer* comp);
 
 void          lvm_step(LVM_Computer* comp, size_t force_time_us);
+void          lvm_reset(LVM_Computer* comp);
 
 uint8_t       lvm_get(LVM_Computer* comp, uint32_t pos);
 void          lvm_set(LVM_Computer* comp, uint32_t pos, uint8_t data);

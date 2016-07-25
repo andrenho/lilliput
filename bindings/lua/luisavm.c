@@ -389,6 +389,13 @@ static int computer_step(lua_State* L)
 }
 
 
+static int computer_reset(lua_State* L)
+{
+    lvm_reset(get_object_ptr(L, 1));
+    return 0;
+}
+
+
 static int destroy_computer(lua_State* L)
 {
     lvm_computerdestroy(get_object_ptr(L, 1));
@@ -411,6 +418,7 @@ static int create_computer(lua_State* L)
         { "set32",   computer_set32  },
         { "add_cpu", computer_addcpu },
         { "step",    computer_step   },
+        { "reset",   computer_reset  },
         { NULL, NULL },
     });
 

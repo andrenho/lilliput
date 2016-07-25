@@ -32,9 +32,18 @@ lvm_destroycpu(LVM_CPU* cpu)
 
 // }}}
 
-// {{{ STEP
+// {{{ STEP / RESET
 
-extern void 
+void 
+lvm_cpureset(LVM_CPU* cpu)
+{
+    for(int i=0; i<16; ++i) {
+        cpu->reg[i] = 0;
+    }
+}
+
+
+void 
 lvm_cpustep(LVM_CPU* cpu)
 {
     (void) cpu;
