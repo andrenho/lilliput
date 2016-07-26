@@ -324,8 +324,484 @@ function cpu_tests()
 
         comp:reset(); cpu.B = 0x42 ; run(comp, "mov A, B")
         equals(cpu.A, 0x42)
+        equals(cpu.PC, 3, "checking PC position")
+
+        comp:reset() ; run(comp, "mov A, 0x34") 
+        equals(cpu.A, 0x34)
+  
+        comp:reset() ; run(comp, "mov A, 0x1234") 
+        equals(cpu.A, 0x1234)
+  
+        comp:reset() ; run(comp, "mov A, 0xFABC1234") 
+        equals(cpu.A, 0xFABC1234)
+
+        print("# Test movement flags")
+  
+        comp:reset() ; run(comp, "mov A, 0")
+        equals(cpu.Z, true, "cpu.Z = 1")
+        equals(cpu.P, true, "cpu.P = 1")
+        equals(cpu.S, false, "cpu.S = 0")
+
+        comp:reset() ; run(comp, "mov A, 0xF0000001")
+        equals(cpu.Z, false, "cpu.Z = 0")
+        equals(cpu.P, false, "cpu.P = 0")
+        equals(cpu.S, true, "cpu.S = 1")
     end
 
+
+    function movb()
+        print("# 8-bit movement (movb)")
+
+        comp:reset() ; cpu.B = 0x1000; comp:set(cpu.B, 0xAB) ; run(comp, "movb A, [B]") 
+        equals(cpu.A, 0xAB)
+  
+        comp:reset() ; comp:set(0x1000, 0xAB) ; run(comp, "movb A, [0x1000]")
+        equals(cpu.A, 0xAB)
+
+        comp:reset() ; cpu.A = 0x64 ; cpu.C = 0x32 ; run(comp, "movb [C], A")
+        equals(comp:get(0x32), 0x64)
+
+        comp:reset() ; cpu.A = 0x64 ; run(comp, "movb [A], 0xFA")
+        equals(comp:get(0x64), 0xFA)
+
+        comp:reset() ; cpu.A = 0x32 ; cpu.B = 0x64 ; comp:set(0x64, 0xFF) ; run(comp, "movb [A], [B]")
+        equals(comp:get(0x32), 0xFF)
+
+        comp:reset() ; cpu.A = 0x32; comp:set(0x6420, 0xFF) ; run(comp, "movb [A], [0x6420]")
+        equals(comp:get(0x32), 0xFF)
+
+        comp:reset() ; cpu.A = 0xAC32 ; run(comp, "movb [0x64], A")
+        equals(comp:get(0x64), 0x32)
+
+        comp:reset() ; run(comp, "movb [0x64], 0xF0")
+        equals(comp:get(0x64), 0xF0)
+  
+        cpu.A = 0xF000 ; comp:set(0xF000, 0x42)
+        comp:reset() ; run(comp, "movb [0xCC64], [A]")
+        equals(comp:get(0xCC64), 0x42)
+  
+        comp:set32(0xABF0, 0x1234); comp:set(0x1234, 0x3F);
+        comp:reset() ; run(comp, "movb [0x64], [0xABF0]")
+        equals(comp:get(0x64), 0x3F)
+    end
+
+
+    function movw()
+        print("# 16-bit movement (movw)")
+  
+        comp:reset() ; cpu.B = 0x1000 ; comp:set16(cpu.B, 0xABCD) ; run(comp, "movw A, [B]") 
+        equals(cpu.A, 0xABCD)
+  
+        comp:reset() ; comp:set16(0x1000, 0xABCD) ; run(comp, "movw A, [0x1000]")
+        equals(cpu.A, 0xABCD)
+
+        comp:reset() ; cpu.A = 0x6402 ; run(comp, "movw [A], A")
+        equals(comp:get16(0x6402), 0x6402)
+
+        comp:reset() ; cpu.A = 0x64 ; run(comp, "movw [A], 0xFABA")
+        equals(comp:get16(0x64), 0xFABA)
+
+        comp:reset() ; cpu.A = 0x32CC ; cpu.B = 0x64 ; comp:set16(0x64, 0xFFAB) ; run(comp, "movw [A], [B]")
+        equals(comp:get16(0x32CC), 0xFFAB)
+
+        comp:reset() ; cpu.A = 0x32; comp:set16(0x6420, 0xFFAC) ; run(comp, "movw [A], [0x6420]")
+        equals(comp:get16(0x32), 0xFFAC)
+
+        comp:reset() ; cpu.A = 0xAB32AC ; run(comp, "movw [0x64], A")
+        equals(comp:get16(0x64), 0x32AC)
+
+        comp:reset() ; run(comp, "movw [0x64], 0xF0FA")
+        equals(comp:get16(0x64), 0xF0FA)
+  
+        cpu.A = 0xF000; comp:set16(0xF000, 0x4245); 
+        comp:reset() ; run(comp, "movw [0xCC64], [A]")
+        equals(comp:get16(0xCC64), 0x4245)
+  
+        comp:set32(0xABF0, 0x1234); comp:set16(0x1234, 0x3F54);
+        comp:reset() ; run(comp, "movw [0x64], [0xABF0]")
+        equals(comp:get16(0x64), 0x3F54)
+    end
+
+
+    function movd()
+        print("# 32-bit movement (movd)")
+  
+        comp:reset() ; cpu.B = 0x1000; comp:set32(cpu.B, 0xABCDEF01) ; run(comp, "movd A, [B]") 
+        equals(cpu.A, 0xABCDEF01)
+  
+        comp:reset() ; comp:set32(0x1000, 0xABCDEF01) ; run(comp, "movd A, [0x1000]")
+        equals(cpu.A, 0xABCDEF01)
+
+        comp:reset() ; cpu.A = 0x16402 ; run(comp, "movd [A], A")
+        equals(comp:get32(0x16402), 0x16402)
+
+        comp:reset() ; cpu.A = 0x64 ; run(comp, "movd [A], 0xFABA1122")
+        equals(comp:get32(0x64), 0xFABA1122)
+
+        comp:reset() ; cpu.A = 0x32CC; cpu.B = 0x64; comp:set32(0x64, 0xFFAB5678) ; run(comp, "movd [A], [B]")
+        equals(comp:get32(0x32CC), 0xFFAB5678)
+
+        comp:reset() ; cpu.A = 0x32; comp:set32(0x6420, 0xFFAC9876) ; run(comp, "movd [A], [0x6420]")
+        equals(comp:get32(0x32), 0xFFAC9876)
+
+        comp:reset() ; cpu.A = 0xAB32AC44 ; run(comp, "movd [0x64], A")
+        equals(comp:get32(0x64), 0xAB32AC44)
+
+        comp:reset() ; run(comp, "movd [0x64], 0xF0FA1234")
+        equals(comp:get32(0x64), 0xF0FA1234)
+  
+        cpu.A = 0xF000; comp:set32(0xF000, 0x4245AABB); 
+        comp:reset() ; run(comp, "movd [0xCC64], [A]")
+        equals(comp:get32(0xCC64), 0x4245AABB)
+  
+        comp:set32(0xABF0, 0x1234); comp:set32(0x1234, 0x3F54FABC);
+        comp:reset() ; run(comp, "movd [0x64], [0xABF0]")
+        equals(comp:get32(0x64), 0x3F54FABC)
+    end
+
+
+    function logic()
+        print("# Logic operations")
+
+        comp:reset() ; cpu.A = b(1010); cpu.B = b(1100) ; run(comp, "or A, B")
+        equals(cpu.A, b(1110))
+        equals(cpu.S, false, "cpu.S == 0")
+        equals(cpu.P, true, "cpu.P == 1")
+        equals(cpu.Z, false, "cpu.Z == 0")
+        equals(cpu.Y, false, "cpu.Y == 0")
+        equals(cpu.V, false, "cpu.V == 0")
+
+        comp:reset() ; cpu.A = b(11) ; run(comp, "or A, 0x4")
+        equals(cpu.A, b(111))
+
+        comp:reset() ; cpu.A = b(111) ; run(comp, "or A, 0x4000")
+        equals(cpu.A, 0x4007)
+
+        comp:reset() ; cpu.A = 0x10800000 ; run(comp, "or A, 0x2A426653")
+        equals(cpu.A, 0x3AC26653)
+
+        comp:reset() ; cpu.A = b(1010); cpu.B = b(1100) ; run(comp, "xor A, B")
+        equals(cpu.A, b(110))
+
+        comp:reset() ; cpu.A = b(11) ; run(comp, "xor A, 0x4")
+        equals(cpu.A, b(111))
+
+        comp:reset() ; cpu.A = 0xFF0 ; run(comp, "xor A, 0xFF00")
+        equals(cpu.A, 0xF0F0)
+
+        comp:reset() ; cpu.A = 0x148ABD12 ; run(comp, "xor A, 0x2A426653")
+        equals(cpu.A, 0x3EC8DB41)
+
+        comp:reset() ; cpu.A = b(11); cpu.B = b(1100) ; run(comp, "and A, B")
+        equals(cpu.A, 0)
+        equals(cpu.Z, true, "cpu.Z == 1")
+
+        comp:reset() ; cpu.A = b(11) ; run(comp, "and A, 0x7")
+        equals(cpu.A, b(11))
+
+        comp:reset() ; cpu.A = 0xFF0 ; run(comp, "and A, 0xFF00")
+        equals(cpu.A, 0xF00)
+
+        comp:reset() ; cpu.A = 0x148ABD12 ; run(comp, "and A, 0x2A426653")
+        equals(cpu.A, 0x22412)
+
+        comp:reset() ; cpu.A = b(10101010); cpu.B = 4 ; run(comp, "shl A, B")
+        equals(cpu.A, b(101010100000))
+
+        comp:reset() ; cpu.A = b(10101010) ; run(comp, "shl A, 4")
+        equals(cpu.A, b(101010100000))
+
+        comp:reset() ; cpu.A = b(10101010); cpu.B = 4 ; run(comp, "shr A, B")
+        equals(cpu.A, b(1010))
+
+        comp:reset() ; cpu.A = b(10101010) ; run(comp, "shr A, 4")
+        equals(cpu.A, b(1010))
+
+        comp:reset() ; cpu.A = b(11001010) ; run(comp, "not A")
+        equals(cpu.A, b(11111111111111111111111100110101))
+    end
+
+
+    function integer_math()
+        print("# Integer arithmetic")
+  
+        comp:reset() ; cpu.A = 0x12; cpu.B = 0x20 ; run(comp, "add A, B")
+        equals(cpu.A, 0x32)
+  
+        comp:reset() ; cpu.A = 0x12 ; run(comp, "add A, 0x20")
+        equals(cpu.A, 0x32)
+
+        comp:reset() ; cpu.A = 0x12 ; cpu.Y = true ; run(comp, "add A, 0x20")
+        equals(cpu.A, 0x33, "add A, 0x20 (with carry)")
+
+        comp:reset() ; cpu.A = 0x12 ; run(comp, "add A, 0x2000")
+        equals(cpu.A, 0x2012)
+
+        comp:reset() ; cpu.A = 0x10000012 ; run(comp, "add A, 0xF0000000")
+        equals(cpu.A, 0x12)
+        equals(cpu.Y, true, "cpu.Y == 1")
+
+        comp:reset() ; cpu.A = 0x30; cpu.B = 0x20 ; run(comp, "sub A, B")
+        equals(cpu.A, 0x10)
+        equals(cpu.S, false, "cpu.S == 0")
+
+        comp:reset() ; cpu.A = 0x20; cpu.B = 0x30 ; run(comp, "sub A, B")
+        equals(cpu.A, 0xFFFFFFF0, "sub A, B (negative)")
+        equals(cpu.S, true, "cpu.S == 1")
+
+        comp:reset() ; cpu.A = 0x22 ; run(comp, "sub A, 0x20")
+        equals(cpu.A, 0x2)
+
+        comp:reset() ; cpu.A = 0x22; cpu.Y = true ; run(comp, "sub A, 0x20")
+        equals(cpu.A, 0x1, "sub A, 0x20 (with carry)")
+
+        comp:reset() ; cpu.A = 0x12 ; run(comp, "sub A, 0x2000")
+        equals(cpu.A, 0xFFFFE012)
+        equals(cpu.S, true, "cpu.S == 1")
+        equals(cpu.Y, true, "cpu.Y == 1")
+
+        comp:reset() ; cpu.A = 0x10000012 ; run(comp, "sub A, 0xF0000000")
+        equals(cpu.A, 0x20000012)
+        equals(cpu.Y, true, "cpu.Y == 1")
+
+        comp:reset() ; run(comp, "cmp A, B")
+        equals(cpu.Z, true)
+
+        comp:reset() ; run(comp, "cmp A, 0x12")
+        equals(cpu.LT and not cpu.GT, true)
+
+        comp:reset() ; cpu.A = 0x6000 ; run(comp, "cmp A, 0x1234")
+        equals(not cpu.LT and cpu.GT, true)
+
+        comp:reset() ; cpu.A = 0xF0000000 ; run(comp, "cmp A, 0x12345678")
+        equals(not cpu.LT and cpu.GT, true)  -- because of the signal!
+
+        comp:reset() ; cpu.A = 0x0 ; run(comp, "cmp A")
+        equals(cpu.Z, true)
+
+        comp:reset() ; cpu.A = 0xF0; cpu.B = 0xF000 ; run(comp, "mul A, B")
+        equals(cpu.A, 0xE10000)
+
+        comp:reset() ; cpu.A = 0x1234 ; run(comp, "mul A, 0x12")
+        equals(cpu.A, 0x147A8)
+
+        comp:reset() ; cpu.A = 0x1234 ; run(comp, "mul A, 0x12AF")
+        equals(cpu.A, 0x154198C)
+        equals(cpu.V, false, "cpu.V == 0")
+
+        comp:reset() ; cpu.A = 0x1234 ; run(comp, "mul A, 0x12AF87AB")
+        equals(cpu.A, 0x233194BC)
+        equals(cpu.V, true, "cpu.V == 1")
+
+        comp:reset() ; cpu.A = 0xF000; cpu.B = 0xF0 ; run(comp, "idiv A, B")
+        equals(cpu.A, 0x100)
+
+        comp:reset() ; cpu.A = 0x1234 ; run(comp, "idiv A, 0x12")
+        equals(cpu.A, 0x102)
+
+        comp:reset() ; cpu.A = 0x1234 ; run(comp, "idiv A, 0x2AF")
+        equals(cpu.A, 0x6)
+
+        comp:reset() ; cpu.A = 0x123487AB ; run(comp, "idiv A, 0x12AF")
+        equals(cpu.A, 0xF971)
+
+        comp:reset() ; cpu.A = 0xF000; cpu.B = 0xF0 ; run(comp, "mod A, B")
+        equals(cpu.A, 0x0)
+        equals(cpu.Z, true, "cpu.Z == 1")
+
+        comp:reset() ; cpu.A = 0x1234 ; run(comp, "mod A, 0x12")
+        equals(cpu.A, 0x10)
+
+        comp:reset() ; cpu.A = 0x1234 ; run(comp, "mod A, 0x2AF")
+        equals(cpu.A, 0x21A)
+
+        comp:reset() ; cpu.A = 0x123487AB ; run(comp, "mod A, 0x12AF")
+        equals(cpu.A, 0x116C)
+
+        comp:reset() ; cpu.A = 0x42 ; run(comp, "inc A")
+        equals(cpu.A, 0x43)
+
+        comp:reset() ; cpu.A = 0xFFFFFFFF ; run(comp, "inc A")
+        equals(cpu.A, 0x0, "inc A (overflow)")
+        equals(cpu.Y, true, "cpu.Y == 1")
+        equals(cpu.Z, true, "cpu.Z == 1")
+
+        comp:reset() ; cpu.A = 0x42 ; run(comp, "dec A")
+        equals(cpu.A, 0x41)
+
+        comp:reset() ; cpu.A = 0x0 ; run(comp, "dec A")
+        equals(cpu.A, 0xFFFFFFFF, "dec A (underflow)")
+        equals(cpu.Z, false, "cpu.Z == 0")
+    end
+
+
+    function branches()
+        print("# Branch operations")
+
+        comp:reset() ; cpu.Z = true; cpu.A = 0x1000 ; run(comp, "bz A")
+        equals(cpu.PC, 0x1000)
+
+        comp:reset() ; cpu.A = 0x1000 ; run(comp, "bz A")
+        equals(cpu.PC, 0x2, "bz A (false)")
+
+        comp:reset() ; cpu.Z = true ; run(comp, "bz 0x1000")
+        equals(cpu.PC, 0x1000)
+
+        comp:reset() ; cpu.A = 0x1000 ; run(comp, "bnz A")
+        equals(cpu.PC, 0x1000)
+
+        comp:reset() ; run(comp, "bnz 0x1000")
+        equals(cpu.PC, 0x1000)
+
+        comp:reset() ; cpu.S = true; cpu.A = 0x1000 ; run(comp, "bneg A")
+        equals(cpu.PC, 0x1000)
+
+        comp:reset() ; cpu.A = 0x1000 ; run(comp, "bneg A")
+        equals(cpu.PC, 0x2, "bneg A (false)")
+
+        comp:reset() ; cpu.S = true ; run(comp, "bneg 0x1000")
+        equals(cpu.PC, 0x1000)
+
+        comp:reset() ; cpu.A = 0x1000 ; run(comp, "bpos A")
+        equals(cpu.PC, 0x1000)
+
+        comp:reset() ; run(comp, "bpos 0x1000")
+        equals(cpu.PC, 0x1000)
+
+        comp:reset() ; run(comp, "jmp 0x12345678")
+        equals(cpu.PC, 0x12345678)
+    end
+
+
+    --[[
+    function stack()
+        print("# Stack operations")
+
+  mb.reset();
+  cpu.SP = 0xFFF; 
+  cpu.A = 0xABCDEF12;
+
+  comp:setArray(0x0, Debugger.encode('pushb A'));
+  comp:setArray(0x2, Debugger.encode('pushb 0x12'));
+  comp:setArray(0x4, Debugger.encode('pushw A'));
+  comp:setArray(0x6, Debugger.encode('pushd A'));
+
+  comp:setArray(0x8, Debugger.encode('popd B'));
+  comp:setArray(0xA, Debugger.encode('popw B'));
+  comp:setArray(0xC, Debugger.encode('popb B'));
+
+  comp:setArray(0xE, Debugger.encode('popx 1'));
+
+  mb.step();
+        equals(comp:get(0xFFF), 0x12, "pushb A")
+        equals(cpu.SP, 0xFFE, "SP = 0xFFE")
+
+  mb.step();
+        equals(comp:get(0xFFE), 0x12, "pushb 0x12")
+        equals(cpu.SP, 0xFFD, "SP = 0xFFD")
+
+  mb.step();
+        equals(comp:get16(0xFFC), 0xEF12)
+        equals(comp:get(0xFFD), 0xEF)
+        equals(comp:get(0xFFC), 0x12)
+        equals(cpu.SP, 0xFFB, "SP = 0xFFB")
+
+  mb.step();
+  t.equal(comp:get32(0xFF8), 0xABCDEF12);
+        equals(cpu.SP, 0xFF7, "SP = 0xFF7")
+
+  mb.step();
+        equals(cpu.B, 0xABCDEF12, "popd B")
+
+  mb.step();
+        equals(cpu.B, 0xEF12, "popw B")
+
+  mb.step();
+        equals(cpu.B, 0x12, "popb B")
+
+  mb.step();
+        equals(cpu.SP, 0xFFF, "popx 1")
+
+  // all registers
+  s = opc('push.a', () => {
+    cpu.SP = 0xFFF;
+    cpu.A = 0xA1B2C3E4;
+    cpu.B = 0xFFFFFFFF;
+  });
+        equals(cpu.SP, 0xFCF)
+        equals(comp:get32(0xFFC), 0xA1B2C3E4, "A is saved")
+        equals(comp:get32(0xFF8), 0xFFFFFFFF, "B is saved")
+  
+  s = opc('pop.a', () => {
+    cpu.SP = 0xFCF;
+    comp:set32(0xFFC, 0xA1B2C3E4);
+    comp:set32(0xFF8, 0xFFFFFFFF);
+  });
+        equals(cpu.SP, 0xFFF)
+        equals(cpu.A, 0xA1B2C3E4, "A is restored")
+        equals(cpu.B, 0xFFFFFFFF, "B is restored")
+    end
+
+  // others
+        print("# Others")
+
+  opc('nop');
+  
+        comp:reset() ; run(comp, "dbg")
+        equals(cpu.activateDebugger, true)
+
+        comp:reset() ; run(comp, "halt")
+        equals(cpu.systemHalted, true)
+
+  s = opc('swap A, B', () => {
+    cpu.A = 0xA;
+    cpu.B = 0xB;
+  });
+        equals(cpu.A == 0xB and cpu.B == 0xA, true)
+
+  t.end();
+
+});
+
+
+test('CPU: subroutines and system calls', t => {
+
+  let [mb, cpu] = makeCPU();
+
+  // jsr
+  mb.reset();
+  comp:setArray(0x200, Debugger.encode('jsr 0x1234'));
+  comp:setArray(0x1234, Debugger.encode('ret'));
+  cpu.PC = 0x200;
+  cpu.SP = 0xFFF;
+  mb.step();
+        equals(cpu.PC, 0x1234, "jsr 0x1234")
+        equals(comp:get(0xFFC), 0x5, "[FFC] = 0x5")
+        equals(comp:get(0xFFD), 0x2, "[FFD] = 0x2")
+        equals(cpu.SP, 0xFFB, "SP = 0xFFB")
+        equals(comp:get32(0xFFC), 0x200 + 5, "address in stack") 
+
+  mb.step();
+        equals(cpu.PC, 0x205, "ret")
+        equals(cpu.SP, 0xFFF, "SP = 0xFFF")
+
+  // sys
+  mb.reset();
+  cpu.SP = 0xFFF;
+  comp:setArray(0, Debugger.encode('sys 2'));
+  comp:set32(cpu.CPU_SYSCALL_VECT + 8, 0x1000);
+        equals(cpu._syscallVector[2], 0x1000, "syscall vector")
+  comp:setArray(0x1000, Debugger.encode('sret'));
+
+  mb.step();
+        equals(cpu.PC, 0x1000, "sys 2")
+        equals(cpu.SP, 0xFFB, "SP = 0xFFD")
+  mb.step();
+        equals(cpu.PC, 0x2, "sret")
+        equals(cpu.SP, 0xFFF, "SP = 0xFFF")
+
+  t.end();
+--]]
 
     sanity()
     mov()
