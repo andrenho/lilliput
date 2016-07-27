@@ -57,7 +57,7 @@ lvm_cpureset(LVM_CPU* cpu)
 //
 
 typedef struct Parameter {
-    enum { REG, INDREG, V8, V16, V32, INDV32 } type;
+    enum { NONE, REG, INDREG, V8, V16, V32, INDV32 } type;
     uint32_t value;
 } Parameter;
 
@@ -109,6 +109,7 @@ _take(LVM_CPU* cpu, Parameter par)
         case V8: case V16: case V32: return par.value;
         case INDV32: return lvm_get32(cpu->computer, par.value);
         case INDREG: return lvm_get32(cpu->computer, cpu->reg[par.value]);
+        case NONE: abort();
     }
     abort();
 }
@@ -132,23 +133,24 @@ _apply(LVM_CPU* cpu, Parameter par, uint32_t value, uint32_t sz)
             break;
         case INDREG:
             switch(sz) {
-                case  8: lvm_set(cpu->computer, cpu->reg[par.value], value); return;
-                case 16: lvm_set16(cpu->computer, cpu->reg[par.value], value); return;
+                case  8: lvm_set(cpu->computer, cpu->reg[par.value], (uint8_t)value); return;
+                case 16: lvm_set16(cpu->computer, cpu->reg[par.value], (uint16_t)value); return;
                 case 32: lvm_set32(cpu->computer, cpu->reg[par.value], value); return;
                 default: abort();
             }
         case INDV32:
             switch(sz) {
-                case  8: lvm_set(cpu->computer, par.value, value); return;
-                case 16: lvm_set16(cpu->computer, par.value, value); return;
+                case  8: lvm_set(cpu->computer, par.value, (uint8_t)value); return;
+                case 16: lvm_set16(cpu->computer, par.value, (uint16_t)value); return;
                 case 32: lvm_set32(cpu->computer, par.value, value); return;
                 default: abort();
             }
-        case V8: case V16: case V32: default:
+        case V8: case V16: case V32: case NONE: default:
             abort();
     }
 }
-#define APPLY(par, value, sz) (_apply(cpu, par, value, sz))
+#define APPLY(par, value) (_apply(cpu, par, value, 0))
+#define APPLY_SZ(par, value, sz) (_apply(cpu, par, value, sz))
 
 
 inline static void
@@ -168,6 +170,8 @@ _advance_pc(LVM_CPU* cpu, Parameter pars[2])
                 case V32: case INDV32:
                     cpu->reg[PC] += 4;
                     break;
+                case NONE:
+                    break;
                 default:
                     abort();
             }
@@ -183,6 +187,7 @@ _advance_pc(LVM_CPU* cpu, Parameter pars[2])
 
 typedef enum Instruction { 
     MOV, MOVB, MOVW, MOVD, SWAP,
+    OR, XOR, AND, SHL, SHR, NOT,
     INVALID 
 } Instruction;
 
@@ -233,6 +238,29 @@ _parse_opcode(LVM_CPU* cpu, Parameter pars[2])
 
         case 0x23: _twin_registers_rr(pars, GET(rPC+1));                            return SWAP;
 
+        case 0x24: _twin_registers_rr(pars, GET(rPC+1));                            return OR;
+        case 0x25: pars[0] = _reg(cpu, rPC+1); pars[1] = _v8(cpu, rPC+2);           return OR;
+        case 0x26: pars[0] = _reg(cpu, rPC+1); pars[1] = _v16(cpu, rPC+2);          return OR;
+        case 0x27: pars[0] = _reg(cpu, rPC+1); pars[1] = _v32(cpu, rPC+2);          return OR;
+
+        case 0x28: _twin_registers_rr(pars, GET(rPC+1));                            return XOR;
+        case 0x29: pars[0] = _reg(cpu, rPC+1); pars[1] = _v8(cpu, rPC+2);           return XOR;
+        case 0x2A: pars[0] = _reg(cpu, rPC+1); pars[1] = _v16(cpu, rPC+2);          return XOR;
+        case 0x2B: pars[0] = _reg(cpu, rPC+1); pars[1] = _v32(cpu, rPC+2);          return XOR;
+
+        case 0x2C: _twin_registers_rr(pars, GET(rPC+1));                            return AND;
+        case 0x2D: pars[0] = _reg(cpu, rPC+1); pars[1] = _v8(cpu, rPC+2);           return AND;
+        case 0x2E: pars[0] = _reg(cpu, rPC+1); pars[1] = _v16(cpu, rPC+2);          return AND;
+        case 0x2F: pars[0] = _reg(cpu, rPC+1); pars[1] = _v32(cpu, rPC+2);          return AND;
+
+        case 0x30: _twin_registers_rr(pars, GET(rPC+1));                            return SHL;
+        case 0x31: pars[0] = _reg(cpu, rPC+1); pars[1] = _v8(cpu, rPC+2);           return SHL;
+
+        case 0x32: _twin_registers_rr(pars, GET(rPC+1));                            return SHR;
+        case 0x33: pars[0] = _reg(cpu, rPC+1); pars[1] = _v8(cpu, rPC+2);           return SHR;
+
+        case 0x34: pars[0] = _reg(cpu, rPC+1); pars[1] = (Parameter){ NONE, 0 };    return NOT;
+
         default:
             return INVALID;
     }
@@ -249,22 +277,40 @@ lvm_cpustep(LVM_CPU* cpu)
     Parameter pars[2];
     switch(_parse_opcode(cpu, pars)) {
         case MOV:
-            APPLY(pars[0], TAKE(pars[1]), 0);
+            APPLY(pars[0], TAKE(pars[1]));
             break;
         case MOVB:
-            APPLY(pars[0], (uint8_t)TAKE(pars[1]), 8);
+            APPLY_SZ(pars[0], (uint8_t)TAKE(pars[1]), 8);
             break;
         case MOVW:
-            APPLY(pars[0], (uint16_t)TAKE(pars[1]), 16);
+            APPLY_SZ(pars[0], (uint16_t)TAKE(pars[1]), 16);
             break;
         case MOVD:
-            APPLY(pars[0], TAKE(pars[1]), 32);
+            APPLY_SZ(pars[0], TAKE(pars[1]), 32);
             break;
         case SWAP: {
                 uint32_t tmp = TAKE(pars[1]);
-                APPLY(pars[1], TAKE(pars[0]), 0);
-                APPLY(pars[0], tmp, 0);
+                APPLY(pars[1], TAKE(pars[0]));
+                APPLY(pars[0], tmp);
             }
+            break;
+        case OR: 
+            APPLY(pars[0], TAKE(pars[0]) | TAKE(pars[1]));
+            break;
+        case XOR: 
+            APPLY(pars[0], TAKE(pars[0]) ^ TAKE(pars[1]));
+            break;
+        case AND: 
+            APPLY(pars[0], TAKE(pars[0]) & TAKE(pars[1]));
+            break;
+        case SHL: 
+            APPLY(pars[0], TAKE(pars[0]) << TAKE(pars[1]));
+            break;
+        case SHR: 
+            APPLY(pars[0], TAKE(pars[0]) >> TAKE(pars[1]));
+            break;
+        case NOT:
+            APPLY(pars[0], !TAKE(pars[0]));
             break;
         case INVALID:
         default:

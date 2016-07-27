@@ -35,6 +35,7 @@ function b(value)
         n = n*2
         value = math.floor(value / 10)
     end
+    return ret
 end
 
 function computer()
@@ -246,7 +247,7 @@ function compile(comp, code)
 ::found::
     
     -- add parameters
-    if parameters[1].type:sub(1, 3) == 'reg' and parameters[2].type:sub(1, 3) == 'reg' then
+    if parameters[1].type:sub(1, 3) == 'reg' and parameters[2] and parameters[2].type:sub(1, 3) == 'reg' then
         ret[#ret+1] = (parameters[1].value[1] << 4) | parameters[2].value[1]
     else
         local i = 1
@@ -503,10 +504,10 @@ function cpu_tests()
 
         comp:reset() ; cpu.A = b(1010); cpu.B = b(1100) ; run(comp, "or A, B")
         equals(cpu.A, b(1110))
-        equals(cpu.flags.S, false, "cpu.flags.S == 0")
-        equals(cpu.flags.Z, false, "cpu.flags.Z == 0")
-        equals(cpu.flags.Y, false, "cpu.Y == 0")
-        equals(cpu.V, false, "cpu.V == 0")
+        equals(cpu.flags.S, false, "cpu.flags.S")
+        equals(cpu.flags.Z, false, "cpu.flags.Z")
+        equals(cpu.flags.Y, false, "cpu.Y")
+        equals(cpu.flags.V, false, "cpu.flags.V")
 
         comp:reset() ; cpu.A = b(11) ; run(comp, "or A, 0x4")
         equals(cpu.A, b(111))
@@ -627,11 +628,11 @@ function cpu_tests()
 
         comp:reset() ; cpu.A = 0x1234 ; run(comp, "mul A, 0x12AF")
         equals(cpu.A, 0x154198C)
-        equals(cpu.V, false, "cpu.V == 0")
+        equals(cpu.flags.V, false, "cpu.flags.V")
 
         comp:reset() ; cpu.A = 0x1234 ; run(comp, "mul A, 0x12AF87AB")
         equals(cpu.A, 0x233194BC)
-        equals(cpu.V, true, "cpu.V == 1")
+        equals(cpu.flags.V, true, "cpu.flags.V")
 
         comp:reset() ; cpu.A = 0xF000; cpu.B = 0xF0 ; run(comp, "idiv A, B")
         equals(cpu.A, 0x100)
