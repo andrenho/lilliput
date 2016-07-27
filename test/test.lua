@@ -25,6 +25,18 @@ function equals(tested, expect, text)
     end
 end
 
+function b(value)
+    local n = 1
+    local ret = 0
+    while value > 0 do
+        if value & 1 ~= 0 then
+            ret = ret + n
+        end
+        n = n*2
+        value = math.floor(value / 10)
+    end
+end
+
 function computer()
     local computer = luisavm.create_computer(1024 * 1024)
     computer:add_cpu()
@@ -386,7 +398,7 @@ function cpu_tests()
         run(comp, "movb [0xCC64], [A]")
         equals(comp:get(0xCC64), 0x42)
   
-        comp:reset() ; comp:set32(0xABF0, 0x1234); comp:set(0x1234, 0x3F);
+        comp:reset() ; comp:set32(0xABF0, 0x3F)
         run(comp, "movb [0x64], [0xABF0]")
         equals(comp:get(0x64), 0x3F)
     end
@@ -426,7 +438,7 @@ function cpu_tests()
         run(comp, "movw [0xCC64], [A]")
         equals(comp:get16(0xCC64), 0x4245)
   
-        comp:reset() ; comp:set32(0xABF0, 0x1234); comp:set16(0x1234, 0x3F54);
+        comp:reset() ; comp:set16(0xABF0, 0x3F54)
         run(comp, "movw [0x64], [0xABF0]")
         equals(comp:get16(0x64), 0x3F54)
     end
@@ -466,7 +478,7 @@ function cpu_tests()
         run(comp, "movd [0xCC64], [A]")
         equals(comp:get32(0xCC64), 0x4245AABB)
   
-        comp:reset() ; comp:set32(0xABF0, 0x1234); comp:set32(0x1234, 0x3F54FABC);
+        comp:reset() ; comp:set32(0xABF0, 0x3F54FABC)
         run(comp, "movd [0x64], [0xABF0]")
         equals(comp:get32(0x64), 0x3F54FABC)
     end
