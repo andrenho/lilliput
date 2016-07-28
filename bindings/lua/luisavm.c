@@ -221,6 +221,27 @@ static void create_cpu_metatable(lua_State* L)
 }
 
 
+static int cpu_add_breakpoint(lua_State* L)
+{
+    lvm_addbreakpoint(get_object_ptr(L, 1), luaL_checknumber(L, 2));
+    return 0;
+}
+
+
+static int cpu_remove_breakpoint(lua_State* L)
+{
+    lvm_removebreakpoint(get_object_ptr(L, 1), luaL_checknumber(L, 2));
+    return 0;
+}
+
+
+static int cpu_is_breakpoint(lua_State* L)
+{
+    lua_pushboolean(L, lvm_isbreakpoint(get_object_ptr(L, 1), luaL_checknumber(L, 2)));
+    return 1;
+}
+
+
 static int computer_addcpu(lua_State* L)
 {
     LVM_Computer* comp = get_object_ptr(L, 1);
@@ -228,6 +249,9 @@ static int computer_addcpu(lua_State* L)
     
     lua_getfield(L, 1, "cpu");
     create_object(L, "LVM_CPU", cpu, (struct luaL_Reg[]) {
+        { "add_breakpoint",     cpu_add_breakpoint },
+        { "remove_breakpoint",  cpu_remove_breakpoint },
+        { "is_breakpoint",      cpu_is_breakpoint },
         { NULL, NULL }
     });
 

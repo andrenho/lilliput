@@ -31,3 +31,7 @@ CPU
 
 cpu.A                           -> set/return the register
 cpu.flags.Z                     -> set/return the flag
+
+cpu:add_breakpoint(n)           -> add a new breakpoint
+cpu:remove_breakpoint(n)        -> remove a breakpoint
+cpu:is_breakpoint(n)            -> return wether `n` address is a breakpoint

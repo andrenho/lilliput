@@ -59,4 +59,8 @@ typedef enum LVM_CPUFlag {
 bool        lvm_cpuflag(LVM_CPU* cpu, LVM_CPUFlag f);
 void        lvm_cpusetflag(LVM_CPU* cpu, LVM_CPUFlag f, bool value);
 
+void        lvm_addbreakpoint(LVM_CPU* cpu, uint32_t pos);
+void        lvm_removebreakpoint(LVM_CPU* cpu, uint32_t pos);
+bool        lvm_isbreakpoint(LVM_CPU* cpu, uint32_t pos);
+
 #endif

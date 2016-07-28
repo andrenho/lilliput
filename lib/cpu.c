@@ -7,6 +7,8 @@
 typedef struct LVM_CPU {
     LVM_Computer* computer;
     uint32_t reg[16];
+    uint32_t* breakpoints;
+    size_t    bkp_count;
 } LVM_CPU;
 
 #pragma GCC diagnostic push
@@ -399,7 +401,7 @@ lvm_cpustep(LVM_CPU* cpu)
             }
             break;
         case CMP: {
-                uint32_t p0 = TAKE(pars[0]), p1 = TAKE(pars[1]), diff = p0 - p1 - (int64_t)lvm_cpuflag(cpu, Y);
+                uint32_t p0 = TAKE(pars[0]), p1 = TAKE(pars[1]), diff = p0 - p1 - (uint32_t)lvm_cpuflag(cpu, Y);
                 lvm_cpusetflag(cpu, Z, diff == 0);
                 lvm_cpusetflag(cpu, S, (diff >> 31) & 1);
                 lvm_cpusetflag(cpu, V, false);
@@ -452,6 +454,7 @@ lvm_cpustep(LVM_CPU* cpu)
         case JMP:    cpu->reg[PC] = TAKE(pars[0]); return;
         case JSR:    ADVANCE_PC(pars); _push32(cpu, cpu->reg[PC]); cpu->reg[PC] = TAKE(pars[0]); return;
         case RET:    cpu->reg[PC] = _pop32(cpu); return;
+        case HALT:   abort();  // TODO
         case IRET:   abort();  // TODO
         case PUSHB:  _push8(cpu, (uint8_t)TAKE(pars[0])); break;
         case PUSHW:  _push16(cpu, (uint16_t)TAKE(pars[0])); break;
@@ -461,8 +464,9 @@ lvm_cpustep(LVM_CPU* cpu)
         case POPW:   APPLY(pars[0], _pop16(cpu)); break;
         case POPD:   APPLY(pars[0], _pop32(cpu)); break;
         case POP_A:  for(int i=11; i>=0; --i) cpu->reg[i] = _pop32(cpu); break;
-        case POPX:   for(int i=0; i<TAKE(pars[0]); ++i) _pop8(cpu); break;
+        case POPX:   for(size_t i=0; i<TAKE(pars[0]); ++i) _pop8(cpu); break;
         case NOP:    break;
+        case DBG:    lvm_addbreakpoint(cpu, rPC+1); break;
         case INVALID:
         default:
             syslog(LOG_ERR, "Invalid opcode 0x%02X", GET(cpu->reg[PC]));
@@ -512,6 +516,60 @@ lvm_cpusetflag(LVM_CPU* cpu, LVM_CPUFlag f, bool value)
     int64_t new_value = lvm_cpuregister(cpu, FL);
     new_value ^= (-value ^ new_value) & (1 << (int)f);
     lvm_cpusetregister(cpu, FL, (uint32_t)new_value);
+}
+
+// }}}
+
+// {{{ BREAKPOINTS
+
+void
+lvm_addbreakpoint(LVM_CPU* cpu, uint32_t pos)
+{
+    if(!lvm_isbreakpoint(cpu, pos)) {
+        cpu->breakpoints = realloc(cpu->breakpoints, sizeof(uint32_t) * (cpu->bkp_count+1));
+        cpu->breakpoints[cpu->bkp_count] = pos;
+        ++cpu->bkp_count;
+    }
+}
+
+
+void
+lvm_removebreakpoint(LVM_CPU* cpu, uint32_t pos)
+{
+    bool found = false;
+    for(size_t i=0; i < cpu->bkp_count; ++i) {
+        if(cpu->breakpoints[i] == pos) {
+            found = true;
+            for(size_t j=i; j < cpu->bkp_count - 1; ++j) {
+                cpu->breakpoints[j] = cpu->breakpoints[j+1];
+            }
+            break;
+        }
+    }
+
+    if(found) {
+        assert(cpu->bkp_count > 0);
+
+        --cpu->bkp_count;
+        if(cpu->bkp_count == 0) {
+            free(cpu->breakpoints);
+            cpu->breakpoints = NULL;
+        } else {
+            cpu->breakpoints = realloc(cpu->breakpoints, sizeof(uint32_t) * cpu->bkp_count);
+        }
+    }
+}
+
+
+bool
+lvm_isbreakpoint(LVM_CPU* cpu, uint32_t pos)
+{
+    for(size_t i=0; i < cpu->bkp_count; ++i) {
+        if(cpu->breakpoints[i] == pos) {
+            return true;
+        }
+    }
+    return false;
 }
 
 // }}}
