@@ -273,7 +273,7 @@ are at most two parameters per instruction. Therefore, a instruction can be from
     </tr>
 
     <tr>
-        <td rowspan="16">Logic</td>
+        <td rowspan="17">Logic</td>
         <td><code>0x24</code></td>
         <td rowspan="4"><code>or</code></td>
         <td><i>reg</i>, <i>reg</i></td>
@@ -331,87 +331,302 @@ are at most two parameters per instruction. Therefore, a instruction can be from
         <td>Invert the value in the registers (NOT operator)</td>
         <td><code>par = ~par</code></td>
     </tr>
-<!--
 
-    - arithmetic
-    [0x35] = { instruction = 'add', parameters = { 'reg', 'reg' } },
-    [0x36] = { instruction = 'add', parameters = { 'reg', 'v8' } },
-    [0x37] = { instruction = 'add', parameters = { 'reg', 'v16' } },
-    [0x38] = { instruction = 'add', parameters = { 'reg', 'v32' } },
-    [0x39] = { instruction = 'sub', parameters = { 'reg', 'reg' } },
-    [0x3A] = { instruction = 'sub', parameters = { 'reg', 'v8' } },
-    [0x3B] = { instruction = 'sub', parameters = { 'reg', 'v16' } },
-    [0x3C] = { instruction = 'sub', parameters = { 'reg', 'v32' } },
-    [0x3D] = { instruction = 'cmp', parameters = { 'reg', 'reg' } },
-    [0x3E] = { instruction = 'cmp', parameters = { 'reg', 'v8' } },
-    [0x3F] = { instruction = 'cmp', parameters = { 'reg', 'v16' } },
-    [0x40] = { instruction = 'cmp', parameters = { 'reg', 'v32' } },
-    [0x41] = { instruction = 'cmp', parameters = { 'reg', } },
-    [0x42] = { instruction = 'mul', parameters = { 'reg', 'reg' } },
-    [0x43] = { instruction = 'mul', parameters = { 'reg', 'v8' } },
-    [0x44] = { instruction = 'mul', parameters = { 'reg', 'v16' } },
-    [0x45] = { instruction = 'mul', parameters = { 'reg', 'v32' } },
-    [0x46] = { instruction = 'idiv', parameters = { 'reg', 'reg' } },
-    [0x47] = { instruction = 'idiv', parameters = { 'reg', 'v8' } },
-    [0x48] = { instruction = 'idiv', parameters = { 'reg', 'v16' } },
-    [0x49] = { instruction = 'idiv', parameters = { 'reg', 'v32' } },
-    [0x4A] = { instruction = 'mod', parameters = { 'reg', 'reg' } },
-    [0x4B] = { instruction = 'mod', parameters = { 'reg', 'v8' } },
-    [0x4C] = { instruction = 'mod', parameters = { 'reg', 'v16' } },
-    [0x4D] = { instruction = 'mod', parameters = { 'reg', 'v32' } },
-    [0x4E] = { instruction = 'inc', parameters = { 'reg', } },
-    [0x4F] = { instruction = 'dec', parameters = { 'reg', } },
+    <tr>
+        <td rowspan="27">Arithmetic</td>
+        <td><code>0x35</code></td>
+        <td rowspan="4"><code>add</code></td>
+        <td><i>reg</i>, <i>reg</i></td>
+        <td rowspan="4">Arithmetic sum. Set the flag <code>Y</code> in case of carry.</td>
+        <td rowspan="4"><code>dest += origin + Y</code></td>
+    </tr>
+    <tr><td><code>0x36</code></td><td><i>reg</i>, <i>v8</i></td></tr>
+    <tr><td><code>0x37</code></td><td><i>reg</i>, <i>v16</i></td></tr>
+    <tr><td><code>0x38</code></td><td><i>reg</i>, <i>v32</i></td></tr>
 
-    - jumps
-    [0x50] = { instruction = 'bz', parameters = { 'reg', } },
-    [0x51] = { instruction = 'bz', parameters = { 'v32', } },
-    [0x52] = { instruction = 'bnz', parameters = { 'reg', } },
-    [0x53] = { instruction = 'bnz', parameters = { 'v32', } },
-    [0x54] = { instruction = 'bneg', parameters = { 'reg', } },
-    [0x55] = { instruction = 'bneg', parameters = { 'v32', } },
-    [0x56] = { instruction = 'bpos', parameters = { 'reg', } },
-    [0x57] = { instruction = 'bpos', parameters = { 'v32', } },
-    [0x58] = { instruction = 'bgt', parameters = { 'reg', } },
-    [0x59] = { instruction = 'bgt', parameters = { 'v32', } },
-    [0x5A] = { instruction = 'bgte', parameters = { 'reg', } },
-    [0x5B] = { instruction = 'bgte', parameters = { 'v32', } },
-    [0x5C] = { instruction = 'blt', parameters = { 'reg', } },
-    [0x5D] = { instruction = 'blt', parameters = { 'v32', } },
-    [0x5E] = { instruction = 'blte', parameters = { 'reg', } },
-    [0x5F] = { instruction = 'blte', parameters = { 'v32', } },
-    [0x60] = { instruction = 'bv', parameters = { 'reg', } },
-    [0x61] = { instruction = 'bv', parameters = { 'v32', } },
-    [0x62] = { instruction = 'bnv', parameters = { 'reg', } },
-    [0x63] = { instruction = 'bnv', parameters = { 'v32', } },
+    <tr>
+        <td><code>0x39</code></td>
+        <td rowspan="4"><code>sub</code></td>
+        <td><i>reg</i>, <i>reg</i></td>
+        <td rowspan="4">Arithmetic subtraction. Set the flag <code>Y</code> in case of carry.</td>
+        <td rowspan="4"><code>dest -= origin + Y</code></td>
+    </tr>
+    <tr><td><code>0x3A</code></td><td><i>reg</i>, <i>v8</i></td></tr>
+    <tr><td><code>0x3B</code></td><td><i>reg</i>, <i>v16</i></td></tr>
+    <tr><td><code>0x3C</code></td><td><i>reg</i>, <i>v32</i></td></tr>
 
-    [0x64] = { instruction = 'jmp', parameters = { 'reg', } },
-    [0x65] = { instruction = 'jmp', parameters = { 'v32', } },
-    [0x66] = { instruction = 'jsr', parameters = { 'reg', } },
-    [0x67] = { instruction = 'jsr', parameters = { 'v32', } },
-    [0x68] = { instruction = 'ret', parameters = {} },
-    [0x69] = { instruction = 'iret', parameters = {} },
+    <tr>
+        <td><code>0x3D</code></td>
+        <td rowspan="5"><code>cmp</code></td>
+        <td><i>reg</i>, <i>reg</i></td>
+        <td rowspan="5">Perform a subtraction, but does not set the result, only the flags. This is the only instruction that sets the flags <code>GT</code> and <code>LT</code>.</td>
+        <td rowspan="5"><code>[flags] = dest - origin</code></td>
+    </tr>
+    <tr><td><code>0x3E</code></td><td><i>reg</i>, <i>v8</i></td></tr>
+    <tr><td><code>0x3F</code></td><td><i>reg</i>, <i>v16</i></td></tr>
+    <tr><td><code>0x40</code></td><td><i>reg</i>, <i>v32</i></td></tr>
+    <tr><td><code>0x41</code></td><td><i>reg</i></td></tr>
 
-    - stack
-    [0x6A] = { instruction = 'pushb', parameters = { 'reg', } },
-    [0x6B] = { instruction = 'pushb', parameters = { 'v8', } },
-    [0x6C] = { instruction = 'pushw', parameters = { 'reg', } },
-    [0x6D] = { instruction = 'pushw', parameters = { 'v16', } },
-    [0x6E] = { instruction = 'pushd', parameters = { 'reg', } },
-    [0x6F] = { instruction = 'pushd', parameters = { 'v32', } },
-    [0x70] = { instruction = 'push.a', parameters = {} },
-    [0x71] = { instruction = 'popb', parameters = { 'reg', } },
-    [0x72] = { instruction = 'popw', parameters = { 'reg', } },
-    [0x73] = { instruction = 'popd', parameters = { 'reg', } },
-    [0x74] = { instruction = 'pop.a', parameters = {} },
-    [0x75] = { instruction = 'popx', parameters = { 'reg', } },
-    [0x76] = { instruction = 'popx', parameters = { 'v8', } },
-    [0x77] = { instruction = 'popx', parameters = { 'v16', } },
+    <tr>
+        <td><code>0x42</code></td>
+        <td rowspan="4"><code>mul</code></td>
+        <td><i>reg</i>, <i>reg</i></td>
+        <td rowspan="4">Multiply two numbers. Sets the <code>V</code> flag (overflow) it the result is above 32 bits.</td>
+        <td rowspan="4"><code>dest *= origin</code></td>
+    </tr>
+    <tr><td><code>0x43</code></td><td><i>reg</i>, <i>v8</i></td></tr>
+    <tr><td><code>0x44</code></td><td><i>reg</i>, <i>v16</i></td></tr>
+    <tr><td><code>0x45</code></td><td><i>reg</i>, <i>v32</i></td></tr>
 
-    - other
-    [0x78] = { instruction = 'nop', parameters = {} },
-    [0x79] = { instruction = 'halt', parameters = {} },
-    [0x7A] = { instruction = 'dbg', parameters = {} },
--->
+    <tr>
+        <td><code>0x46</code></td>
+        <td rowspan="4"><code>idiv</code></td>
+        <td><i>reg</i>, <i>reg</i></td>
+        <td rowspan="4">Perfoms an integer division.</td>
+        <td rowspan="4"><code>dest //= origin</code></td>
+    </tr>
+    <tr><td><code>0x47</code></td><td><i>reg</i>, <i>v8</i></td></tr>
+    <tr><td><code>0x48</code></td><td><i>reg</i>, <i>v16</i></td></tr>
+    <tr><td><code>0x49</code></td><td><i>reg</i>, <i>v32</i></td></tr>
+
+    <tr>
+        <td><code>0x4A</code></td>
+        <td rowspan="4"><code>mod</code></td>
+        <td><i>reg</i>, <i>reg</i></td>
+        <td rowspan="4">Calculate the modulo of two numbers.</td>
+        <td rowspan="4"><code>dest %= origin</code></td>
+    </tr>
+    <tr><td><code>0x4B</code></td><td><i>reg</i>, <i>v8</i></td></tr>
+    <tr><td><code>0x4C</code></td><td><i>reg</i>, <i>v16</i></td></tr>
+    <tr><td><code>0x4D</code></td><td><i>reg</i>, <i>v32</i></td></tr>
+
+    <tr>
+        <td><code>0x4E</code></td>
+        <td><code>inc</code></td>
+        <td><i>reg</i></td>
+        <td>Increment the value in the register by one</td>
+        <td><code>++par</code></td>
+    </tr>
+
+    <tr>
+        <td><code>0x4F</code></td>
+        <td><code>dec</code></td>
+        <td><i>reg</i></td>
+        <td>Decrement the value in the register by one</td>
+        <td><code>--par</code></td>
+    </tr>
+
+    <tr>
+        <td rowspan="25">Branches</td>
+        <td><code>0x50</code></td>
+        <td rowspan="2"><code>bz</code></td>
+        <td><i>reg</i></td>
+        <td rowspan="2">If <code>Z</code> flag is set, jump to instuction in parameter.</td>
+        <td rowspan="2"><code>if (Z) PC = par</code></td>
+    </tr>
+    <tr><td><code>0x51</code></td><td><i>v32</i></td></tr>
+
+    <tr>
+        <td><code>0x52</code></td>
+        <td rowspan="2"><code>bnz</code></td>
+        <td><i>reg</i></td>
+        <td rowspan="2">If <code>Z</code> flag is not set, jump to instuction in parameter.</td>
+        <td rowspan="2"><code>if (!Z) PC = par</code></td>
+    </tr>
+    <tr><td><code>0x53</code></td><td><i>v32</i></td></tr>
+
+    <tr>
+        <td><code>0x54</code></td>
+        <td rowspan="2"><code>bneg</code></td>
+        <td><i>reg</i></td>
+        <td rowspan="2">If <code>S</code> flag is set, jump to instuction in parameter.</td>
+        <td rowspan="2"><code>if (S) PC = par</code></td>
+    </tr>
+    <tr><td><code>0x55</code></td><td><i>v32</i></td></tr>
+
+    <tr>
+        <td><code>0x56</code></td>
+        <td rowspan="2"><code>bpos</code></td>
+        <td><i>reg</i></td>
+        <td rowspan="2">If <code>S</code> flag is not set, jump to instuction in parameter.</td>
+        <td rowspan="2"><code>if (!S) PC = par</code></td>
+    </tr>
+    <tr><td><code>0x57</code></td><td><i>v32</i></td></tr>
+
+    <tr>
+        <td><code>0x58</code></td>
+        <td rowspan="2"><code>bgt</code></td>
+        <td><i>reg</i></td>
+        <td rowspan="2">If <code>GT</code> flag is set, jump to instuction in parameter.</td>
+        <td rowspan="2"><code>if (GT) PC = par</code></td>
+    </tr>
+    <tr><td><code>0x59</code></td><td><i>v32</i></td></tr>
+
+    <tr>
+        <td><code>0x5A</code></td>
+        <td rowspan="2"><code>bgte</code></td>
+        <td><i>reg</i></td>
+        <td rowspan="2">If <code>GT</code> and <code>Z</code> flag is set, jump to instuction in parameter.</td>
+        <td rowspan="2"><code>if (GT &amp;&amp; Z) PC = par</code></td>
+    </tr>
+    <tr><td><code>0x5B</code></td><td><i>v32</i></td></tr>
+
+    <tr>
+        <td><code>0x5C</code></td>
+        <td rowspan="2"><code>blt</code></td>
+        <td><i>reg</i></td>
+        <td rowspan="2">If <code>LT</code> flag is set, jump to instuction in parameter.</td>
+        <td rowspan="2"><code>if (LT) PC = par</code></td>
+    </tr>
+    <tr><td><code>0x5D</code></td><td><i>v32</i></td></tr>
+
+    <tr>
+        <td><code>0x5E</code></td>
+        <td rowspan="2"><code>blte</code></td>
+        <td><i>reg</i></td>
+        <td rowspan="2">If <code>LT</code> and <code>Z</code> flag is set, jump to instuction in parameter.</td>
+        <td rowspan="2"><code>if (LT &amp;&amp; Z) PC = par</code></td>
+    </tr>
+    <tr><td><code>0x5F</code></td><td><i>v32</i></td></tr>
+
+    <tr>
+        <td><code>0x60</code></td>
+        <td rowspan="2"><code>bv</code></td>
+        <td><i>reg</i></td>
+        <td rowspan="2">If <code>V</code> flag is set, jump to instuction in parameter.</td>
+        <td rowspan="2"><code>if (V) PC = par</code></td>
+    </tr>
+    <tr><td><code>0x61</code></td><td><i>v32</i></td></tr>
+
+    <tr>
+        <td><code>0x62</code></td>
+        <td rowspan="2"><code>bnv</code></td>
+        <td><i>reg</i></td>
+        <td rowspan="2">If <code>V</code> flag is not set, jump to instuction in parameter.</td>
+        <td rowspan="2"><code>if (!V) PC = par</code></td>
+    </tr>
+    <tr><td><code>0x63</code></td><td><i>v32</i></td></tr>
+
+    <tr>
+        <td><code>0x64</code></td>
+        <td rowspan="2"><code>jmp</code></td>
+        <td><i>reg</i></td>
+        <td rowspan="2">Unconditionally jumps to instruction in parameter.</td>
+        <td rowspan="2"><code>PC = par</code></td>
+    </tr>
+    <tr><td><code>0x65</code></td><td><i>v32</i></td></tr>
+
+    <tr>
+        <td><code>0x66</code></td>
+        <td rowspan="2"><code>jsr</code></td>
+        <td><i>reg</i></td>
+        <td rowspan="2">Jump to subroutine: stores the next instruction in the stack, and jump to location</td>
+        <td rowspan="2"><code>push(PC); PC = par</code></td>
+    </tr>
+    <tr><td><code>0x67</code></td><td><i>v32</i></td></tr>
+
+    <tr>
+        <td><code>0x68</code></td>
+        <td><code>ret</code></td>
+        <td><i>reg</i></td>
+        <td>Return from subroutine: pops value from stack and jump to it</td>
+        <td><code>PC = pop()</code></td>
+    </tr>
+
+    <tr>
+        <td rowspan="14">Stack operations</td>
+        <td><code>0x6A</code></td>
+        <td rowspan="2"><code>pushb</code></td>
+        <td><i>reg</i></td>
+        <td rowspan="2">Push one byte into the stack</td>
+        <td rowspan="2"><code>[SP] = par; SP -= 1</code>
+    </tr>
+    <tr><td><code>0x6B</code></td><td><i>v8</i></td></tr>
+
+    <tr>
+        <td><code>0x6C</code></td>
+        <td rowspan="2"><code>pushw</code></td>
+        <td><i>reg</i></td>
+        <td rowspan="2">Push one word (two bytes) into the stack</td>
+        <td rowspan="2"><code>[SP] = par; SP -= 2</code>
+    </tr>
+    <tr><td><code>0x6D</code></td><td><i>v16</i></td></tr>
+
+    <tr>
+        <td><code>0x6E</code></td>
+        <td rowspan="2"><code>pushd</code></td>
+        <td><i>reg</i></td>
+        <td rowspan="2">Push one double-word (four bytes) into the stack</td>
+        <td rowspan="2"><code>[SP] = par; SP -= 4</code>
+    </tr>
+    <tr><td><code>0x6F</code></td><td><i>v32</i></td></tr>
+
+    <tr>
+        <td><code>0x70</code></td>
+        <td><code>push.a</code></td>
+        <td></td>
+        <td>Push all registers (except FP, SP, PC and FL) into the stack</td>
+        <td><code>for(i = 0..11) push(reg[i])</td>
+    </tr>
+
+    <tr>
+        <td><code>0x71</code></td>
+        <td><code>popb</code></td>
+        <td><i>reg</i></td>
+        <td>Pop one byte from the stack, and store it in the register</td>
+        <td><code>par = [SP]; SP += 1</code></td>
+    </tr>
+
+    <tr>
+        <td><code>0x72</code></td>
+        <td><code>popw</code></td>
+        <td><i>reg</i></td>
+        <td>Pop one word (two bytes) from the stack, and store it in the register</td>
+        <td><code>par = [SP]; SP += 2</code></td>
+    </tr>
+
+    <tr>
+        <td><code>0x73</code></td>
+        <td><code>popd</code></td>
+        <td><i>reg</i></td>
+        <td>Pop one double-word (four bytes) from the stack, and store it in the register</td>
+        <td><code>par = [SP]; SP += 4</code></td>
+    </tr>
+
+    <tr>
+        <td><code>0x74</code></td>
+        <td><code>pop.a</code></td>
+        <td></td>
+        <td>Pop all registers (except FP, SP, PC and FL) from the stack</td>
+        <td><code>for(i = 11..0) reg[i] = pop()</td>
+    </tr>
+
+    <tr>
+        <td><code>0x75</code></td>
+        <td rowspan="3"><code>popx</code></td>
+        <td><i>reg</i></td>
+        <td rowspan="3">Pop <i>n</i> bytes from the stack, discarding them</td>
+        <td rowspan="3"><code>SP += 4</code>
+    </tr>
+    <tr><td><code>0x76</code></td><td><i>v8</i></td></tr>
+    <tr><td><code>0x77</code></td><td><i>v16</i></td></tr>
+    
+    <tr>
+        <td rowspan="2">Others</td>
+        <td><code>0x78</code></td>
+        <td><code>nop</code></td>
+        <td></td>
+        <td>Does nothing for one cycle</td>
+        <td><code>/* do nothing */</code></td>
+    </tr>
+
+    <tr>
+        <td><code>0x7A</code></td>
+        <td><code>dbg</code></td>
+        <td></td>
+        <td>Enter the debugger. Use as a breakpoint for debugging applications.</td>
+        <td><code>debugger()</code></td>
+    </tr>
 
 </table>
 
