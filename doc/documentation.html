@@ -3,6 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <title>luisavm documentation</title>
+    <style>
+    table, th, tr, td {
+        border: 1px lightgray inset;
+    }
+    </style>
 </head>
 
 <body>
@@ -65,7 +70,7 @@ The following prerequisites are required for installing luisavm:
 
 <p>where the options are:</p>
 
-<table border=1>
+<table>
     <tr>
         <th>Short option</th>
         <th>Long option</th>
@@ -110,7 +115,7 @@ the memories of all devices. All memory access happens through the logical memor
 <code>0xFFFF_FFFF</code>. Devices are mapped into the logical memory in the following
 arrangement:</p>
 
-<table border="1">
+<table>
     <tr>
         <td>0x0000_0000</td>
         <td>Physical memory (RAM)</td>
@@ -122,7 +127,7 @@ arrangement:</p>
     <tr>
         <td>0xF000_0000</td>
         <td>Device area</td>
-    </td>
+    </tr>
 </table>
 
 <p>The physical memory (RAM) is accessible from the logical position starting in
@@ -135,7 +140,7 @@ are no devices with memory yet.</p>
 
 <p>The <i>luisavm</i> has a custom 32-bit CPU. The CPU is little-endian and has 16 32-bit registers:</p>
 
-<table border="1">
+<table>
     <tr><th>Number</th><th>Register</th><th>Pourpose</th></tr>
     <tr><td><code>0x0</code></td><td><code>A</code></td><td rowspan="12">General pourpose registers</td></tr>
     <tr><td><code>0x1</code></td><td><code>B</code></td></tr>
@@ -160,7 +165,7 @@ are no devices with memory yet.</p>
 <p>The <code>FL</code> registers contains a set of flags that are affected by different
 operations. Each flag in one bit in the register:</p>
 
-<table border="1">
+<table>
     <tr><th>Bit</th><th>Flag</th><th>Event</th></tr>
     <tr><td><code>0</code></td><td><code>Y</code></td><td>Last instruction caused a <i>carry</i></td></tr>
     <tr><td><code>1</code></td><td><code>V</code></td><td>Last instruction caused a <i>overflow</i></td></tr>
@@ -199,7 +204,7 @@ are at most two parameters per instruction. Therefore, a instruction can be from
 
 <p>The table below presents the instruction set:</p>
 
-<table border="1">
+<table>
     <tr><th>Group</th><th>Opcode</th><th>Instruction</th><th>Parameters</th><th>Description</th><th>Pseudocode</th></tr>
     <tr>
         <td rowspan="35">Movement</td>
@@ -566,7 +571,7 @@ are at most two parameters per instruction. Therefore, a instruction can be from
         <td><code>push.a</code></td>
         <td></td>
         <td>Push all registers (except FP, SP, PC and FL) into the stack</td>
-        <td><code>for(i = 0..11) push(reg[i])</td>
+        <td><code>for(i = 0..11) push(reg[i])</code></td>
     </tr>
 
     <tr>
@@ -598,7 +603,7 @@ are at most two parameters per instruction. Therefore, a instruction can be from
         <td><code>pop.a</code></td>
         <td></td>
         <td>Pop all registers (except FP, SP, PC and FL) from the stack</td>
-        <td><code>for(i = 11..0) reg[i] = pop()</td>
+        <td><code>for(i = 11..0) reg[i] = pop()</code></td>
     </tr>
 
     <tr>
@@ -638,7 +643,7 @@ started automatically. <!-- TODO --></p>
 
 <p>The keys for controlling the keyboard are:</p>
 
-<table border="1">
+<table>
     <tr><th>Key</th><th>Funtion</th></tr>
     <tr><td>F1</td><td>Debug CPU</td></tr>
     <tr><td>F2</td><td>Debug logical memory</td></tr>
@@ -662,16 +667,16 @@ in the old days...</p>
 This library can be used to embed the emulator in other applications. Useful
 functions are:</p>
 
-<p><code>LVM_Computer* lvm_computercreate(uint32_t physical_memory_size, bool debugger_active);</code><br>
-<div style="text-indent: 50px;">Create a new computer. Multiple computers can be created.</div></p>
+<pre>LVM_Computer* lvm_computercreate(uint32_t physical_memory_size, bool debugger_active);</pre>
+<div style="text-indent: 50px;">Create a new computer. Multiple computers can be created.</div>
 
-<p><code>void lvm_computerdestroy(LVM_Computer* comp);</code><br>
-<div style="text-indent: 50px;">Destroy the computer and clean up the memory.</div></p>
+<pre>void lvm_computerdestroy(LVM_Computer* comp);</pre>
+<div style="text-indent: 50px;">Destroy the computer and clean up the memory.</div>
 
-<p><code>LVM_CPU* lvm_addcpu(LVM_Computer* comp);</code><br>
-<div style="text-indent: 50px;">Add a CPU to the computer</div></p>
+<pre>LVM_CPU* lvm_addcpu(LVM_Computer* comp);</pre>
+<div style="text-indent: 50px;">Add a CPU to the computer</div>
 
-<p><pre>typedef struct VideoCallbacks {
+<pre>typedef struct VideoCallbacks {
     void    (*setpal)(uint8_t idx, uint8_t r, uint8_t g, uint8_t b);
     void    (*clrscr)(uint8_t color);
     void    (*change_border_color)(uint8_t color);
@@ -679,18 +684,18 @@ functions are:</p>
     void    (*draw_sprite)(uint32_t sprite, uint16_t pos_x, uint16_t pos_y);
 } VideoCallbacks;
 
-void lvm_setupvideo(LVM_Computer* comp, VideoCallbacks cbs);</pre><br>
+void lvm_setupvideo(LVM_Computer* comp, VideoCallbacks cbs);</pre>
 <div style="text-indent: 50px;">Setup the video. The callback parameter is a
-struct containing function pointers to functions provided by the caller.</div></p>
+struct containing function pointers to functions provided by the caller.</div>
 
-<p><code>uint8_t lvm_get(LVM_Computer* comp, uint32_t pos)</code><br>
-<div style="text-indent: 50px;">Read data from logical memory.</div></p>
+<pre>uint8_t lvm_get(LVM_Computer* comp, uint32_t pos)</pre><br>
+<div style="text-indent: 50px;">Read data from logical memory.</div>
 
-<p><code>void lvm_step(LVM_Computer* comp, size_t force_time_us);</code><br>
-<div style="text-indent: 50px;">Step one cycle in the VM.</div></p>
+<pre>void lvm_step(LVM_Computer* comp, size_t force_time_us);</pre><br>
+<div style="text-indent: 50px;">Step one cycle in the VM.</div>
 
-<p><code>bool lvm_loadromfile(LVM_Computer* comp, const char* filename)</code><br>
-<div style="text-indent: 50px;">Load a ROM file into the memory.</div></p>
+<pre>bool lvm_loadromfile(LVM_Computer* comp, const char* filename)</pre><br>
+<div style="text-indent: 50px;">Load a ROM file into the memory.</div>
 
 <p>Other functions are available in the file <code>luisavm.h</code>. An example
 application follows:</p>
@@ -728,6 +733,9 @@ int main(int argc, char* argv[])
     lvm_computerdestroy(computer);
 }
 </pre>
+
+<p>A more complete example application can be found in <code>src/main.c</code>.
+This is the code for the official <i>luisavm</i> emulator.</p>
 
 </body>
 </html>
