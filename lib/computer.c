@@ -325,7 +325,6 @@ lvm_loadromfile(LVM_Computer* comp, const char* filename)
         return false;
     }
     lvm_loadrom(comp, (uint32_t)sz, data);
-    free(data);
 
     fclose(f);
     return true;
