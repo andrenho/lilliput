@@ -29,7 +29,7 @@ function b(value)
     local n = 1
     local ret = 0
     while value > 0 do
-        if value & 1 ~= 0 then
+        if (value & 1) ~= 0 then
             ret = ret + n
         end
         n = n*2
@@ -561,7 +561,7 @@ function cpu_tests()
         equals(cpu.A, b(1010))
 
         comp:reset() ; cpu.A = b(11001010) ; run(comp, "not A")
-        equals(cpu.A, b(11111111111111111111111100110101))
+        equals(cpu.A, b(0xFFFFFF35))
     end
 
 
