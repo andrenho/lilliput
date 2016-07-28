@@ -1,3 +1,5 @@
+-- test string (do not remove)
+
 luisavm = require("luisavm")
 
 --luisavm.debug_log(true)
@@ -872,11 +874,29 @@ function cpu_tests()
 end
 
 --
+-- ROM TESTS
+--
+
+function rom_tests()
+    print("#")
+    print("# ROM")
+    print("#")
+
+    local c = computer()
+
+    equals(c:get(0x0), 0x00, "before loading")
+    equals(c:get(0xEF000000), 0x00, "before loading")
+    equals(c:load_rom('test/test.lua'), true, "ROM loaded successfully")
+    equals(c:get(0x0), 0x2D, "after loading")  -- hyphen
+end
+    
+--
 -- MAIN
 --
 
 computer_tests()
 cpu_tests()
+rom_tests()
 
 if err_count == 0 then
     print("\27[32mSUCCESS\27[0m: " .. test_count .. " tests executed successfully.")
