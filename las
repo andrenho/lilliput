@@ -6,6 +6,7 @@
 --   * data, bss (db, rb, etc...)
 --   * labels and local labels
 --   * constants
+--   * comments
 --   * include files
 
 -- {{{ PREPARATION/DEBUGGING
@@ -227,49 +228,91 @@ function assembler_error(assembler, msg)
 end
 
 
+function convert_value(par)
+   if par:match('^%d+$') then
+      return tonumber(par, 10)
+   elseif par:match('^0[xX]%x+$') then
+      return tonumber(par:sub(3, -1), 16)
+   elseif par:match('^0b[01]+$') then
+      return tonumber(par:sub(3, -1), 2)
+   else
+      return nil
+   end
+end
+
+
 function preproc(assembler, line)
-   print("PREPROC: "..line)
+   local cmd, def, val = line:gmatch('([^%s]+)%s+([^%s]+)%s+([^%s]+)')()
+   if cmd ~= '%define' then
+      assembler_error('Unknown directive')
+   end
+   assembler.constants[def] = val
 end
 
 
 function add_label(assembler, lbl)
    print("LABEL: "..lbl)
+   assert(false, 'not implemented')
 end
 
 
 function replace_constants(assembler, line)
+   for k,v in pairs(assembler.constants) do
+      line = line:gsub(k, v, 1, -1)
+   end
    return line
 end
 
 
-function add_data(assembler, sz, data)
-   p(sz)
-   p(data)
-end
+function add_data(assembler, sz, data)  --{{{
+   for _,t in ipairs(data) do
+      local value = convert_value(t)
+      if value then
+         if sz == 'b' then
+            if value > 0xFF then assembler_error('Value too large') end
+            table.insert(assembler.data, value)
+         elseif sz == 'w' then
+            if value > 0xFFFF then assembler_error('Value too large') end
+            table.insert(assembler.data, value & 0xFF)
+            table.insert(assembler.data, value >> 8)
+         elseif sz == 'd' then
+            if value > 0xFFFFFFFF then assembler_error('Value too large') end
+            table.insert(assembler.data, value & 0xFF)
+            table.insert(assembler.data, (value >> 8) & 0xFF)
+            table.insert(assembler.data, (value >> 16) & 0xFF)
+            table.insert(assembler.data, (value >> 24) & 0xFF)
+         else
+            assert(false, "we shouldn't have gotten here")
+         end
+      else
+         assembler_error('Invalid data')
+      end
+   end
+end  --}}}
 
 
 function add_bss(assembler, sz, data)
+   local n = convert_value(data)
+   if not n then
+      assembler_error('Invalid BSS size')
+   else
+      if sz == 'w' then n = n*2 elseif sz == 'd' then n = n*4 end
+      assembler.bss_sz = assembler.bss_sz + n
+   end
 end
 
 
 function add_ascii(assembler, data, zero)
-   print(data, zero)
+   for _,c in ipairs(table.pack(data:byte(1,-1))) do
+      table.insert(assembler.data, c)
+   end
+   if zero then
+      table.insert(assembler.data, 0)
+   end
 end
 
 
 function add_instruction(assembler, inst, pars)  --{{{
-   local function convert_value(par)
-      if par:match('^%d+$') then
-         return tonumber(par, 10)
-      elseif par:match('^0[xX]%x+$') then
-         return tonumber(par:sub(3, -1), 16)
-      elseif par:match('^0b[01]+$') then
-         return tonumber(par:sub(3, -1), 2)
-      else
-         error("we shouldn't have gotten here")
-      end
-   end
-
    -- find parameters types and values
    local ptype, pvalue = {}, {}
    for _,par in ipairs(pars) do
@@ -342,10 +385,11 @@ function compile(source, filename)  -- {{{
    local assembler = {
       text = {},
       data = {},
-      bss = {},
+      bss_sz = 0,
       nline = 1,
       current_line = '',
       current_file = filename or 'stdin',
+      constants = {},
    }
 
    local nline = 1
@@ -375,10 +419,8 @@ function compile(source, filename)  -- {{{
             goto nxt
          end
          -- bss
-         local sz, datax = line:gmatch('%.res([bwd])%s+(.+)')()
+         local sz, data = line:gmatch('%.res([bwd])%s+([[%dxXbB]+)')()
          if sz then
-            local data = {}
-            for d in datax:gmatch('(%w+),?%s*') do data[#data+1] = d end
             add_bss(assembler, sz, data)
             goto nxt
          end
@@ -404,7 +446,16 @@ function compile(source, filename)  -- {{{
 ::nxt::
       nline = nline+1
    end
-   return assembler.text
+
+   -- create binary
+   local binary = {}
+   for _,t in ipairs({ 'text', 'data' }) do
+      for _,data in ipairs(assembler[t]) do 
+         assert(data <= 0xFF)
+         binary[#binary+1] = data 
+      end
+   end
+   return binary
 end -- }}}
 
 -- }}}
@@ -452,7 +503,7 @@ mov A, B
    test('data + string', [[
 mov A, B
 .dw 0x1234
-.db "abc", 0]], { 0x1, 0x1, 0x34, 0x12, 0x61, 0x62, 0x63, 0x0 })
+.ascii "abc"]], { 0x1, 0x1, 0x34, 0x12, 0x61, 0x62, 0x63 })
 
    ----------------------------
    test('data + string (inverted order)', [[
