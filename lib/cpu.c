@@ -158,9 +158,9 @@ _take(LVM_CPU* cpu, Parameter par)
         case V8: case V16: case V32: return par.value;
         case INDV32: return lvm_get32(cpu->computer, par.value);
         case INDREG: return lvm_get32(cpu->computer, cpu->reg[par.value]);
-        case NONE: abort();
+        case NONE:
+        default: abort();
     }
-    abort();
 }
 #define TAKE(par) (_take(cpu, par))
 

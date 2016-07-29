@@ -154,6 +154,7 @@ static int flag_set(lua_State* L)
     } else {
 regular_set:
         lua_rawset(L, 1);
+        return 0;
     }
 }
 
@@ -198,6 +199,7 @@ static int cpu_set(lua_State* L)
     } else {
 regular_set:
         lua_rawset(L, 1);
+        return 0;
     }
 }
 
@@ -355,6 +357,7 @@ static int offset_set(lua_State* L)
     } else {
         lua_rawset(L, 1);
     }
+    return 0;
 }
 
 

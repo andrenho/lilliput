@@ -6,7 +6,7 @@
 -Wmissing-format-attribute -Wmissing-include-dirs 
 -Wmissing-noreturn -Wpacked -Wparentheses -Wpointer-arith 
 -Wredundant-decls -Wreturn-type -Wsequence-point 
--Wsign-compare -Wstack-protector -Wstrict-aliasing 
+-Wsign-compare -Wstrict-aliasing 
 -Wstrict-aliasing=2 -Wswitch -Wtrigraphs -Wuninitialized
 -Wunknown-pragmas -Wunreachable-code -Wunused 
 -Wunused-function -Wunused-label -Wunused-parameter 

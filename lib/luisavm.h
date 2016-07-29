@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
-#if !__WIN32
+#ifndef __WIN32
 #include <syslog.h>
 #endif
 
@@ -16,7 +16,7 @@
 // 
 
 void lvm_debuglog(bool active);
-#if __WIN32
+#ifdef __WIN32
 void syslog(int priority, const char* fmt, ...);
 #define LOG_DEBUG 1
 #define LOG_ERR   2
