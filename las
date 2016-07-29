@@ -218,17 +218,13 @@ local opcodes = {  --{{{ ...  }
     [0x7A] = { instruction = 'dbg', parameters = {} },
 }  --}}}
 
-local registers = {
-   a=0, b=1, c=2, d=3, e=4, f=5, g=6, h=7, i=8, j=9, k=10, l=11, fp=12, sp=13, pc=14, fl=15
-}
+local registers = { a=0, b=1, c=2, d=3, e=4, f=5, g=6, h=7, i=8, j=9, k=10, l=11, fp=12, sp=13, pc=14, fl=15 }
 
-
-function assembler_error(assembler, msg)
+function assembler_error(assembler, msg)  --{{{
    error('** '..msg..' in '..assembler.current_file..':'..assembler.nline..' -> '..assembler.current_line)
-end
+end  --}}}
 
-
-function convert_value(par)
+function convert_value(par)  --{{{
    if par:match('^%d+$') then
       return tonumber(par, 10)
    elseif par:match('^0[xX]%x+$') then
@@ -238,31 +234,27 @@ function convert_value(par)
    else
       return nil
    end
-end
+end  --}}}
 
-
-function preproc(assembler, line)
+function preproc(assembler, line)  --{{{
    local cmd, def, val = line:gmatch('([^%s]+)%s+([^%s]+)%s+([^%s]+)')()
    if cmd ~= '%define' then
       assembler_error('Unknown directive')
    end
    assembler.constants[def] = val
-end
-
+end  --}}}
 
 function add_label(assembler, lbl)
    print("LABEL: "..lbl)
    assert(false, 'not implemented')
 end
 
-
-function replace_constants(assembler, line)
+function replace_constants(assembler, line)  --{{{
    for k,v in pairs(assembler.constants) do
       line = line:gsub(k, v, 1, -1)
    end
    return line
-end
-
+end  --}}}
 
 function add_data(assembler, sz, data)  --{{{
    for _,t in ipairs(data) do
@@ -290,8 +282,7 @@ function add_data(assembler, sz, data)  --{{{
    end
 end  --}}}
 
-
-function add_bss(assembler, sz, data)
+function add_bss(assembler, sz, data)  --{{{
    local n = convert_value(data)
    if not n then
       assembler_error('Invalid BSS size')
@@ -299,18 +290,16 @@ function add_bss(assembler, sz, data)
       if sz == 'w' then n = n*2 elseif sz == 'd' then n = n*4 end
       assembler.bss_sz = assembler.bss_sz + n
    end
-end
+end  --}}}
 
-
-function add_ascii(assembler, data, zero)
+function add_ascii(assembler, data, zero)  --{{{
    for _,c in ipairs(table.pack(data:byte(1,-1))) do
       table.insert(assembler.data, c)
    end
    if zero then
       table.insert(assembler.data, 0)
    end
-end
-
+end  --}}}
 
 function add_instruction(assembler, inst, pars)  --{{{
    -- find parameters types and values
@@ -389,6 +378,7 @@ function compile(source, filename)  -- {{{
       nline = 1,
       current_line = '',
       current_file = filename or 'stdin',
+      section = '',
       constants = {},
    }
 
@@ -396,13 +386,27 @@ function compile(source, filename)  -- {{{
    for line in source:gmatch("([^\n]+)\n?") do  -- split lines
       assembler.current_line = line
       assembler.nline = nline
+      -- remove comments
+      local newline = line:match('^(.*);.*$')
+      if newline then line = newline end
+
       -- is it a preprocessor directive?
       if line:sub(1,1) == '%' then
          preproc(assembler, line)
          goto nxt
       end
-      -- extract label
       do
+         -- define section
+         local section = line:match('section (%.%w+)')
+         if section then
+            if section == '.text' or section == '.data' or section == '.bss' then
+               assembler.section = section
+               goto nxt
+            else
+               assembler_error(assembler, 'Invalid section')
+            end
+         end
+         -- extract label
          local start, finish, match = line:find("^([%.@]?%a%w*):")
          if start then
             add_label(assembler, match)
@@ -483,50 +487,68 @@ end
 
 function run_tests()
    ----------------------------
-   test('basic command', 'mov D, 0x64', { 0x2, 0x3, 0x64 })
+   test('basic command', [[
+section .text
+mov D, 0x64   ; comment]], { 0x2, 0x3, 0x64 })
 
    ----------------------------
    test('two commands', [[
+section .text
 mov F, 0x1234
 
-and F, 0xAB  ]], { 0x3, 0x5, 0x34, 0x12, 0x2D, 0x5, 0xAB })
+and F, 0xAB]], { 0x3, 0x5, 0x34, 0x12, 0x2D, 0x5, 0xAB })
 
    ----------------------------
-   test('two registers', 'mov B, C', { 0x1, 0x12 })
+   test('two registers', [[
+section .text
+mov B, C]], { 0x1, 0x12 })
 
    ----------------------------
    test('data', [[
+section .text
 mov A, B
+section .data
 .db 0x12, 0x34]], { 0x1, 0x1, 0x12, 0x34 })
 
    ----------------------------
    test('data + string', [[
+section .text
 mov A, B
+section .data
 .dw 0x1234
 .ascii "abc"]], { 0x1, 0x1, 0x34, 0x12, 0x61, 0x62, 0x63 })
 
    ----------------------------
    test('data + string (inverted order)', [[
+section .data
 .dw 0x1234
+section .text
 mov A, B
+section .data
 .asciiz "abc"]], { 0x1, 0x1, 0x34, 0x12, 0x61, 0x62, 0x63, 0x0 })
 
    ----------------------------
    test('res', [[
+section .text
 mov A, B
+section .bss
 .resb 8]], { 0x1, 0x1 })
 
    ----------------------------
    test('constants', [[
 %define TEST 0x1234
+section .text
 mov A, TEST]], { 0x3, 0x0, 0x34, 0x12 })
 
    ----------------------------
    test('label', [[
+section .text
 jmp test
 test: mov A, B]], { 0x65, 0x5, 0x0, 0x0, 0x0, 0x1, 0x1 })
 
    -- TODO - test local label
+   -- TODO - label on data
+   -- TODO - label on bss
    -- TODO - import files
    -- TODO - test global label
 end
