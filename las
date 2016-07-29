@@ -244,10 +244,20 @@ function preproc(assembler, line)  --{{{
    assembler.constants[def] = val
 end  --}}}
 
-function add_label(assembler, lbl)
-   print("LABEL: "..lbl)
-   assert(false, 'not implemented')
-end
+function add_label(assembler, lbl) --{{{
+   -- TODO - local, global labels
+   local pos
+   if assembler.section == '.text' then
+      pos = #assembler.text
+   elseif assembler.section == '.data' then
+      pos = #assembler.data
+   elseif assembler.section == '.bss' then
+      pos = assembler.bss_sz
+   else
+      assembler_error(assembler, 'Invalid section')
+   end
+   assembler.labels[lbl] = { section=assembler.section, pos=pos }
+end --}}}
 
 function replace_constants(assembler, line)  --{{{
    for k,v in pairs(assembler.constants) do
@@ -327,6 +337,14 @@ function add_instruction(assembler, inst, pars)  --{{{
       elseif par:match('^%[%d+%]$') or par:match('^%[0[xX]%x+%]$') or par:match('^%[0b[01]+%]$') then
          pt = 'indv32'
          value = assert(convert_value(par:gsub('[%[%]]', '')))
+      elseif par:match('%[%w[%a_]*%]') then
+         table.insert(assembler.labels_ref, { label=par:match('^%[%w[%a_]*%]$'), pos=#assembler.text })
+         value = 0
+         pt = 'v32'
+      elseif par:match('%w[%a_]*') then
+         table.insert(assembler.labels_ref, { label=par, pos=#assembler.text })
+         value = 0
+         pt = 'v32'
       else 
          assembler_error(assembler, 'Invalid parameter')
       end
@@ -380,6 +398,8 @@ function compile(source, filename)  -- {{{
       current_file = filename or 'stdin',
       section = '',
       constants = {},
+      labels = {},
+      labels_ref = {},
    }
 
    local nline = 1
