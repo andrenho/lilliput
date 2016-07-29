@@ -417,6 +417,7 @@ function compile(source, filename)  -- {{{
          -- data
          local sz, datax = line:gmatch('%.d([bwd])%s+(.+)')()
          if sz then
+            if assembler.section ~= '.data' then assembly_error('Unexpected token') end
             local data = {}
             for d in datax:gmatch('(%w+),?%s*') do data[#data+1] = d end
             add_data(assembler, sz, data)
@@ -425,18 +426,21 @@ function compile(source, filename)  -- {{{
          -- bss
          local sz, data = line:gmatch('%.res([bwd])%s+([[%dxXbB]+)')()
          if sz then
+            if assembler.section ~= '.bss' then assembly_error('Unexpected token') end
             add_bss(assembler, sz, data)
             goto nxt
          end
          -- ascii
          local zero, data = line:gmatch('%.ascii(z?)%s+"(.+)"')()
          if zero then
+            if assembler.section ~= '.data' then assembly_error('Unexpected token') end
             add_ascii(assembler, data, zero == 'z')
             goto nxt
          end
          -- instruction
          local inst, pars = line:gmatch('([%w%.]+)%s+(.+)')()
          if inst then
+            if assembler.section ~= '.text' then assembly_error('Unexpected token') end
             local par = {}
             for p in pars:gmatch('([%w%[%]%.@]+),?%s*') do par[#par+1] = p end
             add_instruction(assembler, inst, par)
