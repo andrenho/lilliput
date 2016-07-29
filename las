@@ -76,6 +76,146 @@ end
 
 -- {{{ ASSEMBLER
 
+local opcodes = {  --{{{ ...  }
+    -- movement
+    [0x01] = { instruction = 'mov', parameters = { 'reg', 'reg' } },
+    [0x02] = { instruction = 'mov', parameters = { 'reg', 'v8' } },
+    [0x03] = { instruction = 'mov', parameters = { 'reg', 'v16' } },
+    [0x04] = { instruction = 'mov', parameters = { 'reg', 'v32' } },
+
+    [0x05] = { instruction = 'movb', parameters = { 'reg', 'regind' } },
+    [0x06] = { instruction = 'movb', parameters = { 'reg', 'indv32' } },
+    [0x07] = { instruction = 'movb', parameters = { 'regind', 'reg' } },
+    [0x08] = { instruction = 'movb', parameters = { 'regind', 'v8' } },
+    [0x09] = { instruction = 'movb', parameters = { 'regind', 'regind' } },
+    [0x0A] = { instruction = 'movb', parameters = { 'regind', 'indv32' } },
+    [0x0B] = { instruction = 'movb', parameters = { 'indv32', 'reg' } },
+    [0x0C] = { instruction = 'movb', parameters = { 'indv32', 'v8' } },
+    [0x0D] = { instruction = 'movb', parameters = { 'indv32', 'regind' } },
+    [0x0E] = { instruction = 'movb', parameters = { 'indv32', 'indv32' } },
+
+    [0x0F] = { instruction = 'movw', parameters = { 'reg', 'regind' } },
+    [0x10] = { instruction = 'movw', parameters = { 'reg', 'indv32' } },
+    [0x11] = { instruction = 'movw', parameters = { 'regind', 'reg' } },
+    [0x12] = { instruction = 'movw', parameters = { 'regind', 'v16' } },
+    [0x13] = { instruction = 'movw', parameters = { 'regind', 'regind' } },
+    [0x14] = { instruction = 'movw', parameters = { 'regind', 'indv32' } },
+    [0x15] = { instruction = 'movw', parameters = { 'indv32', 'reg' } },
+    [0x16] = { instruction = 'movw', parameters = { 'indv32', 'v16' } },
+    [0x17] = { instruction = 'movw', parameters = { 'indv32', 'regind' } },
+    [0x18] = { instruction = 'movw', parameters = { 'indv32', 'indv32' } },
+
+    [0x19] = { instruction = 'movd', parameters = { 'reg', 'regind' } },
+    [0x1A] = { instruction = 'movd', parameters = { 'reg', 'indv32' } },
+    [0x1B] = { instruction = 'movd', parameters = { 'regind', 'reg' } },
+    [0x1C] = { instruction = 'movd', parameters = { 'regind', 'v32' } },
+    [0x1D] = { instruction = 'movd', parameters = { 'regind', 'regind' } },
+    [0x1E] = { instruction = 'movd', parameters = { 'regind', 'indv32' } },
+    [0x1F] = { instruction = 'movd', parameters = { 'indv32', 'reg' } },
+    [0x20] = { instruction = 'movd', parameters = { 'indv32', 'v32' } },
+    [0x21] = { instruction = 'movd', parameters = { 'indv32', 'regind' } },
+    [0x22] = { instruction = 'movd', parameters = { 'indv32', 'indv32' } },
+
+    [0x23] = { instruction = 'swap', parameters = { 'reg', 'reg' } },
+
+    -- logic
+    [0x24] = { instruction = 'or', parameters = { 'reg', 'reg' } },
+    [0x25] = { instruction = 'or', parameters = { 'reg', 'v8' } },
+    [0x26] = { instruction = 'or', parameters = { 'reg', 'v16' } },
+    [0x27] = { instruction = 'or', parameters = { 'reg', 'v32' } },
+    [0x28] = { instruction = 'xor', parameters = { 'reg', 'reg' } },
+    [0x29] = { instruction = 'xor', parameters = { 'reg', 'v8' } },
+    [0x2A] = { instruction = 'xor', parameters = { 'reg', 'v16' } },
+    [0x2B] = { instruction = 'xor', parameters = { 'reg', 'v32' } },
+    [0x2C] = { instruction = 'and', parameters = { 'reg', 'reg' } },
+    [0x2D] = { instruction = 'and', parameters = { 'reg', 'v8' } },
+    [0x2E] = { instruction = 'and', parameters = { 'reg', 'v16' } },
+    [0x2F] = { instruction = 'and', parameters = { 'reg', 'v32' } },
+    [0x30] = { instruction = 'shl', parameters = { 'reg', 'reg' } },
+    [0x31] = { instruction = 'shl', parameters = { 'reg', 'v8' } },
+    [0x32] = { instruction = 'shr', parameters = { 'reg', 'reg' } },
+    [0x33] = { instruction = 'shr', parameters = { 'reg', 'v8' } },
+    [0x34] = { instruction = 'not', parameters = { 'reg', } },
+
+    -- arithmetic
+    [0x35] = { instruction = 'add', parameters = { 'reg', 'reg' } },
+    [0x36] = { instruction = 'add', parameters = { 'reg', 'v8' } },
+    [0x37] = { instruction = 'add', parameters = { 'reg', 'v16' } },
+    [0x38] = { instruction = 'add', parameters = { 'reg', 'v32' } },
+    [0x39] = { instruction = 'sub', parameters = { 'reg', 'reg' } },
+    [0x3A] = { instruction = 'sub', parameters = { 'reg', 'v8' } },
+    [0x3B] = { instruction = 'sub', parameters = { 'reg', 'v16' } },
+    [0x3C] = { instruction = 'sub', parameters = { 'reg', 'v32' } },
+    [0x3D] = { instruction = 'cmp', parameters = { 'reg', 'reg' } },
+    [0x3E] = { instruction = 'cmp', parameters = { 'reg', 'v8' } },
+    [0x3F] = { instruction = 'cmp', parameters = { 'reg', 'v16' } },
+    [0x40] = { instruction = 'cmp', parameters = { 'reg', 'v32' } },
+    [0x41] = { instruction = 'cmp', parameters = { 'reg', } },
+    [0x42] = { instruction = 'mul', parameters = { 'reg', 'reg' } },
+    [0x43] = { instruction = 'mul', parameters = { 'reg', 'v8' } },
+    [0x44] = { instruction = 'mul', parameters = { 'reg', 'v16' } },
+    [0x45] = { instruction = 'mul', parameters = { 'reg', 'v32' } },
+    [0x46] = { instruction = 'idiv', parameters = { 'reg', 'reg' } },
+    [0x47] = { instruction = 'idiv', parameters = { 'reg', 'v8' } },
+    [0x48] = { instruction = 'idiv', parameters = { 'reg', 'v16' } },
+    [0x49] = { instruction = 'idiv', parameters = { 'reg', 'v32' } },
+    [0x4A] = { instruction = 'mod', parameters = { 'reg', 'reg' } },
+    [0x4B] = { instruction = 'mod', parameters = { 'reg', 'v8' } },
+    [0x4C] = { instruction = 'mod', parameters = { 'reg', 'v16' } },
+    [0x4D] = { instruction = 'mod', parameters = { 'reg', 'v32' } },
+    [0x4E] = { instruction = 'inc', parameters = { 'reg', } },
+    [0x4F] = { instruction = 'dec', parameters = { 'reg', } },
+
+    -- jumps
+    [0x50] = { instruction = 'bz', parameters = { 'reg', } },
+    [0x51] = { instruction = 'bz', parameters = { 'v32', } },
+    [0x52] = { instruction = 'bnz', parameters = { 'reg', } },
+    [0x53] = { instruction = 'bnz', parameters = { 'v32', } },
+    [0x54] = { instruction = 'bneg', parameters = { 'reg', } },
+    [0x55] = { instruction = 'bneg', parameters = { 'v32', } },
+    [0x56] = { instruction = 'bpos', parameters = { 'reg', } },
+    [0x57] = { instruction = 'bpos', parameters = { 'v32', } },
+    [0x58] = { instruction = 'bgt', parameters = { 'reg', } },
+    [0x59] = { instruction = 'bgt', parameters = { 'v32', } },
+    [0x5A] = { instruction = 'bgte', parameters = { 'reg', } },
+    [0x5B] = { instruction = 'bgte', parameters = { 'v32', } },
+    [0x5C] = { instruction = 'blt', parameters = { 'reg', } },
+    [0x5D] = { instruction = 'blt', parameters = { 'v32', } },
+    [0x5E] = { instruction = 'blte', parameters = { 'reg', } },
+    [0x5F] = { instruction = 'blte', parameters = { 'v32', } },
+    [0x60] = { instruction = 'bv', parameters = { 'reg', } },
+    [0x61] = { instruction = 'bv', parameters = { 'v32', } },
+    [0x62] = { instruction = 'bnv', parameters = { 'reg', } },
+    [0x63] = { instruction = 'bnv', parameters = { 'v32', } },
+
+    [0x64] = { instruction = 'jmp', parameters = { 'reg', } },
+    [0x65] = { instruction = 'jmp', parameters = { 'v32', } },
+    [0x66] = { instruction = 'jsr', parameters = { 'reg', } },
+    [0x67] = { instruction = 'jsr', parameters = { 'v32', } },
+    [0x68] = { instruction = 'ret', parameters = {} },
+    [0x69] = { instruction = 'iret', parameters = {} },
+
+    -- stack
+    [0x6A] = { instruction = 'pushb', parameters = { 'reg', } },
+    [0x6B] = { instruction = 'pushb', parameters = { 'v8', } },
+    [0x6C] = { instruction = 'pushw', parameters = { 'reg', } },
+    [0x6D] = { instruction = 'pushw', parameters = { 'v16', } },
+    [0x6E] = { instruction = 'pushd', parameters = { 'reg', } },
+    [0x6F] = { instruction = 'pushd', parameters = { 'v32', } },
+    [0x70] = { instruction = 'push.a', parameters = {} },
+    [0x71] = { instruction = 'popb', parameters = { 'reg', } },
+    [0x72] = { instruction = 'popw', parameters = { 'reg', } },
+    [0x73] = { instruction = 'popd', parameters = { 'reg', } },
+    [0x74] = { instruction = 'pop.a', parameters = {} },
+    [0x75] = { instruction = 'popx', parameters = { 'reg', } },
+    [0x76] = { instruction = 'popx', parameters = { 'v8', } },
+    [0x77] = { instruction = 'popx', parameters = { 'v16', } },
+
+    -- other
+    [0x78] = { instruction = 'nop', parameters = {} },
+    [0x79] = { instruction = 'halt', parameters = {} },
+    [0x7A] = { instruction = 'dbg', parameters = {} },
+}  --}}}
 
 function preproc(line)
    print("PREPROC: "..line)
@@ -84,6 +224,11 @@ end
 
 function add_label(lbl)
    print("LABEL: "..lbl)
+end
+
+
+function replace_constants(line)
+   return line
 end
 
 
@@ -101,6 +246,11 @@ end
 
 
 function add_instruction(inst, pars)
+   -- find parameters types
+   local ptype = {}
+   for _,p in ipairs(pars) do
+
+   end
 end
 
 
@@ -120,7 +270,8 @@ function compile(source)
             add_label(match)
             line = line:sub(start)
          end
-         -- TODO - replace directives
+         -- replace directives
+         line = replace_constants(line)
          -- data
          local sz, datax = line:gmatch('%.d([bwd])%s+(.+)')()
          if sz then
