@@ -76,9 +76,89 @@ end
 
 -- {{{ ASSEMBLER
 
+
+function preproc(line)
+   print("PREPROC: "..line)
+end
+
+
+function add_label(lbl)
+   print("LABEL: "..lbl)
+end
+
+
+function add_data(sz, data)
+end
+
+
+function add_bss(sz, data)
+end
+
+
+function add_ascii(data, zero)
+   print(data, zero)
+end
+
+
+function add_instruction(inst, pars)
+end
+
+
 function compile(source)
+   local nline = 1
    for line in source:gmatch("([^\n]+)\n?") do  -- split lines
       print("** "..line)
+      -- is it a preprocessor directive?
+      if line:sub(1,1) == '%' then
+         preproc(line)
+         goto nxt
+      end
+      -- extract label
+      do
+         local start, finish, match = line:find("^([%.@]?%a%w*):")
+         if start then
+            add_label(match)
+            line = line:sub(start)
+         end
+         -- TODO - replace directives
+         -- data
+         local sz, datax = line:gmatch('%.d([bwd])%s+(.+)')()
+         if sz then
+            local data = {}
+            for d in datax:gmatch('(%w+),?%s*') do data[#data+1] = d end
+            add_data(sz, data)
+            goto nxt
+         end
+         -- bss
+         local sz, datax = line:gmatch('%.res([bwd])%s+(.+)')()
+         if sz then
+            local data = {}
+            for d in datax:gmatch('(%w+),?%s*') do data[#data+1] = d end
+            add_bss(sz, data)
+            goto nxt
+         end
+         -- ascii
+         local zero, data = line:gmatch('%.ascii(z?)%s+"(.+)"')()
+         if zero then
+            add_ascii(data, zero == 'z')
+            goto nxt
+         end
+         -- instruction
+         local inst, pars = line:gmatch('([%w%.]+)%s+(.+)')()
+         if inst then
+            local par = {}
+            for p in pars:gmatch('([%w%[%]]+),?%s*') do par[#par+1] = p end
+            add_instruction(inst, par)
+            goto nxt
+         end
+      end
+
+      -- not found, bail out
+      io.stderr:write("** Syntax error: could not parse line "..nline..": '"..line.."'")
+      os.exit(false)
+
+::nxt::
+      nline = nline+1
    end
    return {}   -- TODO
 end
@@ -100,43 +180,53 @@ function test(name, code, expected_binary)
       io.stdout:write(" }\nFound:   {")
       for _,d in ipairs(binary) do io.stdout:write(string.format("%02X, ", d)) end
       print("}")
-      --error('unexpected test result', 2)
+      error('unexpected test result', 2)
    else
       print("[OK] "..name)
    end
 end
 
 function run_tests()
+   ----------------------------
    test('basic command', 'mov D, 0x64', { 0x2, 0x3, 0x64 })
 
+   ----------------------------
    test('two commands', [[
 mov F, 0x1234
+
 and F, 0xAB  ]], { 0x3, 0x5, 0x34, 0x12, 0x2D, 0x5, 0xAB })
 
+   ----------------------------
    test('two registers', 'mov B, C', { 0x1, 0x12 })
 
+   ----------------------------
    test('data', [[
 mov A, B
 .db 0x12, 0x34]], { 0x1, 0x1, 0x12, 0x34 })
 
+   ----------------------------
    test('data + string', [[
 mov A, B
 .dw 0x1234
 .db "abc", 0]], { 0x1, 0x1, 0x34, 0x12, 0x61, 0x62, 0x63, 0x0 })
 
+   ----------------------------
    test('data + string (inverted order)', [[
 .dw 0x1234
 mov A, B
-.db "abc", 0]], { 0x1, 0x1, 0x34, 0x12, 0x61, 0x62, 0x63, 0x0 })
+.asciiz "abc"]], { 0x1, 0x1, 0x34, 0x12, 0x61, 0x62, 0x63, 0x0 })
 
+   ----------------------------
    test('res', [[
 mov A, B
 .resb 8]], { 0x1, 0x1 })
 
+   ----------------------------
    test('constants', [[
 %define TEST 0x1234
 mov A, TEST]], { 0x3, 0x0, 0x34, 0x12 })
 
+   ----------------------------
    test('label', [[
 jmp test
 test: mov A, B]], { 0x65, 0x5, 0x0, 0x0, 0x0, 0x1, 0x1 })
