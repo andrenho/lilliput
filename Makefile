@@ -116,12 +116,14 @@ distcheck: dist
 install: luisavm
 	cp libluisavm.so /usr/lib
 	cp luisavm /usr/local/bin/
+	cp las /usr/local/bin
 	cp lib/luisavm.h /usr/local/include
 	ldconfig
 
 uninstall:
 	rm /usr/lib/libluisavm.so
 	rm /usr/local/bin/luisavm
+	rm /usr/local/bin/las
 	rm /usr/local/include/luisavm.h
 
 #

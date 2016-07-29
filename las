@@ -221,50 +221,43 @@ local registers = {
    a=0, b=1, c=2, d=3, e=4, f=5, g=6, h=7, i=8, j=9, k=10, l=11, fp=12, sp=13, pc=14, fl=15
 }
 
-local assembler = {
-   text = {},
-   data = {},
-   bss = {},
-   nline = 1,
-   current_line = '',
-   current_file = '',
-}
 
-
-function assembler_error(msg)
+function assembler_error(assembler, msg)
    error('** '..msg..' in '..assembler.current_file..':'..assembler.nline..' -> '..assembler.current_line)
 end
 
 
-function preproc(line)
+function preproc(assembler, line)
    print("PREPROC: "..line)
 end
 
 
-function add_label(lbl)
+function add_label(assembler, lbl)
    print("LABEL: "..lbl)
 end
 
 
-function replace_constants(line)
+function replace_constants(assembler, line)
    return line
 end
 
 
-function add_data(sz, data)
+function add_data(assembler, sz, data)
+   p(sz)
+   p(data)
 end
 
 
-function add_bss(sz, data)
+function add_bss(assembler, sz, data)
 end
 
 
-function add_ascii(data, zero)
+function add_ascii(assembler, data, zero)
    print(data, zero)
 end
 
 
-function add_instruction(inst, pars)  --{{{
+function add_instruction(assembler, inst, pars)  --{{{
    local function convert_value(par)
       if par:match('^%d+$') then
          return tonumber(par, 10)
@@ -296,14 +289,14 @@ function add_instruction(inst, pars)  --{{{
          elseif value <= 0xFFFFFFFF then
             pt = 'v32'
          else
-            assembler_error('Overflow')
+            assembler_error(assembler, 'Overflow')
             os.exit(false)
          end
       elseif par:match('^%[%d+%]$') or par:match('^%[0[xX]%x+%]$') or par:match('^%[0b[01]+%]$') then
          pt = 'indv32'
          value = assert(convert_value(par:gsub('[%[%]]', '')))
       else 
-         assembler_error('Invalid parameter')
+         assembler_error(assembler, 'Invalid parameter')
       end
       ptype[#ptype+1] = pt
       pvalue[#pvalue+1] = value
@@ -311,13 +304,12 @@ function add_instruction(inst, pars)  --{{{
 
    -- find instruction
    for k,v in pairs(opcodes) do
-      ---[0x01] = { instruction = 'mov', parameters = { 'reg', 'reg' } },
       if inst == v.instruction and ptype[1] == v.parameters[1] and ptype[2] == v.parameters[2] then
          table.insert(assembler.text, k)
          goto found
       end
    end
-   assembler_error('Instruction not found')
+   assembler_error(assembler, 'Instruction not found')
 
 ::found::
 
@@ -327,12 +319,12 @@ function add_instruction(inst, pars)  --{{{
    else
       for i=1,2 do
          if ptype[i] then
-            if ptype[1]:sub(1,3) == 'reg' or ptype == 'v8' then
+            if ptype[i]:sub(1,3) == 'reg' or ptype[i] == 'v8' then
                table.insert(assembler.text, pvalue[i])
-            elseif ptype == 'v16' then
+            elseif ptype[i] == 'v16' then
                table.insert(assembler.text, pvalue[i] & 0xFF)
                table.insert(assembler.text, pvalue[i] >> 8)
-            elseif ptype == 'v32' or ptype == 'indv32' then
+            elseif ptype[i] == 'v32' or ptype == 'indv32' then
                table.insert(assembler.text, pvalue[i] & 0xFF)
                table.insert(assembler.text, (pvalue[i] >> 8) & 0xFF)
                table.insert(assembler.text, (pvalue[i] >> 16) & 0xFF)
@@ -347,31 +339,39 @@ function add_instruction(inst, pars)  --{{{
 end --}}}
 
 function compile(source, filename)  -- {{{
-   assembler.current_file = filename or 'stdin'
+   local assembler = {
+      text = {},
+      data = {},
+      bss = {},
+      nline = 1,
+      current_line = '',
+      current_file = filename or 'stdin',
+   }
+
    local nline = 1
    for line in source:gmatch("([^\n]+)\n?") do  -- split lines
       assembler.current_line = line
       assembler.nline = nline
       -- is it a preprocessor directive?
       if line:sub(1,1) == '%' then
-         preproc(line)
+         preproc(assembler, line)
          goto nxt
       end
       -- extract label
       do
          local start, finish, match = line:find("^([%.@]?%a%w*):")
          if start then
-            add_label(match)
+            add_label(assembler, match)
             line = line:sub(start)
          end
          -- replace directives
-         line = replace_constants(line)
+         line = replace_constants(assembler, line)
          -- data
          local sz, datax = line:gmatch('%.d([bwd])%s+(.+)')()
          if sz then
             local data = {}
             for d in datax:gmatch('(%w+),?%s*') do data[#data+1] = d end
-            add_data(sz, data)
+            add_data(assembler, sz, data)
             goto nxt
          end
          -- bss
@@ -379,13 +379,13 @@ function compile(source, filename)  -- {{{
          if sz then
             local data = {}
             for d in datax:gmatch('(%w+),?%s*') do data[#data+1] = d end
-            add_bss(sz, data)
+            add_bss(assembler, sz, data)
             goto nxt
          end
          -- ascii
          local zero, data = line:gmatch('%.ascii(z?)%s+"(.+)"')()
          if zero then
-            add_ascii(data, zero == 'z')
+            add_ascii(assembler, data, zero == 'z')
             goto nxt
          end
          -- instruction
@@ -393,13 +393,13 @@ function compile(source, filename)  -- {{{
          if inst then
             local par = {}
             for p in pars:gmatch('([%w%[%]%.@]+),?%s*') do par[#par+1] = p end
-            add_instruction(inst, par)
+            add_instruction(assembler, inst, par)
             goto nxt
          end
       end
 
       -- not found, bail out
-      assembler_error("Syntax error: could not parse line")
+      assembler_error(assembler, "Syntax error: could not parse line")
 
 ::nxt::
       nline = nline+1
@@ -515,7 +515,8 @@ function parse_commandline()
       elseif switch:sub(1, 1) ~= '-' and #arg == 0 then
          opt.source_file = switch
       else
-         assembler_error("Unrecognized switch '"..switch.."'")
+         io.stderr:write("Unrecognized switch '"..switch.."'\n")
+         os.exit(false)
       end
    end
 
