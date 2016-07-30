@@ -396,7 +396,7 @@ function add_instruction(assembler, inst, pars)  --{{{
 ::found::
 
    -- add parameters
-   if ptype[1]:sub(1,3) == 'reg' and ptype[2]:sub(1,3) == 'reg' then
+   if (ptype[1] and ptype[1]:sub(1,3) == 'reg') and (ptype[2] and ptype[2]:sub(1,3) == 'reg') then
       table.insert(assembler.text, (pvalue[1] << 4) | pvalue[2])
    else
       for i=1,2 do
