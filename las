@@ -529,7 +529,7 @@ function compile(source, filename)  --{{{
          if inst then
             if assembler.section ~= '.text' then assembler_error(assembler, 'Unexpected token') end
             if not map[pp_filename] then map[pp_filename] = {} end
-            map[pp_filename] = { #assembler.text, pp_nline }
+            table.insert(map[pp_filename], { #assembler.text, pp_nline })
             local par = {}
             for p in pars:gmatch('([%w%[%]%.@]+),?%s*') do par[#par+1] = p end
             add_instruction(assembler, inst, par, map)
@@ -560,7 +560,11 @@ function compile(source, filename)  --{{{
    local tmap = {}
    for file,_ in pairs(map) do tmap[#tmap+1] = file end
    tmap[#tmap+1] = '**'
-   for file,v in pairs(map) do tmap[#tmap+1] = file..':'..v[1]..':'..v[2] end
+   for file,addrs in pairs(map) do 
+      for _,addr in ipairs(addrs) do
+         tmap[#tmap+1] = file..':'..addr[1]..':'..addr[2] 
+      end
+   end
 
    return binary, table.concat(tmap, '\n')
 end -- }}}

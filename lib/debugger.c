@@ -339,38 +339,38 @@ cpu_inst(LVM_Computer* comp, uint32_t addr, char buf[40])
         // {{{ ...
         // movement
         case 0x01: sprintf(buf, "mov    %s, %s", reg(lvm_get(comp, addr+1) >> 4), reg(lvm_get(comp, addr+1) & 0xF)); break;
-        case 0x02: sprintf(buf, "mov    %s, 0x%02X", reg(lvm_get(comp, addr+1)), lvm_get(comp, addr+1)); break;
-        case 0x03: sprintf(buf, "mov    %s, 0x%04X", reg(lvm_get(comp, addr+1)), lvm_get16(comp, addr+1)); break;
-        case 0x04: sprintf(buf, "mov    %s, 0x%08X", reg(lvm_get(comp, addr+1)), lvm_get32(comp, addr+1)); break;
+        case 0x02: sprintf(buf, "mov    %s, 0x%02X", reg(lvm_get(comp, addr+1)), lvm_get(comp, addr+2)); break;
+        case 0x03: sprintf(buf, "mov    %s, 0x%04X", reg(lvm_get(comp, addr+1)), lvm_get16(comp, addr+2)); break;
+        case 0x04: sprintf(buf, "mov    %s, 0x%08X", reg(lvm_get(comp, addr+1)), lvm_get32(comp, addr+2)); break;
 
         case 0x05: sprintf(buf, "movb   %s, [%s]", reg(lvm_get(comp, addr+1) >> 4), reg(lvm_get(comp, addr+1) & 0xF)); break;
-        case 0x06: sprintf(buf, "movb   %s, [0x%08X]", reg(lvm_get(comp, addr+1)), lvm_get32(comp, addr+1)); break;
+        case 0x06: sprintf(buf, "movb   %s, [0x%08X]", reg(lvm_get(comp, addr+1)), lvm_get32(comp, addr+2)); break;
         case 0x07: sprintf(buf, "movb   [%s], %s", reg(lvm_get(comp, addr+1) >> 4), reg(lvm_get(comp, addr+1) & 0xF)); break;
-        case 0x08: sprintf(buf, "movb   [%s], 0x%02X", reg(lvm_get(comp, addr+1)), lvm_get(comp, addr+1)); break;
+        case 0x08: sprintf(buf, "movb   [%s], 0x%02X", reg(lvm_get(comp, addr+1)), lvm_get(comp, addr+2)); break;
         case 0x09: sprintf(buf, "movb   [%s], [%s]", reg(lvm_get(comp, addr+1) >> 4), reg(lvm_get(comp, addr+1) & 0xF)); break;
-        case 0x0A: sprintf(buf, "movb   [%s], [0x%08X]", reg(lvm_get(comp, addr+1)), lvm_get32(comp, addr+1)); break;
+        case 0x0A: sprintf(buf, "movb   [%s], [0x%08X]", reg(lvm_get(comp, addr+1)), lvm_get32(comp, addr+2)); break;
         case 0x0B: sprintf(buf, "movb   [0x%08X], %s", lvm_get32(comp, addr+1), reg(lvm_get(comp, addr+5))); break;
         case 0x0C: sprintf(buf, "movb   [0x%08X], 0x%02X", lvm_get32(comp, addr+1), lvm_get(comp, addr+5)); break;
         case 0x0D: sprintf(buf, "movb   [0x%08X], [%s]", lvm_get32(comp, addr+1), reg(lvm_get(comp, addr+5))); break;
         case 0x0E: sprintf(buf, "movb   [0x%08X], [0x%08X]", lvm_get32(comp, addr+1), lvm_get32(comp, addr+5)); break;
 
         case 0x0F: sprintf(buf, "movw   %s, [%s]", reg(lvm_get(comp, addr+1) >> 4), reg(lvm_get(comp, addr+1) & 0xF)); break;
-        case 0x10: sprintf(buf, "movw   %s, [0x%08X]", reg(lvm_get(comp, addr+1)), lvm_get32(comp, addr+1)); break;
+        case 0x10: sprintf(buf, "movw   %s, [0x%08X]", reg(lvm_get(comp, addr+1)), lvm_get32(comp, addr+2)); break;
         case 0x11: sprintf(buf, "movw   [%s], %s", reg(lvm_get(comp, addr+1) >> 4), reg(lvm_get(comp, addr+1) & 0xF)); break;
-        case 0x12: sprintf(buf, "movw   [%s], 0x%04X", reg(lvm_get(comp, addr+1)), lvm_get(comp, addr+1)); break;
+        case 0x12: sprintf(buf, "movw   [%s], 0x%04X", reg(lvm_get(comp, addr+1)), lvm_get(comp, addr+2)); break;
         case 0x13: sprintf(buf, "movw   [%s], [%s]", reg(lvm_get(comp, addr+1) >> 4), reg(lvm_get(comp, addr+1) & 0xF)); break;
-        case 0x14: sprintf(buf, "movw   [%s], [0x%08X]", reg(lvm_get(comp, addr+1)), lvm_get32(comp, addr+1)); break;
+        case 0x14: sprintf(buf, "movw   [%s], [0x%08X]", reg(lvm_get(comp, addr+1)), lvm_get32(comp, addr+2)); break;
         case 0x15: sprintf(buf, "movw   [0x%08X], %s", lvm_get32(comp, addr+1), reg(lvm_get(comp, addr+5))); break;
         case 0x16: sprintf(buf, "movw   [0x%08X], 0x%04X", lvm_get32(comp, addr+1), lvm_get16(comp, addr+5)); break;
         case 0x17: sprintf(buf, "movw   [0x%08X], [%s]", lvm_get32(comp, addr+1), reg(lvm_get(comp, addr+5))); break;
         case 0x18: sprintf(buf, "movw   [0x%08X], [0x%08X]", lvm_get32(comp, addr+1), lvm_get32(comp, addr+5)); break;
 
         case 0x19: sprintf(buf, "movd   %s, [%s]", reg(lvm_get(comp, addr+1) >> 4), reg(lvm_get(comp, addr+1) & 0xF)); break;
-        case 0x1A: sprintf(buf, "movd   %s, [0x%08X]", reg(lvm_get(comp, addr+1)), lvm_get32(comp, addr+1)); break;
+        case 0x1A: sprintf(buf, "movd   %s, [0x%08X]", reg(lvm_get(comp, addr+1)), lvm_get32(comp, addr+2)); break;
         case 0x1B: sprintf(buf, "movd   [%s], %s", reg(lvm_get(comp, addr+1) >> 4), reg(lvm_get(comp, addr+1) & 0xF)); break;
-        case 0x1C: sprintf(buf, "movd   [%s], 0x%08X", reg(lvm_get(comp, addr+1)), lvm_get(comp, addr+1)); break;
+        case 0x1C: sprintf(buf, "movd   [%s], 0x%08X", reg(lvm_get(comp, addr+1)), lvm_get(comp, addr+2)); break;
         case 0x1D: sprintf(buf, "movd   [%s], [%s]", reg(lvm_get(comp, addr+1) >> 4), reg(lvm_get(comp, addr+1) & 0xF)); break;
-        case 0x1E: sprintf(buf, "movd   [%s], [0x%08X]", reg(lvm_get(comp, addr+1)), lvm_get32(comp, addr+1)); break;
+        case 0x1E: sprintf(buf, "movd   [%s], [0x%08X]", reg(lvm_get(comp, addr+1)), lvm_get32(comp, addr+2)); break;
         case 0x1F: sprintf(buf, "movd   [0x%08X], %s", lvm_get32(comp, addr+1), reg(lvm_get(comp, addr+5))); break;
         case 0x20: sprintf(buf, "movd   [0x%08X], 0x%08X", lvm_get32(comp, addr+1), lvm_get16(comp, addr+5)); break;
         case 0x21: sprintf(buf, "movd   [0x%08X], [%s]", lvm_get32(comp, addr+1), reg(lvm_get(comp, addr+5))); break;
@@ -380,49 +380,49 @@ cpu_inst(LVM_Computer* comp, uint32_t addr, char buf[40])
 
         // logic
         case 0x24: sprintf(buf, "or     %s, %s", reg(lvm_get(comp, addr+1) >> 4), reg(lvm_get(comp, addr+1) & 0xF)); break;
-        case 0x25: sprintf(buf, "or     %s, 0x%02X", reg(lvm_get(comp, addr+1)), lvm_get(comp, addr+1)); break;
-        case 0x26: sprintf(buf, "or     %s, 0x%04X", reg(lvm_get(comp, addr+1)), lvm_get16(comp, addr+1)); break;
-        case 0x27: sprintf(buf, "or     %s, 0x%08X", reg(lvm_get(comp, addr+1)), lvm_get32(comp, addr+1)); break;
+        case 0x25: sprintf(buf, "or     %s, 0x%02X", reg(lvm_get(comp, addr+1)), lvm_get(comp, addr+2)); break;
+        case 0x26: sprintf(buf, "or     %s, 0x%04X", reg(lvm_get(comp, addr+1)), lvm_get16(comp, addr+2)); break;
+        case 0x27: sprintf(buf, "or     %s, 0x%08X", reg(lvm_get(comp, addr+1)), lvm_get32(comp, addr+2)); break;
         case 0x28: sprintf(buf, "xor    %s, %s", reg(lvm_get(comp, addr+1) >> 4), reg(lvm_get(comp, addr+1) & 0xF)); break;
-        case 0x29: sprintf(buf, "xor    %s, 0x%02X", reg(lvm_get(comp, addr+1)), lvm_get(comp, addr+1)); break;
-        case 0x2A: sprintf(buf, "xor    %s, 0x%04X", reg(lvm_get(comp, addr+1)), lvm_get16(comp, addr+1)); break;
-        case 0x2B: sprintf(buf, "xor    %s, 0x%08X", reg(lvm_get(comp, addr+1)), lvm_get32(comp, addr+1)); break;
+        case 0x29: sprintf(buf, "xor    %s, 0x%02X", reg(lvm_get(comp, addr+1)), lvm_get(comp, addr+2)); break;
+        case 0x2A: sprintf(buf, "xor    %s, 0x%04X", reg(lvm_get(comp, addr+1)), lvm_get16(comp, addr+2)); break;
+        case 0x2B: sprintf(buf, "xor    %s, 0x%08X", reg(lvm_get(comp, addr+1)), lvm_get32(comp, addr+2)); break;
         case 0x2C: sprintf(buf, "and    %s, %s", reg(lvm_get(comp, addr+1) >> 4), reg(lvm_get(comp, addr+1) & 0xF)); break;
-        case 0x2D: sprintf(buf, "and    %s, 0x%02X", reg(lvm_get(comp, addr+1)), lvm_get(comp, addr+1)); break;
-        case 0x2E: sprintf(buf, "and    %s, 0x%04X", reg(lvm_get(comp, addr+1)), lvm_get16(comp, addr+1)); break;
-        case 0x2F: sprintf(buf, "and    %s, 0x%08X", reg(lvm_get(comp, addr+1)), lvm_get32(comp, addr+1)); break;
+        case 0x2D: sprintf(buf, "and    %s, 0x%02X", reg(lvm_get(comp, addr+1)), lvm_get(comp, addr+2)); break;
+        case 0x2E: sprintf(buf, "and    %s, 0x%04X", reg(lvm_get(comp, addr+1)), lvm_get16(comp, addr+2)); break;
+        case 0x2F: sprintf(buf, "and    %s, 0x%08X", reg(lvm_get(comp, addr+1)), lvm_get32(comp, addr+2)); break;
         case 0x30: sprintf(buf, "shl    %s, %s", reg(lvm_get(comp, addr+1) >> 4), reg(lvm_get(comp, addr+1) & 0xF)); break;
-        case 0x31: sprintf(buf, "shl    %s, 0x%02X", reg(lvm_get(comp, addr+1)), lvm_get(comp, addr+1)); break;
+        case 0x31: sprintf(buf, "shl    %s, 0x%02X", reg(lvm_get(comp, addr+1)), lvm_get(comp, addr+2)); break;
         case 0x32: sprintf(buf, "shr    %s, %s", reg(lvm_get(comp, addr+1) >> 4), reg(lvm_get(comp, addr+1) & 0xF)); break;
-        case 0x33: sprintf(buf, "shr    %s, 0x%02X", reg(lvm_get(comp, addr+1)), lvm_get(comp, addr+1)); break;
+        case 0x33: sprintf(buf, "shr    %s, 0x%02X", reg(lvm_get(comp, addr+1)), lvm_get(comp, addr+2)); break;
         case 0x34: sprintf(buf, "not    %s", reg(lvm_get(comp, addr+1))); break;
 
         // arithmetic
         case 0x35: sprintf(buf, "add    %s, %s", reg(lvm_get(comp, addr+1) >> 4), reg(lvm_get(comp, addr+1) & 0xF)); break;
-        case 0x36: sprintf(buf, "add    %s, 0x%02X", reg(lvm_get(comp, addr+1)), lvm_get(comp, addr+1)); break;
-        case 0x37: sprintf(buf, "add    %s, 0x%04X", reg(lvm_get(comp, addr+1)), lvm_get16(comp, addr+1)); break;
-        case 0x38: sprintf(buf, "add    %s, 0x%08X", reg(lvm_get(comp, addr+1)), lvm_get32(comp, addr+1)); break;
+        case 0x36: sprintf(buf, "add    %s, 0x%02X", reg(lvm_get(comp, addr+1)), lvm_get(comp, addr+2)); break;
+        case 0x37: sprintf(buf, "add    %s, 0x%04X", reg(lvm_get(comp, addr+1)), lvm_get16(comp, addr+2)); break;
+        case 0x38: sprintf(buf, "add    %s, 0x%08X", reg(lvm_get(comp, addr+1)), lvm_get32(comp, addr+2)); break;
         case 0x39: sprintf(buf, "sub    %s, %s", reg(lvm_get(comp, addr+1) >> 4), reg(lvm_get(comp, addr+1) & 0xF)); break;
-        case 0x3A: sprintf(buf, "sub    %s, 0x%02X", reg(lvm_get(comp, addr+1)), lvm_get(comp, addr+1)); break;
-        case 0x3B: sprintf(buf, "sub    %s, 0x%04X", reg(lvm_get(comp, addr+1)), lvm_get16(comp, addr+1)); break;
-        case 0x3C: sprintf(buf, "sub    %s, 0x%08X", reg(lvm_get(comp, addr+1)), lvm_get32(comp, addr+1)); break;
+        case 0x3A: sprintf(buf, "sub    %s, 0x%02X", reg(lvm_get(comp, addr+1)), lvm_get(comp, addr+2)); break;
+        case 0x3B: sprintf(buf, "sub    %s, 0x%04X", reg(lvm_get(comp, addr+1)), lvm_get16(comp, addr+2)); break;
+        case 0x3C: sprintf(buf, "sub    %s, 0x%08X", reg(lvm_get(comp, addr+1)), lvm_get32(comp, addr+2)); break;
         case 0x3D: sprintf(buf, "cmp    %s, %s", reg(lvm_get(comp, addr+1) >> 4), reg(lvm_get(comp, addr+1) & 0xF)); break;
-        case 0x3E: sprintf(buf, "cmp    %s, 0x%02X", reg(lvm_get(comp, addr+1)), lvm_get(comp, addr+1)); break;
-        case 0x3F: sprintf(buf, "cmp    %s, 0x%04X", reg(lvm_get(comp, addr+1)), lvm_get16(comp, addr+1)); break;
-        case 0x40: sprintf(buf, "cmp    %s, 0x%08X", reg(lvm_get(comp, addr+1)), lvm_get32(comp, addr+1)); break;
+        case 0x3E: sprintf(buf, "cmp    %s, 0x%02X", reg(lvm_get(comp, addr+1)), lvm_get(comp, addr+2)); break;
+        case 0x3F: sprintf(buf, "cmp    %s, 0x%04X", reg(lvm_get(comp, addr+1)), lvm_get16(comp, addr+2)); break;
+        case 0x40: sprintf(buf, "cmp    %s, 0x%08X", reg(lvm_get(comp, addr+1)), lvm_get32(comp, addr+2)); break;
         case 0x41: sprintf(buf, "cmp    %s", reg(lvm_get(comp, addr+1))); break;
         case 0x42: sprintf(buf, "mul    %s, %s", reg(lvm_get(comp, addr+1) >> 4), reg(lvm_get(comp, addr+1) & 0xF)); break;
-        case 0x43: sprintf(buf, "mul    %s, 0x%02X", reg(lvm_get(comp, addr+1)), lvm_get(comp, addr+1)); break;
-        case 0x44: sprintf(buf, "mul    %s, 0x%04X", reg(lvm_get(comp, addr+1)), lvm_get16(comp, addr+1)); break;
-        case 0x45: sprintf(buf, "mul    %s, 0x%08X", reg(lvm_get(comp, addr+1)), lvm_get32(comp, addr+1)); break;
+        case 0x43: sprintf(buf, "mul    %s, 0x%02X", reg(lvm_get(comp, addr+1)), lvm_get(comp, addr+2)); break;
+        case 0x44: sprintf(buf, "mul    %s, 0x%04X", reg(lvm_get(comp, addr+1)), lvm_get16(comp, addr+2)); break;
+        case 0x45: sprintf(buf, "mul    %s, 0x%08X", reg(lvm_get(comp, addr+1)), lvm_get32(comp, addr+2)); break;
         case 0x46: sprintf(buf, "idiv   %s, %s", reg(lvm_get(comp, addr+1) >> 4), reg(lvm_get(comp, addr+1) & 0xF)); break;
-        case 0x47: sprintf(buf, "idiv   %s, 0x%02X", reg(lvm_get(comp, addr+1)), lvm_get(comp, addr+1)); break;
-        case 0x48: sprintf(buf, "idiv   %s, 0x%04X", reg(lvm_get(comp, addr+1)), lvm_get16(comp, addr+1)); break;
-        case 0x49: sprintf(buf, "idiv   %s, 0x%08X", reg(lvm_get(comp, addr+1)), lvm_get32(comp, addr+1)); break;
+        case 0x47: sprintf(buf, "idiv   %s, 0x%02X", reg(lvm_get(comp, addr+1)), lvm_get(comp, addr+2)); break;
+        case 0x48: sprintf(buf, "idiv   %s, 0x%04X", reg(lvm_get(comp, addr+1)), lvm_get16(comp, addr+2)); break;
+        case 0x49: sprintf(buf, "idiv   %s, 0x%08X", reg(lvm_get(comp, addr+1)), lvm_get32(comp, addr+2)); break;
         case 0x4A: sprintf(buf, "mod    %s, %s", reg(lvm_get(comp, addr+1) >> 4), reg(lvm_get(comp, addr+1) & 0xF)); break;
-        case 0x4B: sprintf(buf, "mod    %s, 0x%02X", reg(lvm_get(comp, addr+1)), lvm_get(comp, addr+1)); break;
-        case 0x4C: sprintf(buf, "mod    %s, 0x%04X", reg(lvm_get(comp, addr+1)), lvm_get16(comp, addr+1)); break;
-        case 0x4D: sprintf(buf, "mod    %s, 0x%08X", reg(lvm_get(comp, addr+1)), lvm_get32(comp, addr+1)); break;
+        case 0x4B: sprintf(buf, "mod    %s, 0x%02X", reg(lvm_get(comp, addr+1)), lvm_get(comp, addr+2)); break;
+        case 0x4C: sprintf(buf, "mod    %s, 0x%04X", reg(lvm_get(comp, addr+1)), lvm_get16(comp, addr+2)); break;
+        case 0x4D: sprintf(buf, "mod    %s, 0x%08X", reg(lvm_get(comp, addr+1)), lvm_get32(comp, addr+2)); break;
         case 0x4E: sprintf(buf, "inc    %s", reg(lvm_get(comp, addr+1))); break;
         case 0x4F: sprintf(buf, "dec    %s", reg(lvm_get(comp, addr+1))); break;
 
@@ -633,7 +633,7 @@ cpu_inst_sz(LVM_Computer* comp, uint32_t addr)
     }
 }
 
-    
+
 static void
 cpu_update(Debugger* dbg)
 {
