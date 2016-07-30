@@ -557,12 +557,16 @@ function compile(source, filename)  --{{{
    end
    
    -- create map
+   local files = {}; for file,_ in pairs(map) do files[#files+1] = file end; table.sort(files)
+
    local tmap = {}
-   for file,_ in pairs(map) do tmap[#tmap+1] = file end
+   for i,file in ipairs(files) do
+      tmap[#tmap+1] = (i-1)..':'..file
+   end
    tmap[#tmap+1] = '**'
-   for file,addrs in pairs(map) do 
-      for _,addr in ipairs(addrs) do
-         tmap[#tmap+1] = file..':'..addr[1]..':'..addr[2] 
+   for i,file in ipairs(files) do
+      for _,addr in ipairs(map[file]) do
+         tmap[#tmap+1] = (i-1)..':'..addr[1]..':'..addr[2] 
       end
    end
 

@@ -13,6 +13,7 @@ typedef enum State {
     ST_LOGICAL,
     ST_PHYSICAL,
     ST_CPU,
+    ST_SOURCE,
     ST_QUESTION,
 } State;
 
@@ -37,6 +38,9 @@ typedef struct Question {
     bool     ok;
 } Question;
 
+typedef struct Source {
+} Source;
+
 typedef struct Debugger {
     bool          active;
     LVM_Computer* comp;
@@ -45,6 +49,7 @@ typedef struct Debugger {
     Logical       logical;
     Physical      physical;
     CPU           cpu;
+    Source        source;
     Question      question;
 } Debugger;
 
@@ -61,6 +66,7 @@ debugger_init(LVM_Computer* comp, bool active)
     dbg->logical = (Logical) { .top_addr = 0x0 };
     dbg->physical = (Physical) { .top_addr = 0x0 };
     dbg->cpu = (CPU) { .code_start = 0x0, .top_addr = 0x0 };
+    dbg->source = (Source) {};
 
     syslog(LOG_DEBUG, "Debugger created.");
 
@@ -745,6 +751,24 @@ cpu_keypressed(Debugger* debugger, uint32_t chr)
 
 // }}}
 
+// {{{ SOURCE
+
+static void
+source_update(Debugger* dbg)
+{
+    (void) dbg;
+}
+
+
+static void 
+source_keypressed(Debugger* debugger, uint32_t chr)
+{
+    (void) debugger;
+    (void) chr;
+}
+
+// }}}
+
 // {{{ QUESTION
 
 static void 
@@ -809,6 +833,9 @@ debugger_update(Debugger* dbg)
             case ST_CPU:
                 cpu_update(dbg);
                 break;
+            case ST_SOURCE:
+                source_update(dbg);
+                break;
             case ST_QUESTION:
                 question_update(dbg);
                 break;
@@ -825,15 +852,20 @@ void debugger_keypressed(Debugger* debugger, uint32_t chr, uint8_t modifiers)
     switch(chr) {
         case F1:
             lvm_clrscr(debugger->comp);
-            debugger->state = ST_CPU;
+            debugger->state = ST_SOURCE;
             debugger->dirty = true;
             break;
         case F2:
             lvm_clrscr(debugger->comp);
-            debugger->state = ST_LOGICAL;
+            debugger->state = ST_CPU;
             debugger->dirty = true;
             break;
         case F3:
+            lvm_clrscr(debugger->comp);
+            debugger->state = ST_LOGICAL;
+            debugger->dirty = true;
+            break;
+        case F4:
             lvm_clrscr(debugger->comp);
             debugger->state = ST_PHYSICAL;
             debugger->dirty = true;
@@ -849,6 +881,9 @@ void debugger_keypressed(Debugger* debugger, uint32_t chr, uint8_t modifiers)
                 case ST_CPU:
                     cpu_keypressed(debugger, chr);
                     break;
+                case ST_SOURCE:
+                    source_keypressed(debugger, chr);
+                    break;
                 case ST_QUESTION:
                     question_keypressed(debugger, chr);
                     break;
@@ -856,6 +891,15 @@ void debugger_keypressed(Debugger* debugger, uint32_t chr, uint8_t modifiers)
                     abort();
             }
     }
+}
+
+// }}}
+
+// {{{ MAP
+
+void 
+debugger_loadmap(Debugger* debugger, const char* filename)
+{
 }
 
 // }}}

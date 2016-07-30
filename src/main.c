@@ -23,13 +23,6 @@ typedef struct Sprites {
 } Sprites;
 static Sprites sprites = { 0, NULL };
 
-typedef struct Options {
-    const char* rom_file;
-    uint32_t    memory_size;
-    uint8_t     zoom;
-    bool        start_with_debugger;
-} Options;
-
 // {{{ CALLBACKS
 
 static void setpal(uint8_t idx, uint8_t r, uint8_t g, uint8_t b)
@@ -170,10 +163,19 @@ static bool get_events(LVM_Computer* comp)
 
 // {{{ COMMANDLINE OPTIONS
 
+typedef struct Options {
+    const char* rom_file;
+    const char* map_file;
+    uint32_t    memory_size;
+    uint8_t     zoom;
+    bool        start_with_debugger;
+} Options;
+
 Options parse_args(int argc, char* argv[])
 {
     Options opt = {
         .rom_file = NULL,
+        .map_file = NULL,
         .memory_size = 4,
         .zoom = 2,
         .start_with_debugger = true,
@@ -186,18 +188,22 @@ Options parse_args(int argc, char* argv[])
         int option_index = 0;
         static struct option long_options[] = {
             {"memory",  required_argument, 0,  'm' },
+            {"map",     required_argument, 0,  'M' },
             {"zoom",    required_argument, 0,  'z' },
             {"help",    no_argument,       0,  'h' },
             {0,         0,                 0,  0 }
         };
 
-        c = getopt_long(argc, argv, "m:z:vh", long_options, &option_index);
+        c = getopt_long(argc, argv, "m:M:z:vh", long_options, &option_index);
         if(c == -1)
             break;
 
         switch(c) {
             case 'm':
                 opt.memory_size = strtol(optarg, NULL, 10);
+                break;
+            case 'M':
+                opt.map_file = optarg;
                 break;
             case 'z':
                 opt.zoom = strtol(optarg, NULL, 10);
@@ -239,6 +245,10 @@ int main(int argc, char* argv[])
         lvm_loadromfile(computer, opt.rom_file);
     }
     ZOOM = opt.zoom;
+
+    if(opt.map_file) {
+        lvm_debuggerloadmap(computer, opt.map_file);
+    }
 
     if(SDL_Init(SDL_INIT_VIDEO) != 0) {
         fprintf(stderr, "SDL_Init error: %s\n", SDL_GetError());

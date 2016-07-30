@@ -379,6 +379,13 @@ lvm_debuggerupdate(LVM_Computer* computer)
     debugger_update(computer->debugger);
 }
 
+
+void
+lvm_debuggerloadmap(LVM_Computer* computer, const char* filename)
+{
+    debugger_loadmap(computer->debugger, filename);
+}
+
 // }}}
 
 // {{{ KEYBOARD

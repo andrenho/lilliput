@@ -92,6 +92,7 @@ bool        lvm_isbreakpoint(LVM_CPU* cpu, uint32_t pos);
 //
 bool        lvm_debuggeractive(LVM_Computer* computer);
 void        lvm_debuggerupdate(LVM_Computer* computer);
+void        lvm_debuggerloadmap(LVM_Computer* computer, const char* filename);
 
 // 
 // KEYBOARD

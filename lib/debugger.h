@@ -12,4 +12,6 @@ bool debugger_active(Debugger* dbg);
 void debugger_update(Debugger* dbg);
 void debugger_keypressed(Debugger* debugger, uint32_t chr, uint8_t modifiers);
 
+void debugger_loadmap(Debugger* debugger, const char* filename);
+
 #endif
