@@ -16,8 +16,8 @@ static SDL_Color pal[256] = { 0 };
 typedef struct Sprites {
     uint32_t n_sprites;
     SDL_Texture** sprite;
-};
-Sprites sprites = { 0, NULL };
+} Sprites;
+static Sprites sprites = { 0, NULL };
 
 
 //
@@ -39,15 +39,39 @@ static void clrscr(uint8_t color)
 }
 
 
-static uint32_t upload_sprite(uint16_t x, uint16_t y, uint8_t* data)
+static uint32_t upload_sprite(uint16_t w, uint16_t h, uint8_t* data)
 {
-    SDL_Surface* sf = SDL_CreateRGBSurface(0, 
+    Uint32 rmask = 0xff000000;
+    Uint32 gmask = 0x00ff0000;
+    Uint32 bmask = 0x0000ff00;
+    Uint32 amask = 0x000000ff;
+
+    SDL_Surface* sf = SDL_CreateRGBSurface(0, w * ZOOM, h * ZOOM, 32, rmask, gmask, bmask, amask);
+    for(size_t x=0; x<w; ++x) {
+        for(size_t y=0; y<h; ++y) {
+            // TODO - draw points directly
+            uint8_t idx = data[x+(y*h)];
+            SDL_FillRect(sf, 
+                    &(SDL_Rect) { (int)x, (int)y, 1, 1 },
+                    ((Uint32)pal[idx].r << 24) | ((Uint32)pal[idx].g << 16) | ((Uint32)pal[idx].b << 8) | 0xFF);
+        }
+    }
+
+    SDL_Texture* tx = SDL_CreateTextureFromSurface(ren, sf);
+
+    sprites.sprite = realloc(sprites.sprite, sizeof(SDL_Texture*) * (sprites.n_sprites + 1));
+    sprites.sprite[sprites.n_sprites] = tx;
+    return sprites.n_sprites++;
 }
 
 
-static void draw_sprite(uint32_t sprite, uint16_t pos_x, uint16_t pos_y)
+static void draw_sprite(uint32_t sprite_idx, uint16_t pos_x, uint16_t pos_y)
 {
-    // TODO
+    assert(sprites.sprite[sprite_idx]);
+
+    SDL_RenderCopy(ren, sprites.sprite[sprite_idx], NULL, 
+            &(SDL_Rect) { (pos_x+BORDER) * ZOOM, (pos_y+BORDER) * ZOOM, 
+                          sprites[sprite_idx].w * ZOOM, sprites[sprite_idx].h * ZOOM });
 }
 
 // 
