@@ -12,6 +12,4 @@
 -Wunused-function -Wunused-label -Wunused-parameter 
 -Wunused-value -Wunused-variable -Wvariadic-macros 
 -Wvolatile-register-var -Wwrite-strings -Winvalid-pch 
--Wconversion -Wundef
--Winline -Wswitch-enum -Wmissing-declarations
--Winvalid-pch -Wodr
+-Wconversion -Wundef -Winline -Wswitch-enum -Winvalid-pch -Wodr

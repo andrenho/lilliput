@@ -5,6 +5,17 @@
 #include "luisavm.h"
 #include <SDL2/SDL.h>
 
+//
+// CALLBACKS
+//
+
+static void chg_border_color(Color color)
+{
+}
+
+// 
+// MAIN
+//
 
 static bool get_events(LVM_Computer* comp)
 {
@@ -51,6 +62,15 @@ int main()
     SDL_SetRenderDrawColor(ren, 0, 0, 0, 0xFF);
     SDL_RenderClear(ren);
     SDL_RenderPresent(ren);
+
+    //
+    // setup video device
+    //
+#define CB(name) .name = name
+    lvm_setupvideo(computer, (VideoCallbacks) {
+        CB(chg_border_color),
+    });
+#undef CB
 
     // 
     // main loop

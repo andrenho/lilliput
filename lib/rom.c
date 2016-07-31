@@ -37,9 +37,6 @@ rom_get(void* ptr, uint32_t pos)
 }
 
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wmissing-declarations"
-
 LVM_Device*
 rom_init(uint32_t sz, uint8_t* data_new_ownership)
 {
@@ -60,5 +57,3 @@ rom_init(uint32_t sz, uint8_t* data_new_ownership)
 
     return dev;
 }
-
-#pragma GCC diagnostic pop

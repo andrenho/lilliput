@@ -19,7 +19,7 @@ e src/main.c
 args Makefile
 args src/*.h
 args src/*.c
-args lib/luisavm.h
+args lib/*.h
 args lib/*.c
 args test/test.lua
 args bindings/lua/luisavm.c
