@@ -11,6 +11,14 @@
 #define ZOOM     3
 
 static SDL_Renderer* ren = NULL;
+static SDL_Color pal[256] = { 0 };
+
+typedef struct Sprites {
+    uint32_t n_sprites;
+    SDL_Texture** sprite;
+};
+Sprites sprites = { 0, NULL };
+
 
 //
 // CALLBACKS
@@ -18,13 +26,28 @@ static SDL_Renderer* ren = NULL;
 
 static void setpal(uint8_t idx, uint8_t r, uint8_t g, uint8_t b)
 {
+    pal[idx].r = r;
+    pal[idx].g = g;
+    pal[idx].b = b;
 }
 
 
 static void clrscr(uint8_t color)
 {
-    //SDL_SetRenderDrawColor(ren, color.r, color.g, color.b, SDL_ALPHA_OPAQUE);
+    SDL_SetRenderDrawColor(ren, pal[color].r, pal[color].g, pal[color].b, SDL_ALPHA_OPAQUE);
     SDL_RenderFillRect(ren, &(SDL_Rect) { BORDER * ZOOM, BORDER * ZOOM, WIDTH * ZOOM, HEIGHT * ZOOM });
+}
+
+
+static uint32_t upload_sprite(uint16_t x, uint16_t y, uint8_t* data)
+{
+    SDL_Surface* sf = SDL_CreateRGBSurface(0, 
+}
+
+
+static void draw_sprite(uint32_t sprite, uint16_t pos_x, uint16_t pos_y)
+{
+    // TODO
 }
 
 // 
