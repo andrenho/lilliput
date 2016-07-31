@@ -1,6 +1,7 @@
 #ifndef ASSEMBLER_HH_
 #define ASSEMBLER_HH_
 
+#include <map>
 #include <string>
 #include <vector>
 using namespace std;
@@ -18,6 +19,8 @@ public:
     }
 
 private:
+    enum Section { NONE, TEXT, DATA, BSS };
+
     struct Pos {
         string filename;
         size_t n_line;
@@ -26,6 +29,11 @@ private:
     struct Parameter {
         ParameterType type;
         uint32_t      value;
+    };
+
+    struct Label {
+        Section  section;
+        uint32_t pos;
     };
 
     // preprocessing
@@ -37,23 +45,28 @@ private:
     void   ReplaceConstants(string& line) const;
 
     // labels
-    void   ExtractLabel(string& line) const;
+    void   ExtractLabel(string& line);
     void   ReplaceLabels();
 
     // data
     void   Data(string const& sz, string const& data);
-    void   BSS(string const& sz, size_t n);
+    void   Bss(string const& sz, size_t n);
     void   Ascii(bool zero, string const& data);
 
     // instruction parsing
     void   Instruction(string const& inst, string const& pars);
-    Parameter ParseParameter(string const& par) const;
+    Parameter ParseParameter(string const& par);
 
     // linkage
     vector<uint8_t> CreateBinary() const;
 
-    string          _current_section;
-    vector<uint8_t> _code, _data;
+    enum Section          _current_section = Section::NONE;
+    vector<uint8_t>       _text, _data;
+    uint32_t              _bss_sz = 0;
+    map<string, Label>    _labels;
+    string                _current_label;
+    map<uint32_t, string> _pending_labels;
+    map<string, string>   _defines;
 };
 
 }  // namespace luisavm

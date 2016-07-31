@@ -131,7 +131,7 @@ test: luisavm-tests
 	./luisavm-tests
 
 cloc:
-	cloc Makefile src/*.hh src/*.cc lib/*.hh lib/*.cc test/*.lua bindings/lua/*.c
+	cloc Makefile src/*.hh src/*.cc lib/*.hh lib/*.cc
 
 check-leaks: debug
 	valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes --suppressions=build/luisavm.supp ./luisavm-tests

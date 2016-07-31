@@ -11,6 +11,8 @@
 #include <string>
 using namespace std;
 
+// TODO - create a new exception
+
 namespace luisavm {
 
 // {{{ preprocessing
@@ -59,7 +61,7 @@ void Assembler::RemoveComments(string& line) const
 
 Assembler::Pos Assembler::ExtractPos(string& line) const
 {
-    static regex fl(R"(^<([^:]+):(\d+)>\s*(.*)$)");
+    static regex fl(R"(^<([^:]+):(\d+)>\s*(.*?)\s*$)");
     smatch match;
 
     if(regex_search(line, match, fl)) {
@@ -74,8 +76,10 @@ Assembler::Pos Assembler::ExtractPos(string& line) const
 
 void Assembler::Define(string const& def, string const& val)
 {
-    (void) def; (void) val;
-    throw logic_error(string(__PRETTY_FUNCTION__) + " not implemented");
+    if(_defines.find(def) != _defines.end()) {
+        throw runtime_error("Constant " + def + " already defined.");
+    }
+    _defines[def] = val;
 }
 
 
@@ -83,8 +87,12 @@ void Assembler::Section(string const& section)
 {
     string sec;
     transform(section.begin(), section.end(), back_inserter(sec), ::tolower);
-    if(sec == ".text" || sec == ".data" || sec == ".bss") {
-        _current_section = sec;
+    if(sec == ".text") {
+        _current_section = TEXT;
+    } else if(sec == ".data") {
+        _current_section = DATA;
+    } else if(sec == ".bss") {
+        _current_section = BSS;
     } else {
         throw runtime_error("Invalid section |" + sec + "|");
     }
@@ -92,21 +100,45 @@ void Assembler::Section(string const& section)
 
 void Assembler::ReplaceConstants(string& line) const
 {
-    (void) line;
-    // TODO - not implemented
+    for(auto const& kv: _defines) {
+        line = regex_replace(line, regex(kv.first), kv.second);
+    }
 }
 
 // }}}
 
 // {{{ labels
 
-void Assembler::ExtractLabel(string& line) const
+void Assembler::ExtractLabel(string& line)
 {
-    static regex label(R"(^\s*(\.?[a-z_]\w*)\s*:(.*)$)", regex_constants::icase);
+    static regex label(R"(^\s*(\.?[a-z_]\w*)\s*:(.*)$)", regex_constants::icase),
+                 lbl_remove(R"(^\s*(\.?[a-z_]\w*)\s*:\s*)", regex_constants::icase);
     smatch match;
 
     if(regex_search(line, match, label)) {
-        throw logic_error(string(__PRETTY_FUNCTION__) + " not implemented");
+        // find label name
+        string lbl;
+        if(match.str(1)[0] == '.') {
+            lbl = _current_label + "@" + match.str(1);
+        } else {
+            lbl = _current_label = match.str(1);
+        }
+        line = regex_replace(line, lbl_remove, "");
+
+        // was this label already used?
+        if(_labels.find(lbl) != _labels.end()) {
+            throw runtime_error("label '" + lbl + "' reused.");
+        }
+
+        // find position
+        uint32_t pos = 0;
+        switch(_current_section) {
+            case TEXT: pos = static_cast<uint32_t>(_text.size()); break;
+            case DATA: pos = static_cast<uint32_t>(_data.size()); break;
+            case BSS:  pos = _bss_sz; break;
+            default: throw runtime_error("no section defined");
+        }
+        _labels[lbl] = { _current_section, pos };
     }
 }
 
@@ -121,22 +153,54 @@ void Assembler::ReplaceLabels()
 
 void Assembler::Data(string const& sz, string const& data)
 {
-    (void) sz; (void) data;
-    throw logic_error(string(__PRETTY_FUNCTION__) + " not implemented");
+    static regex dt(R"(([^\s,]+))");
+
+    auto end = sregex_token_iterator();
+    for(sregex_token_iterator i(data.begin(), data.end(), dt, 1); i != end; ++i) {
+        try {
+            uint32_t value = static_cast<uint32_t>(stoll(*i, nullptr, 0));
+            if(sz == "b") {
+                if(value > 0xFF) {
+                    throw out_of_range("");
+                }
+                _data.push_back(static_cast<uint8_t>(value));
+            } else if(sz == "w") {
+                if(value > 0xFFFF) {
+                    throw out_of_range("");
+                }
+                _data.push_back(static_cast<uint8_t>(value));
+                _data.push_back(static_cast<uint8_t>(value >> 8));
+            } else if(sz == "d") {
+                _data.push_back(static_cast<uint8_t>(value));
+                _data.push_back(static_cast<uint8_t>(value >> 8));
+                _data.push_back(static_cast<uint8_t>(value >> 16));
+                _data.push_back(static_cast<uint8_t>(value >> 24));
+            } else {
+                throw logic_error("invalid data type");
+            }
+        } catch(invalid_argument&) {
+            throw runtime_error("Invalid data argument " + string(*i) + ".");
+        } catch(out_of_range&) {
+            throw runtime_error("Value " + string(*i) + " out of range.");
+        }
+    }
 }
 
 
-void Assembler::BSS(string const& sz, size_t n)
+void Assembler::Bss(string const& sz, size_t n)
 {
-    (void) sz; (void) n;
-    throw logic_error(string(__PRETTY_FUNCTION__) + " not implemented");
+    _bss_sz += n;
 }
 
 
 void Assembler::Ascii(bool zero, string const& data)
 {
-    (void) zero; (void) data;
-    throw logic_error(string(__PRETTY_FUNCTION__) + " not implemented");
+    for(auto const& c: data) {
+        _data.push_back(c);
+    }
+    if(zero) {
+        _data.push_back(0);
+    }
 }
 
 // }}}
@@ -165,7 +229,7 @@ void Assembler::Instruction(string const& inst, string const& pars)
     uint8_t i=0;
     for(auto const& op: opcodes) {   // opcodes in 'opcodes.hh'
         if(inst == op.instruction && partype == op.parameter) {
-            _code.push_back(i);
+            _text.push_back(i);
             goto found;
         }
         ++i;
@@ -174,22 +238,22 @@ void Assembler::Instruction(string const& inst, string const& pars)
 
 found:
     if(par.size() == 2 && (par[0].type == REG || par[0].type == INDREG) && (par[1].type == REG || par[1].type == INDREG)) {
-        _code.push_back(par[0].value | (par[1].value << 4));
+        _text.push_back((par[0].value << 4) | (par[1].value & 0xF));
     } else {
         for(auto const& p: par) {
             switch(p.type) {
                 case REG: case INDREG: case V8:
-                    _code.push_back(static_cast<uint8_t>(p.value));
+                    _text.push_back(static_cast<uint8_t>(p.value));
                     break;
                 case V16:
-                    _code.push_back(static_cast<uint8_t>(p.value));
-                    _code.push_back(static_cast<uint8_t>(p.value >> 8));
+                    _text.push_back(static_cast<uint8_t>(p.value));
+                    _text.push_back(static_cast<uint8_t>(p.value >> 8));
                     break;
                 case V32: case INDV32:
-                    _code.push_back(static_cast<uint8_t>(p.value));
-                    _code.push_back(static_cast<uint8_t>(p.value >> 8));
-                    _code.push_back(static_cast<uint8_t>(p.value >> 16));
-                    _code.push_back(static_cast<uint8_t>(p.value >> 24));
+                    _text.push_back(static_cast<uint8_t>(p.value));
+                    _text.push_back(static_cast<uint8_t>(p.value >> 8));
+                    _text.push_back(static_cast<uint8_t>(p.value >> 16));
+                    _text.push_back(static_cast<uint8_t>(p.value >> 24));
                     break;
                 default: throw logic_error("invalid parameter type");
             }
@@ -198,7 +262,7 @@ found:
 }
 
 
-Assembler::Parameter Assembler::ParseParameter(string const& par) const
+Assembler::Parameter Assembler::ParseParameter(string const& par)
 {
     string lpar;
     transform(par.begin(), par.end(), back_inserter(lpar), ::tolower);
@@ -212,8 +276,10 @@ Assembler::Parameter Assembler::ParseParameter(string const& par) const
         {"i",8}, {"j",9}, {"k",10}, {"l",11}, {"fp",12}, {"sp",13}, {"pc",14}, {"fl",15}
     };
 
+    // register?
     if(reg.find(lpar) != reg.end()) {
         return { REG, reg.at(lpar) };
+    // indirect register?
     } else if(regex_match(lpar, match, indreg)) {
         try {
             return { INDREG, reg.at(match.str(1)) };
@@ -222,6 +288,7 @@ Assembler::Parameter Assembler::ParseParameter(string const& par) const
         }
     }
 
+    // indirect value?
     if(regex_match(lpar, match, indv32)) {
         try {
             uint32_t value = static_cast<uint32_t>(stoll(match.str(1), nullptr, 0));
@@ -230,6 +297,8 @@ Assembler::Parameter Assembler::ParseParameter(string const& par) const
             throw runtime_error("Invalid indirect value " + par);
         }
     }
+
+    // value?
     try {
         uint32_t value = static_cast<uint32_t>(stoll(lpar, nullptr, 0));
         if(value <= 0xFF) {
@@ -239,9 +308,11 @@ Assembler::Parameter Assembler::ParseParameter(string const& par) const
         } else if(value <= 0xFFFFFFFF) {
             return { V32, value };
         }
+    // label?
     } catch(invalid_argument&) {
-        // TODO - check for label
-        throw logic_error("labels not implemented");
+        string lbl_name = (par[0] == '.') ? _current_label + par : par;
+        _pending_labels[_text.size()] = lbl_name;
+        return { V32, 0 };
     }
 
     throw runtime_error("Invalid parameter " + par);
@@ -255,7 +326,7 @@ Assembler::Parameter Assembler::ParseParameter(string const& par) const
 vector<uint8_t> Assembler::CreateBinary() const
 {
     vector<uint8_t> bin;
-    copy(begin(_code), end(_code), back_inserter(bin));
+    copy(begin(_text), end(_text), back_inserter(bin));
     copy(begin(_data), end(_data), back_inserter(bin));
     return bin;
 }
@@ -267,7 +338,7 @@ vector<uint8_t> Assembler::CreateBinary() const
 vector<uint8_t> Assembler::AssembleString(string const& filename, string const& code, string& mp)
 {
     smatch match;
-    static regex define(R"(^%define\s+([^\s]+)\s+([^\s]+)$)", regex_constants::icase),
+    static regex define(R"(^%define\s+([A-Za-z_][\w_]*)\s+([^\s]+)$)", regex_constants::icase),
                  section(R"(^section\s+(\.[a-z]+)$)", regex_constants::icase),
                  data(R"(^\.d([bwd])\s+(.+)$)", regex_constants::icase),
                  bss(R"(^\.res([bwd])\s+([xb\d]+)$)", regex_constants::icase),
@@ -289,13 +360,13 @@ vector<uint8_t> Assembler::AssembleString(string const& filename, string const& 
             } else {
                 ExtractLabel(line);
                 ReplaceConstants(line);
-                if(_current_section == ".data" && regex_match(line, match, data)) {
+                if(_current_section == DATA && regex_match(line, match, data)) {
                     Data(match.str(1), match.str(2));
-                } else if(_current_section == ".bss" && regex_match(line, match, bss)) {
-                    BSS(match.str(1), stoll(match.str(2), nullptr, 0));  // TODO - catch errors
-                } else if(_current_section == ".data" && regex_match(line, match, ascii)) {
+                } else if(_current_section == BSS && regex_match(line, match, bss)) {
+                    Bss(match.str(1), stoll(match.str(2), nullptr, 0));  // TODO - catch errors
+                } else if(_current_section == DATA && regex_match(line, match, ascii)) {
                     Ascii(match.str(1) == "z", match.str(2));
-                } else if(_current_section == ".text" && regex_match(line, match, inst)) {
+                } else if(_current_section == TEXT && regex_match(line, match, inst)) {
                     Instruction(match.str(1), match.str(2));
                 } else {
                     throw runtime_error("Syntax error in " + pos.filename + ":" + 
