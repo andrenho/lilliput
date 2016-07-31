@@ -12,12 +12,15 @@
 #define ROM_POSITION 0xEF000000
 #define VIDEO_POSITION 0xF8000000
 
+typedef struct ROM ROM;
+typedef struct Video Video;
+
 extern LVM_CPU* lvm_createcpu(LVM_Computer* comp);
 extern void lvm_destroycpu(LVM_CPU* cpu);
 extern void lvm_cpustep(LVM_CPU* cpu);
 extern void lvm_cpureset(LVM_CPU* cpu);
-extern LVM_Device* rom_init(uint32_t sz, uint8_t* data_new_ownership);
-extern LVM_Device* video_init(VideoCallbacks cbs);
+extern LVM_Device* rom_dev_init(uint32_t sz, uint8_t* data_new_ownership);
+extern LVM_Device* video_dev_init(VideoCallbacks cbs);
 
 typedef struct Device {
     LVM_Device* device;
@@ -53,7 +56,12 @@ void
 lvm_computerdestroy(LVM_Computer* comp)
 {
     size_t i = 0;
+    while(comp->device[i]) {
+        device_free(comp->device[i]->device);
+        free(comp->device[i++]);
+    }
     free(comp->device);
+    i = 0;
     while(comp->cpu[i]) {
         lvm_destroycpu(comp->cpu[i++]);
     }
@@ -301,7 +309,7 @@ lvm_loadrom(LVM_Computer* comp, uint32_t sz, uint8_t* data)
         }
     }
 
-    LVM_Device* dev = rom_init(sz, data);
+    LVM_Device* dev = rom_dev_init(sz, data);
     lvm_adddevice(comp, dev, ROM_POSITION);
     lvm_setoffset(comp, ROM_POSITION);
 }
@@ -340,7 +348,7 @@ lvm_loadromfile(LVM_Computer* comp, const char* filename)
 
 void lvm_setupvideo(LVM_Computer* comp, VideoCallbacks cbs)
 {
-    LVM_Device* dev = video_init(cbs);
+    LVM_Device* dev = video_dev_init(cbs);
     lvm_adddevice(comp, dev, VIDEO_POSITION);
 }
 

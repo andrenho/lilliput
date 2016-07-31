@@ -11,16 +11,28 @@ typedef struct ROM {
 } ROM;
 
 
-static void
-rom_free(LVM_Device* dev)
+ROM*
+rom_init(uint32_t sz, uint8_t* data_new_ownership)
 {
-    ROM* rom = (ROM*)dev->ptr;
+    ROM* rom = calloc(sizeof(ROM), 1);
+    rom->sz = sz;
+    rom->data = data_new_ownership;
+
+    syslog(LOG_DEBUG, "A ROM device was created.");
+
+    return rom;
+}
+
+
+static void
+rom_free(void* ptr)
+{
+    ROM* rom = (ROM*)ptr;
 
     if(rom->data) {
         free(rom->data);
     }
     free(rom);
-    free(dev);
 }
 
 
@@ -37,23 +49,8 @@ rom_get(void* ptr, uint32_t pos)
 }
 
 
-LVM_Device*
-rom_init(uint32_t sz, uint8_t* data_new_ownership)
+LVM_Device* rom_dev_init(uint32_t sz, uint8_t* data_new_ownership)
 {
-    ROM* rom = calloc(sizeof(ROM), 1);
-    rom->sz = sz;
-    rom->data = data_new_ownership;
-
-    LVM_Device* dev = calloc(sizeof(LVM_Device), 1);
-    dev->ptr = rom;
-    dev->step = NULL;
-    dev->get = rom_get;
-    dev->set = NULL;
-    dev->free = rom_free;
-    dev->type = DEV_ROM;
-    dev->sz = sz;
-
-    syslog(LOG_DEBUG, "A ROM device was created.");
-
-    return dev;
+    return device_init(rom_init(sz, data_new_ownership),
+            NULL, rom_get, NULL, rom_free, DEV_ROM, sz);
 }

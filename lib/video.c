@@ -8,30 +8,29 @@ typedef struct Video {
     VideoCallbacks cb;
 } Video;
 
-static void
-video_free(LVM_Device* dev)
-{
-    Video* video = (Video*)dev->ptr;
-    free(video);
-    free(dev);
-}
 
-LVM_Device*
+Video*
 video_init(VideoCallbacks cbs)
 {
     Video* video = calloc(sizeof(Video), 1);
     video->cb = cbs;
 
-    LVM_Device* dev = calloc(sizeof(LVM_Device), 1);
-    dev->ptr = video;
-    dev->step = NULL;
-    dev->get = NULL;
-    dev->set = NULL;
-    dev->free = video_free;
-    dev->type = DEV_VIDEO;
-    dev->sz = 0;
-
     syslog(LOG_DEBUG, "Video created.");
 
-    return dev;
+    return video;
+}
+
+
+static void
+video_free(void* ptr)
+{
+    Video* video = (Video*)ptr;
+    free(video);
+}
+
+
+LVM_Device* video_dev_init(VideoCallbacks cbs)
+{
+    return device_init(video_init(cbs),
+            NULL, NULL, NULL, video_free, DEV_VIDEO, 0);
 }
