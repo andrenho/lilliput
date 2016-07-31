@@ -9,7 +9,7 @@
 // CALLBACKS
 //
 
-static void chg_border_color(Color color)
+static void clrscr(Color color)
 {
 }
 
@@ -68,7 +68,7 @@ int main()
     //
 #define CB(name) .name = name
     lvm_setupvideo(computer, (VideoCallbacks) {
-        CB(chg_border_color),
+        CB(clrscr),
     });
 #undef CB
 

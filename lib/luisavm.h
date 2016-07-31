@@ -49,7 +49,7 @@ typedef struct Color {
 } Color;
 
 typedef struct VideoCallbacks {
-    void(* chg_border_color)(Color color);
+    void(* clrscr)(Color color);
 } VideoCallbacks;
 
 void          lvm_setupvideo(LVM_Computer* comp, VideoCallbacks cbs);
