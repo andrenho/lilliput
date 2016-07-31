@@ -799,9 +799,9 @@ source_update(Debugger* debugger)
                 char* buf = strndup(debugger->map.contents[pos->file][p], 45);
                 if(pos->line == p) {
                     print(debugger, 1, i+2, 0, 10, "%*s", 45, "");
-                    print(debugger, 1, i+2, 0, 10, buf);
+                    print(debugger, 1, i+2, 0, 10, "%s", buf);
                 } else {
-                    print(debugger, 1, i+2, 10, 0, buf);
+                    print(debugger, 1, i+2, 10, 0, "%s", buf);
                 }
                 free(buf);
             }
@@ -813,22 +813,41 @@ source_update(Debugger* debugger)
 static void 
 source_keypressed(Debugger* debugger, uint32_t chr)
 {
+    LVM_CPU* cpu = lvm_cpu(debugger->comp, 0);
+    FilePos* pos = &debugger->map.pos[lvm_cpuregister(cpu, PC)];
+
+    if(pos->file != -1) {
+        switch(chr) {
+            case DOWN:
+                ++debugger->source.top_line;
+                debugger->dirty = true;
+                break;
+            case UP:
+                if(debugger->source.top_line > 0) {
+                    --debugger->source.top_line;
+                }
+                debugger->dirty = true;
+                break;
+            case PGDOWN:
+                if(debugger->source.top_line + 19 < debugger->map.nlines[pos->file]) {
+                    debugger->source.top_line += 19;
+                    debugger->dirty = true;
+                }
+                break;
+            case PGUP:
+                if(debugger->source.top_line > 19) {
+                    debugger->source.top_line -= 19;
+                } else if(debugger->source.top_line > 0) {
+                    debugger->source.top_line = 0;
+                }
+                debugger->dirty = true;
+                break;
+        }
+    }
+
     switch(chr) {
-        case DOWN:
-            ++debugger->source.top_line;
-            break;
-        case UP:
-            --debugger->source.top_line;
-            break;
-        case PGDOWN:
-            debugger->source.top_line += 19;
-            break;
-        case PGUP:
-            debugger->source.top_line -= 19;
-            break;
         case 's': {
                 // step
-                LVM_CPU* cpu = lvm_cpu(debugger->comp, 0);
                 lvm_step(debugger->comp, 0);
                 /* TODO
                 // center position
