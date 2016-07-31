@@ -264,7 +264,7 @@ vector<uint8_t> Assembler::CreateBinary() const
 
 // {{{ main assembler
 
-vector<uint8_t> Assembler::AssembleString(string const& filename, string const& code)
+vector<uint8_t> Assembler::AssembleString(string const& filename, string const& code, string& mp)
 {
     smatch match;
     static regex define(R"(^%define\s+([^\s]+)\s+([^\s]+)$)", regex_constants::icase),

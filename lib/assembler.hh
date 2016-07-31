@@ -11,7 +11,11 @@ namespace luisavm {
 
 class Assembler {
 public:
-    vector<uint8_t> AssembleString(string const& filename, string const& code);
+    vector<uint8_t> AssembleString(string const& filename, string const& code, string& mp);
+    vector<uint8_t> AssembleString(string const& filename, string const& code) {
+        string mp;
+        return AssembleString(filename, code, mp);
+    }
 
 private:
     struct Pos {

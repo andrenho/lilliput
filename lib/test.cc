@@ -48,7 +48,21 @@ void test_assembler(string const& name, string const& code, vector<uint8_t> cons
             cout << hex << uppercase << "0x" << static_cast<int>(v) << ", ";
         }
         cout << "\n";
-//        throw test_failed();
+        throw test_failed();
+    }
+}
+
+void test_assembler_map(string const& name, string const& code, string const& expected)
+{
+    string result;
+    Assembler().AssembleString(name, code, result);
+    if(result == expected) {
+        cout << "[\e[32mok\e[0m] " << name << endl;
+    } else {
+        cout << "[\e[31merr\e[0m] " << name << endl;
+        cout << "Expected: \n" + expected + "\n";
+        cout << "Result: \n" + result + "\n";
+        throw test_failed();
     }
 }
 
@@ -104,8 +118,85 @@ static void assembler_tests()
     section .text
     mov D, 0x64   ; comment)", V { 0x2, 0x3, 0x64 });
 
+    test_assembler("two commands", R"(
+    section .text
+    mov B, C )", V { 0x1, 0x12 });
+
+    test_assembler("data", R"(
+    section .text
+    mov A, B
+    section .data
+    .db 0x12, 0x34 )", V { 0x1, 0x1, 0x12, 0x34 });
+
+    test_assembler("data + string", R"(
+    section .text
+    mov A, B
+    section .data
+    .dw 0x1234
+    .ascii abc )", V { 0x1, 0x1, 0x34, 0x12, 0x61, 0x62, 0x63 });
+
+    test_assembler("data + string (inverted order)", R"(
+    section .data
+    .dw 0x1234
+    section .text
+    mov A, B
+    section .data
+    .asciiz abc )", V { 0x1, 0x1, 0x34, 0x12, 0x61, 0x62, 0x63, 0x0 });
+
+    test_assembler("res", R"(
+    section .text
+    mov A, B
+    section .bss
+    .resb 8 )", V { 0x1, 0x1 });
+
+    test_assembler("constants", R"(
+%define TEST 0x1234
+    section .text
+    mov A, TEST )", V { 0x3, 0x0, 0x34, 0x12 });
+
+    test_assembler("label", R"(
+    section .text
+    jmp test
+    test: mov A, B )", V { 0x65, 0x5, 0x0, 0x0, 0x0, 0x1, 0x1 });
+
+    test_assembler("local label", R"(
+    section .text
+    a: jmp .test
+    .test: mov A, B
+    b: jmp .test
+    .test: mov A, B )", V { 0x65, 5, 0, 0, 0, 0x1, 0x1,
+                            0x65, 12, 0, 0, 0, 0x1, 0x1 });
+
+    test_assembler("label on data", R"(
+    section .text
+    jmp test
+    section .data
+    test: .db 0 )", V { 0x65, 5, 0, 0, 0, 0 });
+
+    test_assembler("label on bss", R"(
+    section .text
+    jmp test
+    section .bss
+    .resb 4
+    test: .resb 4 )", V { 0x65, 9, 0, 0, 0 });
+
     test_assembler("include", R"(%import data/test.s)", 
-            V { 0x1, 0x10 });
+            V { 0x1, 0x1 });
+
+    test_assembler_map("map", R"(section .text
+
+            mov     C, 10   ; initialize C
+    next:   dec     C
+            cmp     C, 0    ; TODO - this is not needed
+            bnz     next
+
+    halt:   jmp     halt)", R"(0:test.s
+**
+0:3:0
+0:4:3
+0:5:5
+0:6:8
+0:8:13)");
 }
 
 // }}}
