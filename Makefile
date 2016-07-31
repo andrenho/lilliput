@@ -143,7 +143,7 @@ cloc:
 	cloc Makefile src/*.h src/*.c lib/*.h lib/*.c test/*.lua bindings/lua/*.c las
 
 check-leaks: debug
-	valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes --suppressions=build/luisavm.supp ./luisavm -D
+	valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes --suppressions=build/luisavm.supp ./luisavm -M map test.bin
 
 gen-suppressions: debug
 	valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes --error-limit=no --gen-suppressions=all --log-file=build/luisavm.supp ./luisavm -D

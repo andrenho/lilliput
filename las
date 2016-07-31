@@ -213,7 +213,7 @@ local registers = { a=0, b=1, c=2, d=3, e=4, f=5, g=6, h=7, i=8, j=9, k=10, l=11
 
 function assembler_error(assembler, msg)  --{{{
    assert(type(assembler) == 'table' and type(msg) == 'string')
-   error('** '..msg..' in '..assembler.current_file..':'..assembler.nline..' -> '..assembler.current_line)
+   error('** '..msg..' in '..assembler.current_file..':'..assembler.nline..' -> '..assembler.current_line, 2)
 end  --}}}
 
 function convert_value(par)  --{{{
@@ -233,7 +233,7 @@ function preprocess_file(filename, new_source)  --{{{
    local source = fin:read('*all')
    fin:close()
    local nline = 1
-   for line in source:gmatch("([^\n]+)\n?") do  -- split lines
+   for line in source:gmatch("([^\n]*)\n?") do  -- split lines
       local import = line:match('%%import%s+(.+)')
       if import then
          preprocess_file(import, new_source)
@@ -248,7 +248,7 @@ end
 function preprocess(filename, source)
    local new_source = {}
    local nline = 1
-   for line in source:gmatch("([^\n]+)\n?") do  -- split lines
+   for line in source:gmatch("([^\n]*)\n?") do  -- split lines
       local import = line:match('%%import%s+(.+)')
       if import then
          preprocess_file(import, new_source)
@@ -475,14 +475,19 @@ function compile(source, filename)  --{{{
       pp_nline = tonumber(pp_nline)
       line = line:gsub("<.*>", "")
 
-      -- %define
-      local def, val = line:gmatch('%%define%s+([^%s]+)%s+([^%s]+)')()
-      if def then
-         assembler.constants[def] = val
+      -- empty line?
+      if line == "" then
          goto nxt
       end
 
       do
+         -- %define
+         local def, val = line:gmatch('%%define%s+([^%s]+)%s+([^%s]+)')()
+         if def then
+            assembler.constants[def] = val
+            goto nxt
+         end
+
          -- define section
          local section = line:match('section (%.%w+)')
          if section then

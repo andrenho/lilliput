@@ -39,18 +39,19 @@ typedef struct Question {
 } Question;
 
 typedef struct Source {
+    uint32_t top_line;
 } Source;
 
 typedef struct FilePos {
     ssize_t file;
     size_t line;
-    size_t pc;
 } FilePos;
 
 typedef struct Map {
     const char**  filename;
     const char*** contents;
-    FilePos*      pos;
+    size_t*       nlines;
+    FilePos*      pos;         // TODO - this is incredibly wasteful, we shoud replace it by a proper map
 } Map;
 
 typedef struct Debugger {
@@ -71,28 +72,28 @@ typedef struct Debugger {
 Debugger*
 debugger_init(LVM_Computer* comp, bool active)
 {
-    Debugger* dbg = calloc(sizeof(Debugger), 1);
-    dbg->active = active;
-    dbg->comp = comp;
-    dbg->state = ST_CPU;
-    dbg->dirty = true;
-    dbg->logical = (Logical) { .top_addr = 0x0 };
-    dbg->physical = (Physical) { .top_addr = 0x0 };
-    dbg->cpu = (CPU) { .code_start = 0x0, .top_addr = 0x0 };
-    dbg->source = (Source) {};
-    dbg->map = (Map) { 0 };
+    Debugger* debugger = calloc(sizeof(Debugger), 1);
+    debugger->active = active;
+    debugger->comp = comp;
+    debugger->state = ST_SOURCE;
+    debugger->dirty = true;
+    debugger->logical = (Logical) { .top_addr = 0x0 };
+    debugger->physical = (Physical) { .top_addr = 0x0 };
+    debugger->cpu = (CPU) { .code_start = 0x0, .top_addr = 0x0 };
+    debugger->source = (Source) { .top_line = 0 };
+    debugger->map = (Map) { 0 };
 
     syslog(LOG_DEBUG, "Debugger created.");
 
-    return dbg;
+    return debugger;
 }
 
 
 void
-debugger_free(Debugger* dbg)
+debugger_free(Debugger* debugger)
 {
     // TODO - clear map
-    free(dbg);
+    free(debugger);
 }
 
 // }}}
@@ -101,10 +102,10 @@ debugger_free(Debugger* dbg)
 
 extern void lvm_draw_char(LVM_Computer* comp, uint8_t c, uint16_t x, uint16_t y, uint8_t fg, uint8_t bg);
 extern void lvm_clrscr(LVM_Computer* comp);
-static void print(Debugger* dbg, uint16_t x, uint16_t y, uint8_t fg, uint8_t bg, const char* fmt, ...) __attribute__((format(printf, 6, 7)));
+static void print(Debugger* debugger, uint16_t x, uint16_t y, uint8_t fg, uint8_t bg, const char* fmt, ...) __attribute__((format(printf, 6, 7)));
 
 static void
-print(Debugger* dbg, uint16_t x, uint16_t y, uint8_t fg, uint8_t bg, const char* fmt, ...)
+print(Debugger* debugger, uint16_t x, uint16_t y, uint8_t fg, uint8_t bg, const char* fmt, ...)
 {
     char buf[100];
     va_list ap;
@@ -114,40 +115,40 @@ print(Debugger* dbg, uint16_t x, uint16_t y, uint8_t fg, uint8_t bg, const char*
     va_end(ap);
 
     for(uint16_t n = 0; n < sz; ++n) {
-        lvm_draw_char(dbg->comp, (uint8_t)buf[n], (uint16_t)(x + n), y, fg, bg);
+        lvm_draw_char(debugger->comp, (uint8_t)buf[n], (uint16_t)(x + n), y, fg, bg);
     }
 }
 
 static void
-draw_box(Debugger* dbg, uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2, uint8_t fg, uint8_t bg, bool clear, bool shadow)
+draw_box(Debugger* debugger, uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2, uint8_t fg, uint8_t bg, bool clear, bool shadow)
 {
-    lvm_draw_char(dbg->comp, 218, x1, y1, fg, bg);
-    lvm_draw_char(dbg->comp, 191, x2, y1, fg, bg);
-    lvm_draw_char(dbg->comp, 217, x2, y2, fg, bg);
-    lvm_draw_char(dbg->comp, 192, x1, y2, fg, bg);
+    lvm_draw_char(debugger->comp, 218, x1, y1, fg, bg);
+    lvm_draw_char(debugger->comp, 191, x2, y1, fg, bg);
+    lvm_draw_char(debugger->comp, 217, x2, y2, fg, bg);
+    lvm_draw_char(debugger->comp, 192, x1, y2, fg, bg);
     for(uint16_t x=x1+1; x<x2; ++x) {
-        lvm_draw_char(dbg->comp, 196, x, y1, fg, bg);
-        lvm_draw_char(dbg->comp, 196, x, y2, fg, bg);
+        lvm_draw_char(debugger->comp, 196, x, y1, fg, bg);
+        lvm_draw_char(debugger->comp, 196, x, y2, fg, bg);
     }
     for(uint16_t y=y1+1; y<y2; ++y) {
-        lvm_draw_char(dbg->comp, 179, x1, y, fg, bg);
-        lvm_draw_char(dbg->comp, 179, x2, y, fg, bg);
+        lvm_draw_char(debugger->comp, 179, x1, y, fg, bg);
+        lvm_draw_char(debugger->comp, 179, x2, y, fg, bg);
     }
 
     if(clear) {
         for(uint16_t x=x1+1; x<x2; ++x) {
             for(uint16_t y=y1+1; y<y2; ++y) {
-                lvm_draw_char(dbg->comp, ' ', x, y, fg, bg);
+                lvm_draw_char(debugger->comp, ' ', x, y, fg, bg);
             }
         }
     }
 
     if(shadow) {
         for(uint16_t x=x1+1; x<=(x2+1); ++x) {
-            lvm_draw_char(dbg->comp, 176, x, y2+1, fg, bg);
+            lvm_draw_char(debugger->comp, 176, x, y2+1, fg, bg);
         }
         for(uint16_t y=y1+1; y<=(y2+1); ++y) {
-            lvm_draw_char(dbg->comp, 176, x2+1, y, fg, bg);
+            lvm_draw_char(debugger->comp, 176, x2+1, y, fg, bg);
         }
     }
 }
@@ -157,36 +158,36 @@ draw_box(Debugger* dbg, uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2, uint
 // {{{ LOGICAL
 
 static void
-logical_update(Debugger* dbg)
+logical_update(Debugger* debugger)
 {
-    if(dbg->question.ok) {
-        uint32_t addr = dbg->question.response / 8;
-        dbg->logical.top_addr = addr * 8;
-        if(dbg->logical.top_addr > 0xFFFFFF50) {
-            dbg->logical.top_addr = 0xFFFFFF50;
+    if(debugger->question.ok) {
+        uint32_t addr = debugger->question.response / 8;
+        debugger->logical.top_addr = addr * 8;
+        if(debugger->logical.top_addr > 0xFFFFFF50) {
+            debugger->logical.top_addr = 0xFFFFFF50;
         }
-        dbg->question.ok = false;
+        debugger->question.ok = false;
     }
 
-    print(dbg, 0, 0, 10, 0, "Logical memory");
-    print(dbg, 33, 0, 10, 8, "[F?]"); print(dbg, 38, 0, 10, 0, "- choose device");
-    print(dbg, 0, 25, 10, 8, "[G]"); print(dbg, 4, 25, 10, 0, "- go to");
+    print(debugger, 0, 0, 10, 0, "Logical memory");
+    print(debugger, 33, 0, 10, 8, "[F?]"); print(debugger, 38, 0, 10, 0, "- choose device");
+    print(debugger, 0, 25, 10, 8, "[G]"); print(debugger, 4, 25, 10, 0, "- go to");
 
-    draw_box(dbg, 1, 1, 50, 24, 10, 0, true, false);
+    draw_box(debugger, 1, 1, 50, 24, 10, 0, true, false);
 
     // addresses
     for(uint32_t i=0; i<22; ++i) {
-        uint32_t addr = dbg->logical.top_addr + (i*0x8);
-        print(dbg, 3, i+2, 10, 0, "%08X:", addr);
+        uint32_t addr = debugger->logical.top_addr + (i*0x8);
+        print(debugger, 3, i+2, 10, 0, "%08X:", addr);
         for(int j=0; j<8; ++j) {
-            uint8_t data = lvm_get(dbg->comp, addr+j);
-            print(dbg, 15 + (j*3), i+2, 10, 0, "%02X", data);
+            uint8_t data = lvm_get(debugger->comp, addr+j);
+            print(debugger, 15 + (j*3), i+2, 10, 0, "%02X", data);
             const char* printable = (data >= 32 && data < 127) ? (char[]) { data, '\0' } : ".";
-            print(dbg, 41 + j, i+2, 10, 0, "%s", printable);
+            print(debugger, 41 + j, i+2, 10, 0, "%s", printable);
         }
     }
 
-    print(dbg, 37, 25, 10, 0, "Offset: %08X", lvm_offset(dbg->comp));
+    print(debugger, 37, 25, 10, 0, "Offset: %08X", lvm_offset(debugger->comp));
 }
 
 
@@ -242,41 +243,41 @@ logical_keypressed(Debugger* debugger, uint32_t chr, uint8_t modifiers)
 // {{{ PHYSICAL
 
 static void
-physical_update(Debugger* dbg)
+physical_update(Debugger* debugger)
 {
-    if(dbg->question.ok) {
-        uint32_t addr = dbg->question.response / 8;
-        dbg->physical.top_addr = addr * 8;
-        if(dbg->physical.top_addr > lvm_physicalmemorysz(dbg->comp) - 0xB0) {
-            dbg->physical.top_addr = lvm_physicalmemorysz(dbg->comp) - 0xB0;
+    if(debugger->question.ok) {
+        uint32_t addr = debugger->question.response / 8;
+        debugger->physical.top_addr = addr * 8;
+        if(debugger->physical.top_addr > lvm_physicalmemorysz(debugger->comp) - 0xB0) {
+            debugger->physical.top_addr = lvm_physicalmemorysz(debugger->comp) - 0xB0;
         }
-        dbg->question.ok = false;
+        debugger->question.ok = false;
     }
 
-    print(dbg, 0, 0, 10, 0, "Physical memory");
-    print(dbg, 33, 0, 10, 8, "[F?]"); print(dbg, 38, 0, 10, 0, "- choose device");
-    print(dbg, 0, 25, 10, 8, "[G]"); print(dbg, 4, 25, 10, 0, "- go to");
+    print(debugger, 0, 0, 10, 0, "Physical memory");
+    print(debugger, 33, 0, 10, 8, "[F?]"); print(debugger, 38, 0, 10, 0, "- choose device");
+    print(debugger, 0, 25, 10, 8, "[G]"); print(debugger, 4, 25, 10, 0, "- go to");
 
-    draw_box(dbg, 1, 1, 50, 24, 10, 0, true, false);
+    draw_box(debugger, 1, 1, 50, 24, 10, 0, true, false);
 
     // addresses
     for(uint32_t i=0; i<22; ++i) {
-        uint32_t addr = dbg->physical.top_addr + (i*0x8);
-        print(dbg, 3, i+2, 10, 0, "%08X:", addr);
+        uint32_t addr = debugger->physical.top_addr + (i*0x8);
+        print(debugger, 3, i+2, 10, 0, "%08X:", addr);
         for(int j=0; j<8; ++j) {
-            if(addr+j < lvm_physicalmemorysz(dbg->comp)) {
-                uint8_t data = lvm_physicalmemory(dbg->comp)[addr+j];
-                print(dbg, 15 + (j*3), i+2, 10, 0, "%02X", data);
+            if(addr+j < lvm_physicalmemorysz(debugger->comp)) {
+                uint8_t data = lvm_physicalmemory(debugger->comp)[addr+j];
+                print(debugger, 15 + (j*3), i+2, 10, 0, "%02X", data);
                 const char* printable = (data >= 32 && data < 127) ? (char[]) { data, '\0' } : ".";
-                print(dbg, 41 + j, i+2, 10, 0, "%s", printable);
+                print(debugger, 41 + j, i+2, 10, 0, "%s", printable);
             } else {
-                print(dbg, 15 + (j*3), i+2, 10, 0, "   ");
-                print(dbg, 41 + j, i+2, 10, 0, " ");
+                print(debugger, 15 + (j*3), i+2, 10, 0, "   ");
+                print(debugger, 41 + j, i+2, 10, 0, " ");
             }
         }
     }
 
-    print(dbg, 37, 25, 10, 0, "Offset: %08X", lvm_offset(dbg->comp));
+    print(debugger, 37, 25, 10, 0, "Offset: %08X", lvm_offset(debugger->comp));
 }
 
 
@@ -495,7 +496,7 @@ cpu_inst(LVM_Computer* comp, uint32_t addr, char buf[40])
         // other
         case 0x78: sprintf(buf, "nop"); break;
         case 0x79: sprintf(buf, "halt"); break;
-        case 0x7A: sprintf(buf, "dbg"); break;
+        case 0x7A: sprintf(buf, "debugger"); break;
         // }}}
 
         default: sprintf(buf, "data   0x%02X", op); break;
@@ -656,46 +657,56 @@ cpu_inst_sz(LVM_Computer* comp, uint32_t addr)
 
 
 static void
-cpu_update(Debugger* dbg)
+cpu_draw_basic(Debugger* debugger)
 {
-    LVM_CPU* cpu = lvm_cpu(dbg->comp, 0);
+    LVM_CPU* cpu = lvm_cpu(debugger->comp, 0);
     assert(cpu);
 
-    print(dbg, 0, 0, 10, 0, "CPU");
-    print(dbg, 33, 0, 10, 8, "[F?]"); print(dbg, 38, 0, 10, 0, "- choose device");
-    print(dbg, 47, 2, 10, 8, "[S]"); print(dbg, 50, 2, 10, 0, "tep");
+    print(debugger, 33, 0, 10, 8, "[F?]"); print(debugger, 38, 0, 10, 0, "- choose device");
+    print(debugger, 47, 2, 10, 8, "[S]"); print(debugger, 50, 2, 10, 0, "tep");
 
-    draw_box(dbg, 0, 1, 46, 21, 10, 0, true, false);
+    draw_box(debugger, 0, 1, 46, 21, 10, 0, true, false);
 
     // registers
     for(size_t i=0; i<16; ++i) {
-        print(dbg, (i%4)*13, 22+(i/4), 10, 0, "%s%s: %08X", regs[i], (i<12) ? " " : "", lvm_cpuregister(cpu, i));
+        print(debugger, (i%4)*13, 22+(i/4), 10, 0, "%s%s: %08X", regs[i], (i<12) ? " " : "", lvm_cpuregister(cpu, i));
     }
 
     // flags
     for(size_t i=0; i<6; ++i) {
-        print(dbg, i+47, 19, 10, 0, "%s", flags[i]);
-        print(dbg, i+47, 20, 10, 0, "%d", lvm_cpuflag(cpu, i));
+        print(debugger, i+47, 19, 10, 0, "%s", flags[i]);
+        print(debugger, i+47, 20, 10, 0, "%d", lvm_cpuflag(cpu, i));
     }
+
+}
+
+
+static void
+cpu_update(Debugger* debugger)
+{
+    LVM_CPU* cpu = lvm_cpu(debugger->comp, 0);
+    cpu_draw_basic(debugger);
+
+    print(debugger, 0, 0, 10, 0, "CPU");
 
     // instructions
     uint32_t addr = 0;
     uint8_t y = 0;
-    for(uint32_t i=dbg->cpu.code_start; ; ++i) {
-        if(addr >= dbg->cpu.top_addr) {
+    for(uint32_t i=debugger->cpu.code_start; ; ++i) {
+        if(addr >= debugger->cpu.top_addr) {
             char buf[40];
-            cpu_inst(dbg->comp, addr, buf);
+            cpu_inst(debugger->comp, addr, buf);
             if(addr != lvm_cpuregister(cpu, PC)) {
-                print(dbg, 2, y+2, 10, 0, "%08X:  %s", addr, buf);
+                print(debugger, 2, y+2, 10, 0, "%08X:  %s", addr, buf);
             } else {
-                print(dbg, 1, y+2, 0, 10, "%*s", 45, "");
-                print(dbg, 2, y+2, 0, 10, "%08X:  %s", addr, buf);
+                print(debugger, 1, y+2, 0, 10, "%*s", 45, "");
+                print(debugger, 2, y+2, 0, 10, "%08X:  %s", addr, buf);
             }
             ++y;
             if(y == 19)
                 break;
         }
-        addr += cpu_inst_sz(dbg->comp, addr);
+        addr += cpu_inst_sz(debugger->comp, addr);
     }
 }
 
@@ -709,18 +720,18 @@ cpu_advance(Debugger* debugger)
 
 
 static void
-cpu_regress(Debugger* dbg)
+cpu_regress(Debugger* debugger)
 {
     uint32_t addr = 0;
     uint32_t last_addr = 0;
-    for(uint32_t i=dbg->cpu.code_start; ; ++i) {
-        if(addr >= dbg->cpu.top_addr) {
-            dbg->cpu.top_addr = last_addr;
-            dbg->dirty = true;
+    for(uint32_t i=debugger->cpu.code_start; ; ++i) {
+        if(addr >= debugger->cpu.top_addr) {
+            debugger->cpu.top_addr = last_addr;
+            debugger->dirty = true;
             return;
         }
         last_addr = addr;
-        addr += cpu_inst_sz(dbg->comp, addr);
+        addr += cpu_inst_sz(debugger->comp, addr);
     }
 }
 
@@ -769,17 +780,71 @@ cpu_keypressed(Debugger* debugger, uint32_t chr)
 // {{{ SOURCE
 
 static void
-source_update(Debugger* dbg)
+source_update(Debugger* debugger)
 {
-    (void) dbg;
+    LVM_CPU* cpu = lvm_cpu(debugger->comp, 0);
+
+    cpu_draw_basic(debugger);
+    print(debugger, 0, 0, 10, 0, "Source");
+
+    FilePos* pos = &debugger->map.pos[lvm_cpuregister(cpu, PC)];
+    if(pos->file == -1) {
+        print(debugger, 13, 11, 10, 0, "Source code not found");
+    } else {
+        print(debugger, 7, 0, 10, 0, "- %s", debugger->map.filename[pos->file]);
+
+        for(size_t i=0; i<19; ++i) {
+            size_t p = i + debugger->source.top_line;
+            if(p < debugger->map.nlines[pos->file]) {
+                char* buf = strndup(debugger->map.contents[pos->file][p], 45);
+                if(pos->line == p) {
+                    print(debugger, 1, i+2, 0, 10, "%*s", 45, "");
+                    print(debugger, 1, i+2, 0, 10, buf);
+                } else {
+                    print(debugger, 1, i+2, 10, 0, buf);
+                }
+                free(buf);
+            }
+        }
+    }
 }
 
 
 static void 
 source_keypressed(Debugger* debugger, uint32_t chr)
 {
-    (void) debugger;
-    (void) chr;
+    switch(chr) {
+        case DOWN:
+            ++debugger->source.top_line;
+            break;
+        case UP:
+            --debugger->source.top_line;
+            break;
+        case PGDOWN:
+            debugger->source.top_line += 19;
+            break;
+        case PGUP:
+            debugger->source.top_line -= 19;
+            break;
+        case 's': {
+                // step
+                LVM_CPU* cpu = lvm_cpu(debugger->comp, 0);
+                lvm_step(debugger->comp, 0);
+                /* TODO
+                // center position
+                uint32_t addr = debugger->cpu.top_addr;
+                for(uint32_t y=0; y<22; ++y) {
+                    addr += cpu_inst_sz(debugger->comp, addr);
+                }
+                uint32_t pc = lvm_cpuregister(cpu, PC);
+                if(pc < debugger->cpu.top_addr || pc >= addr) {
+                    debugger->cpu.top_addr = pc;
+                }
+                */
+                debugger->dirty = true;
+            }
+            break;
+    }
 }
 
 // }}}
@@ -787,18 +852,18 @@ source_keypressed(Debugger* debugger, uint32_t chr)
 // {{{ QUESTION
 
 static void 
-question_update(Debugger* dbg)
+question_update(Debugger* debugger)
 {
-    Question* q = &dbg->question;
+    Question* q = &debugger->question;
 
     uint16_t width = strlen(q->text);
     if(width < 12) width = 12;
 
-    draw_box(dbg, (CH_COLUMNS/2) - (width/2) - 2, (CH_LINES/2 - 2), (CH_COLUMNS/2) + (width/2) + 2, (CH_LINES/2 + 2), 10, 0, true, true);
-    print(dbg, (CH_COLUMNS/2) - (width/2) - 1, (CH_LINES/2 - 1), 10, 0, "%s", q->text);
+    draw_box(debugger, (CH_COLUMNS/2) - (width/2) - 2, (CH_LINES/2 - 2), (CH_COLUMNS/2) + (width/2) + 2, (CH_LINES/2 + 2), 10, 0, true, true);
+    print(debugger, (CH_COLUMNS/2) - (width/2) - 1, (CH_LINES/2 - 1), 10, 0, "%s", q->text);
 
-    print(dbg, (CH_COLUMNS/2) - (width/2) - 1, (CH_LINES/2 + 1), 10, 8, "0x        ");
-    print(dbg, (CH_COLUMNS/2) - (width/2) + 1, (CH_LINES/2 + 1), 10, 8, "%s%c", q->buffer, 255);
+    print(debugger, (CH_COLUMNS/2) - (width/2) - 1, (CH_LINES/2 + 1), 10, 8, "0x        ");
+    print(debugger, (CH_COLUMNS/2) - (width/2) + 1, (CH_LINES/2 + 1), 10, 8, "%s%c", q->buffer, 255);
 }
 
 static void 
@@ -828,37 +893,37 @@ question_keypressed(Debugger* debugger, uint32_t chr)
 // {{{ PUBLIC
 
 bool 
-debugger_active(Debugger* dbg)
+debugger_active(Debugger* debugger)
 {
-    return dbg->active;
+    return debugger->active;
 }
 
 
 void
-debugger_update(Debugger* dbg)
+debugger_update(Debugger* debugger)
 {
-    if(dbg->dirty) {
-        switch(dbg->state) {
+    if(debugger->dirty) {
+        switch(debugger->state) {
             case ST_LOGICAL:
-                logical_update(dbg);
+                logical_update(debugger);
                 break;
             case ST_PHYSICAL:
-                physical_update(dbg);
+                physical_update(debugger);
                 break;
             case ST_CPU:
-                cpu_update(dbg);
+                cpu_update(debugger);
                 break;
             case ST_SOURCE:
-                source_update(dbg);
+                source_update(debugger);
                 break;
             case ST_QUESTION:
-                question_update(dbg);
+                question_update(debugger);
                 break;
             default:
                 abort();
         }
         
-        dbg->dirty = false;
+        debugger->dirty = false;
     }
 }
 
@@ -925,13 +990,16 @@ debugger_loadmap(Debugger* debugger, const char* filename)
         
         // get filename
         map->filename = realloc(map->filename, sizeof(const char*) * (i+1));
-        map->filename[i] = fname;
+        map->filename[i] = strdup(fname);
 
         // get file contents
         const char** contents = NULL;
         ssize_t read;
         size_t len;
         char* line = NULL;
+
+        map->nlines = realloc(map->nlines, sizeof(size_t) * (i+1));
+        map->nlines[i] = 0;
 
         FILE* f = fopen(fname, "r");
         assert(f); // TODO
@@ -940,12 +1008,13 @@ debugger_loadmap(Debugger* debugger, const char* filename)
             line[strlen(line)-1] = '\0';  // remove final enter
             contents = realloc(contents, sizeof(const char*) * (j+1));
             contents[j] = strdup(line);
+            ++map->nlines[i];
             ++j;
         }
         free(line);
         fclose(f);
 
-        map->contents= realloc(map->filename, sizeof(const char*) * (i+1));
+        map->contents= realloc(map->contents, sizeof(const char*) * (i+1));
         map->contents[i] = contents;
 
         ++i;
@@ -957,12 +1026,18 @@ debugger_loadmap(Debugger* debugger, const char* filename)
     assert(strcmp(stars, "**") == 0);
     free(stars);
 
+    // initialize file position structure
+    size_t memsz = lvm_physicalmemorysz(debugger->comp);
+    map->pos = malloc(memsz * sizeof(FilePos));
+    for(size_t i=0; i<memsz; ++i) {
+        map->pos[i] = (FilePos) { .file=-1, .line=0 };
+    }
+
     // read file:line:pc combination
     ssize_t file;
-    size_t line;
-    size_t pc;
-    while(fscanf(mainf, "%zd:%zu:%zu\n", &file, &line, &pc)) {
-        printf("%zd:%zu:%zu\n", file, line, pc);
+    size_t line, pc;
+    while(fscanf(mainf, "%zd:%zu:%zu\n", &file, &line, &pc) != EOF) {
+        map->pos[pc] = (FilePos) { .file=file, .line=line-1 };
     }
 
     fclose(mainf);
