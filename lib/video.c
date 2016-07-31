@@ -14,6 +14,11 @@ video_init(VideoCallbacks cbs)
 {
     Video* video = calloc(sizeof(Video), 1);
     video->cb = cbs;
+    
+    video->cb.setpal(0, 0, 0, 0);
+    video->cb.setpal(1, 255, 255, 255);
+
+    video->cb.clrscr(0);
 
     syslog(LOG_DEBUG, "Video created.");
 

@@ -5,12 +5,26 @@
 #include "luisavm.h"
 #include <SDL2/SDL.h>
 
+#define WIDTH  318
+#define HEIGHT 234
+#define BORDER  10
+#define ZOOM     3
+
+static SDL_Renderer* ren = NULL;
+
 //
 // CALLBACKS
 //
 
-static void clrscr(Color color)
+static void setpal(uint8_t idx, uint8_t r, uint8_t g, uint8_t b)
 {
+}
+
+
+static void clrscr(uint8_t color)
+{
+    //SDL_SetRenderDrawColor(ren, color.r, color.g, color.b, SDL_ALPHA_OPAQUE);
+    SDL_RenderFillRect(ren, &(SDL_Rect) { BORDER * ZOOM, BORDER * ZOOM, WIDTH * ZOOM, HEIGHT * ZOOM });
 }
 
 // 
@@ -47,13 +61,13 @@ int main()
 
     SDL_Window* window = SDL_CreateWindow("luisavm " VERSION, 
             SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
-            984, 732, 0);
+            (WIDTH + (2*BORDER)) * ZOOM, (HEIGHT + (2 * BORDER)) * ZOOM, 0);
     if(!window) {
         fprintf(stderr, "SDL_CreateWindow error: %s\n", SDL_GetError());
         exit(EXIT_FAILURE);
     }
 
-    SDL_Renderer* ren = SDL_CreateRenderer(window, -1, SDL_RENDERER_TARGETTEXTURE);
+    ren = SDL_CreateRenderer(window, -1, SDL_RENDERER_TARGETTEXTURE);
     if(!ren) {
         fprintf(stderr, "SDL_CreateRenderer error: %s\n", SDL_GetError());
         exit(EXIT_FAILURE);
@@ -68,6 +82,7 @@ int main()
     //
 #define CB(name) .name = name
     lvm_setupvideo(computer, (VideoCallbacks) {
+        CB(setpal),
         CB(clrscr),
     });
 #undef CB

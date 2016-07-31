@@ -44,12 +44,9 @@ LVM_CPU*      lvm_cpu(LVM_Computer* comp, size_t n);
 void          lvm_loadrom(LVM_Computer* comp, uint32_t sz, uint8_t* data);
 bool          lvm_loadromfile(LVM_Computer* comp, const char* filename);
 
-typedef struct Color {
-    uint8_t r, g, b;
-} Color;
-
 typedef struct VideoCallbacks {
-    void(* clrscr)(Color color);
+    void(* setpal)(uint8_t idx, uint8_t r, uint8_t g, uint8_t b);
+    void(* clrscr)(uint8_t color);
 } VideoCallbacks;
 
 void          lvm_setupvideo(LVM_Computer* comp, VideoCallbacks cbs);
