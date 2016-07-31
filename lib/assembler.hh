@@ -24,21 +24,32 @@ private:
         uint32_t      value;
     };
 
+    // preprocessing
     string Preprocess(string const& filename, string const& code) const;
     void   RemoveComments(string& line) const;
     Pos    ExtractPos(string& line) const;
     void   Define(string const& def, string const& val);
     void   Section(string const& section);
-    void   ExtractLabel(string& line) const;
     void   ReplaceConstants(string& line) const;
+
+    // labels
+    void   ExtractLabel(string& line) const;
+    void   ReplaceLabels();
+
+    // data
     void   Data(string const& sz, string const& data);
     void   BSS(string const& sz, size_t n);
     void   Ascii(bool zero, string const& data);
-    void   Instruction(string const& inst, string const& pars);
 
+    // instruction parsing
+    void   Instruction(string const& inst, string const& pars);
     Parameter ParseParameter(string const& par) const;
 
-    string _current_section;
+    // linkage
+    vector<uint8_t> CreateBinary() const;
+
+    string          _current_section;
+    vector<uint8_t> _code, _data;
 };
 
 }  // namespace luisavm

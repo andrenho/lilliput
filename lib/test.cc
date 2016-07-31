@@ -105,7 +105,7 @@ static void assembler_tests()
     mov D, 0x64   ; comment)", V { 0x2, 0x3, 0x64 });
 
     test_assembler("include", R"(%import data/test.s)", 
-            V { 0x1, 0x1 });
+            V { 0x1, 0x10 });
 }
 
 // }}}
