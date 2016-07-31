@@ -51,9 +51,11 @@ void
 lvm_computerdestroy(LVM_Computer* comp)
 {
     size_t i = 0;
+    free(comp->device);
     while(comp->cpu[i]) {
         lvm_destroycpu(comp->cpu[i++]);
     }
+    free(comp->cpu);
     free(comp->physical_memory);
     free(comp);
     syslog(LOG_DEBUG, "Computer destroyed.");

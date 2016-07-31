@@ -18,9 +18,8 @@ endif
 #
 # add cflags/libraries
 #
-CFLAGS += -fpic -Ilib
-#CFLAGS += `pkg-config --cflags sdl2`
-#LDFLAGS  += -fuse-ld=gold `pkg-config --libs sdl2`
+CFLAGS += -fpic -Ilib `pkg-config --cflags sdl2`
+LDFLAGS  += -fuse-ld=gold
 
 #
 # add warnings
@@ -59,7 +58,7 @@ profile: luisavm
 # compile source files
 #
 %.o: %.c
-	$(CC) -c $(CFLAGS) $(WARNINGS) $(TARGET_CFLAGS) $<
+	$(CC) -c $(WARNINGS) $(CFLAGS) $(TARGET_CFLAGS) $<
 	@$(CC) -MM $(CFLAGS) $< > $*.d
 	@mv -f $*.d $*.d.tmp
 	@sed -e 's|.*:|$*.o:|' < $*.d.tmp > $*.d
@@ -82,7 +81,7 @@ src/font.h: data/font.bmp
 # link
 #
 luisavm: libluisavm.so $(OBJS_EXE)
-	$(CC) $(OBJS_EXE) -o $@ $(TARGET_LDFLAGS) $(LDFLAGS) -Wl,-rpath=. -L. -lluisavm
+	$(CC) $(OBJS_EXE) -o $@ $(TARGET_LDFLAGS) $(LDFLAGS) -Wl,-rpath=. -L. -lluisavm `pkg-config --libs sdl2`
 
 libluisavm.so: $(OBJS_LIB)
 	$(CC) -shared $^ -o $@ $(TARGET_LDFLAGS) $(LDFLAGS)
