@@ -70,12 +70,11 @@ profile: luisavm
 # 
 # other dependencies
 #
-data/font.bmp: data/font.png
+lib/font.xbm: data/font.png
 	convert $< -depth 1 -monochrome $@
+	sed -i 's/static char/static unsigned char/g' $@
 
-src/font.h: data/font.bmp
-	xxd -i $< > $@
-
+lib/video.c: lib/font.xbm
 
 #
 # link
