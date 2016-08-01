@@ -21,6 +21,8 @@ extern void lvm_cpustep(LVM_CPU* cpu);
 extern void lvm_cpureset(LVM_CPU* cpu);
 extern LVM_Device* rom_dev_init(uint32_t sz, uint8_t* data_new_ownership);
 extern LVM_Device* video_dev_init(VideoCallbacks cbs);
+extern LVM_Device* debugger_dev_init(bool active);
+static void lvm_adddevice(LVM_Computer* comp, LVM_Device* dev, uint32_t pos);
 
 typedef struct Device {
     LVM_Device* device;
@@ -39,7 +41,7 @@ typedef struct LVM_Computer {
 // {{{ COMPUTER MANAGEMENT
 
 LVM_Computer*
-lvm_computercreate(uint32_t physical_memory_size)
+lvm_computercreate(uint32_t physical_memory_size, bool debugger_active)
 {
     LVM_Computer* comp = calloc(1, sizeof(LVM_Computer));
     comp->physical_memory = calloc(physical_memory_size, 1);
@@ -47,6 +49,9 @@ lvm_computercreate(uint32_t physical_memory_size)
     comp->device = calloc(1, sizeof(LVM_Device*));
     comp->cpu = calloc(1, sizeof(LVM_CPU*));
     clock_gettime(CLOCK_MONOTONIC, &comp->last_step);
+
+    lvm_adddevice(comp, debugger_dev_init(debugger_active), 0);
+
     syslog(LOG_DEBUG, "Computer created with %d kB of physical memory.", physical_memory_size / 1024);
     return comp;
 }

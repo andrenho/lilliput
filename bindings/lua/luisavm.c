@@ -439,7 +439,7 @@ static int create_computer(lua_State* L)
     int n_args = lua_gettop(L);
 
     uint32_t sz = luaL_checkinteger(L, 1);
-    LVM_Computer* comp = lvm_computercreate(sz);
+    LVM_Computer* comp = lvm_computercreate(sz, false);
     create_object(L, "LVM_Computer", comp, (struct luaL_Reg[]) {
         { "get",      computer_get     },
         { "get16",    computer_get16   },

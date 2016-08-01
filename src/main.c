@@ -119,7 +119,7 @@ int main()
     // initialization
     //
 
-    LVM_Computer* computer = lvm_computercreate(128 * 1024);
+    LVM_Computer* computer = lvm_computercreate(128 * 1024, true);  // TODO
 
     if(SDL_Init(SDL_INIT_VIDEO) != 0) {
         fprintf(stderr, "SDL_Init error: %s\n", SDL_GetError());

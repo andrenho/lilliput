@@ -18,7 +18,7 @@ void lvm_debuglog(bool active);
 typedef struct LVM_Computer LVM_Computer;
 typedef struct LVM_CPU LVM_CPU;
 
-LVM_Computer* lvm_computercreate(uint32_t physical_memory_size);
+LVM_Computer* lvm_computercreate(uint32_t physical_memory_size, bool debugger_active);
 void          lvm_computerdestroy(LVM_Computer* comp);
 
 void          lvm_step(LVM_Computer* comp, size_t force_time_us);

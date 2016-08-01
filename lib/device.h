@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-typedef enum { DEV_ROM, DEV_VIDEO } LVM_DeviceType;
+typedef enum { DEV_ROM, DEV_VIDEO, DEV_DEBUGGER } LVM_DeviceType;
 
 typedef struct LVM_Device {
     void     *ptr;
