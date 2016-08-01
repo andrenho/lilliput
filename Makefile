@@ -2,7 +2,6 @@ VERSION = 0.2
 
 VPATH := src lib
 
-OBJS_EXE := main.o
 OBJS_LIB := luisavm.o cpu.o test.o assembler.o
 
 .DEFAULT_GOAL := release
@@ -86,8 +85,11 @@ lib/video.c: lib/font.xbm
 #
 # link
 #
-luisavm: libluisavm.so $(OBJS_EXE)
-	$(CXX) $(OBJS_EXE) -o $@ $(TARGET_LDFLAGS) $(LDFLAGS) -Wl,-rpath=. -L. -lluisavm `pkg-config --libs sdl2`
+luisavm: libluisavm.so main.o
+	$(CXX) main.o -o $@ $(TARGET_LDFLAGS) $(LDFLAGS) -Wl,-rpath=. -L. -lluisavm `pkg-config --libs sdl2`
+
+las: libluisavm.so las.o
+	$(CXX) las.o -o $@ $(TARGET_LDFLAGS) $(LDFLAGS) -Wl,-rpath=. -L. -lluisavm `pkg-config --libs sdl2`
 
 libluisavm.so: $(OBJS_LIB)
 	$(CXX) -shared $^ -o $@ $(TARGET_LDFLAGS) $(LDFLAGS) $(SOFLAGS)
@@ -114,12 +116,14 @@ distcheck: dist
 install: luisavm
 	cp libluisavm.so /usr/lib
 	cp luisavm /usr/local/bin/
+	cp las /usr/local/bin/
 	cp lib/luisavm.h /usr/local/include
 	ldconfig
 
 uninstall:
 	rm /usr/lib/libluisavm.so
 	rm /usr/local/bin/luisavm
+	rm /usr/local/bin/las
 	rm /usr/local/include/luisavm.h
 
 #

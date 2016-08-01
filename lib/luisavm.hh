@@ -7,6 +7,7 @@
 #include <vector>
 using namespace std;
 
+#include "assembler.hh"
 #include "device.hh"
 #include "cpu.hh"
 #include "video.hh"
