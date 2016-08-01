@@ -17,8 +17,11 @@ video_init(VideoCallbacks cbs)
     
     video->cb.setpal(0, 0, 0, 0);
     video->cb.setpal(1, 255, 255, 255);
+    video->cb.setpal(2, 255, 0, 0);
 
     video->cb.clrscr(0);
+    uint32_t s = video->cb.upload_sprite(2, 2, (uint8_t[]) { 1, 1, 1, 2 });
+    video->cb.draw_sprite(s, 50, 50);
 
     syslog(LOG_DEBUG, "Video created.");
 

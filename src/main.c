@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -69,9 +70,11 @@ static void draw_sprite(uint32_t sprite_idx, uint16_t pos_x, uint16_t pos_y)
 {
     assert(sprites.sprite[sprite_idx]);
 
+    Uint32 format;
+    int access, w, h;
+    SDL_QueryTexture(sprites.sprite[sprite_idx], &format, &access, &w, &h);
     SDL_RenderCopy(ren, sprites.sprite[sprite_idx], NULL, 
-            &(SDL_Rect) { (pos_x+BORDER) * ZOOM, (pos_y+BORDER) * ZOOM, 
-                          sprites[sprite_idx].w * ZOOM, sprites[sprite_idx].h * ZOOM });
+            &(SDL_Rect) { (pos_x+BORDER) * ZOOM, (pos_y+BORDER) * ZOOM, w * ZOOM, h * ZOOM });
 }
 
 // 
@@ -131,6 +134,8 @@ int main()
     lvm_setupvideo(computer, (VideoCallbacks) {
         CB(setpal),
         CB(clrscr),
+        CB(upload_sprite),
+        CB(draw_sprite),
     });
 #undef CB
 
