@@ -68,6 +68,12 @@ void LuisaVM::Set32(uint32_t pos, uint32_t data)
 }
 
 
+void LuisaVM::Step() 
+{
+    // TODO
+}
+
+
 CPU& LuisaVM::cpu() const
 {
     return *static_cast<CPU*>(_devices[0].get());
