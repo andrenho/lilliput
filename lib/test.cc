@@ -66,6 +66,23 @@ void test_assembler_map(string const& name, string const& code, string const& ex
     }
 }
 
+template<typename F, typename U>
+luisavm::LuisaVM _code(function<void(luisavm::LuisaVM& c, luisavm::CPU&)> pre, string const& code, F&& test, U&& expected)
+{
+    luisavm::LuisaVM comp;
+    pre(comp, comp.cpu());
+
+    luisavm::Assembler().AssembleString("test", "section .text\n" + code);
+    luisavm::CPU& cpu = comp.cpu();
+    auto tested = test(comp, cpu);
+    equals(tested, expected, code);
+
+    return comp;
+}
+
+#define code(pre, code, tested, expected) \
+    (_code([](luisavm::LuisaVM& comp, luisavm::CPU& cpu) { (void)comp; (void)cpu; pre; }, code, [](luisavm::LuisaVM const& comp, luisavm::CPU const& cpu) { (void) comp; (void) cpu; return tested; }, expected))
+
 // }}}
 
 static void luisavm_tests();
@@ -205,6 +222,8 @@ static void assembler_tests()
 // {{{ cpu_tests
 
 static void cpu_santiy();
+static void mov();
+static void movb();
 
 
 static void cpu_tests()
@@ -214,6 +233,8 @@ static void cpu_tests()
     cout << "#\n";
 
     cpu_santiy();
+    mov();
+    movb();
 }
 
 
@@ -234,6 +255,44 @@ static void cpu_santiy()
     equals(cpu.Flag(Flag::Z), true);
     equals(cpu.FL, 0x4);
 }
+
+
+static void mov()
+{
+    cout << "# mov\n";
+
+    LuisaVM c = code(cpu.B = 0x42, "mov A, B", cpu.A, 0x42);
+    equals(c.cpu().PC, 2);
+
+    code({}, "mov A, 0x34", cpu.A, 0x34);
+    code({}, "mov A, 0x1234", cpu.A, 0x1234);
+    code({}, "mov A, 0xFABC1234", cpu.A, 0xFABC1234);
+
+    cout << "# movement flags\n";
+    c = code({}, "mov A, 0", cpu.Flag(Flag::Z), true);
+    equals(c.cpu().Flag(Flag::S), false);
+
+    c = code({}, "mov A, 0xF0000001", cpu.Flag(Flag::Z), false);
+    equals(c.cpu().Flag(Flag::S), true);
+}
+
+
+static void movb()
+{
+    cout << "# movb\n";
+
+    code({ cpu.B = 0x1000; comp.Set(cpu.B, 0xAB); }, "movb A, [B]", cpu.A, 0xAB);
+    code({ comp.Set(0x1000, 0xAB) ; }, "movb A, [0x1000]", cpu.A, 0xAB);
+    code({ cpu.A = 0x64 ; cpu.C = 0x32 ; }, "movb [C], A", comp.Get(0x32), 0x64);
+    code({ cpu.A = 0x64 ; }, "movb [A], 0xFA", comp.Get(0x64), 0xFA);
+    code({ cpu.A = 0x32 ; cpu.B = 0x64 ; comp.Set(0x64, 0xFF) ; }, "movb [A], [B]", comp.Get(0x32), 0xFF);
+    code({ cpu.A = 0x32; comp.Set(0x6420, 0xFF) ; }, "movb [A], [0x6420]", comp.Get(0x32), 0xFF);
+    code({ cpu.A = 0xAC32 ; }, "movb [0x64], A", comp.Get(0x64), 0x32);
+    code({}, "movb [0x64], 0xF0", comp.Get(0x64), 0xF0);
+    code({ cpu.A = 0xF000 ; comp.Set(0xF000, 0x42); }, "movb [0xCC64], [A]", comp.Get(0xCC64), 0x42);
+    code({ comp.Set32(0xABF0, 0x3F); }, "movb [0x64], [0xABF0]", comp.Get(0x64), 0x3F);
+}
+
 
 // }}}
 
