@@ -258,7 +258,7 @@ void Assembler::Instruction(string const& inst, string const& pars, Pos const& p
     // find instruction
     uint8_t i=0;
     for(auto const& op: opcodes) {   // opcodes in 'opcodes.hh'
-        if(inst == op.instruction && partype == op.parameter) {
+        if(inst == op.description && partype == op.parameter) {
             if(_mp.find(pos.filename) == _mp.end()) {
                 _mp[pos.filename] = {};
             }
@@ -310,7 +310,7 @@ Assembler::Parameter Assembler::ParseParameter(string const& par)
     
     smatch match;
     static regex indreg(R"(\[([a-z][a-z]?)\])"),
-                 indv32(R"(\[([xb\d]+)\])");
+                 indv32(R"(\[([xb\A-Za-z0-9]+)\])");
 
     static map<string, uint8_t> reg = {
         {"a",0}, {"b",1}, {"c",2}, {"d",3}, {"e",4}, {"f",5}, {"g",6}, {"h",7}, 
@@ -401,7 +401,7 @@ vector<uint8_t> Assembler::AssembleString(string const& filename, string const& 
     static regex define(R"(^%define\s+([A-Za-z_][\w_]*)\s+([^\s]+)$)", regex_constants::icase),
                  section(R"(^section\s+(\.[a-z]+)$)", regex_constants::icase),
                  data(R"(^\.d([bwd])\s+(.+)$)", regex_constants::icase),
-                 bss(R"(^\.res([bwd])\s+([xb\d]+)$)", regex_constants::icase),
+                 bss(R"(^\.res([bwd])\s+([xbA-Za-z0-9]+)$)", regex_constants::icase),
                  ascii(R"(^\.ascii(z?)\s+(.+)$)", regex_constants::icase),
                  inst(R"(^([\w\.]+)\s+(.+)$)", regex_constants::icase);
 

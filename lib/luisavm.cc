@@ -8,7 +8,7 @@ namespace luisavm {
 LuisaVM::LuisaVM(uint32_t physical_memory_size)
 {
     _physical_memory.resize(physical_memory_size, 0);
-    _devices.push_back(make_unique<CPU>());
+    _devices.push_back(make_unique<CPU>(*this));
 }
 
 
@@ -68,9 +68,19 @@ void LuisaVM::Set32(uint32_t pos, uint32_t data)
 }
 
 
+void LuisaVM::Reset()
+{
+    for(auto& dev: _devices) {
+        dev->Reset();
+    }
+}
+
+
 void LuisaVM::Step() 
 {
-    // TODO
+    for(auto& dev: _devices) {
+        dev->Step();
+    }
 }
 
 

@@ -45,11 +45,11 @@ all:
 
 debug: TARGET_CPPFLAGS = -g -ggdb3 -O0 -DDEBUG -fno-inline-functions
 debug: TARGET_LDFLAGS = -g
-debug: luisavm libluisavm.so
+debug: luisavm las libluisavm.so
 
 release: TARGET_CPPFLAGS = -DNDEBUG -Ofast -fomit-frame-pointer -ffast-math -mfpmath=sse -fPIC -msse -msse2 -msse3 -mssse3 -msse4 -flto
 release: TARGET_LDFLAGS = -flto -Wl,--strip-all
-release: luisavm libluisavm.so
+release: luisavm las libluisavm.so
 
 profile: TARGET_CPPFLAGS = -g -ggdb3 -O0 -DDEBUG -fno-inline-functions -pg
 profile: TARGET_LDFLAGS = -g -pg
@@ -113,7 +113,7 @@ distcheck: dist
 	cd luisavm-$(VERSION) && make test
 	rm -rf luisavm-$(VERSION)
 
-install: luisavm
+install: luisavm las
 	cp libluisavm.so /usr/lib
 	cp luisavm /usr/local/bin/
 	cp las /usr/local/bin/

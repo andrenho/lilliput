@@ -4,6 +4,9 @@
 namespace luisavm {
 
 class Device {
+public:
+    virtual void Step() {}
+    virtual void Reset() {}
 };
 
 }  // namespace luisavm

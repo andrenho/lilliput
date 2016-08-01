@@ -69,10 +69,14 @@ void test_assembler_map(string const& name, string const& code, string const& ex
 template<typename F, typename U>
 LuisaVM _code(function<void(LuisaVM& c, CPU&)> pre, string const& code, F&& test, U&& expected)
 {
-    LuisaVM comp;
+    LuisaVM comp(1024*1024);
     pre(comp, comp.cpu());
 
-    Assembler().AssembleString("test", "section .text\n" + code);
+    vector<uint8_t> data = Assembler().AssembleString("test", "section .text\n" + code);
+    for(uint32_t i=0; i<data.size(); ++i) {
+        comp.Set(i, data[i]);
+    }
+    comp.Step();
     CPU& cpu = comp.cpu();
     auto tested = test(comp, cpu);
     equals(tested, expected, code);
@@ -337,7 +341,7 @@ static void logic()
     code({ cpu.A = 0b11; }, "xor A, 0x4", cpu.A, 0b111);
     code({ cpu.A = 0xFF0; }, "xor A, 0xFF00", cpu.A, 0xF0F0);
     code({ cpu.A = 0x148ABD12; }, "xor A, 0x2A426653", cpu.A, 0x3EC8DB41);
-    code({ cpu.A = 0b11; cpu.B = 0b1100; }, "and A, B", cpu.A, 0);
+    c = code({ cpu.A = 0b11; cpu.B = 0b1100; }, "and A, B", cpu.A, 0);
     equals(c.cpu().Flag(Flag::Z), true);
 
     code({ cpu.A = 0b11; }, "and A, 0x7", cpu.A, 0b11);
