@@ -502,8 +502,8 @@ static void stack_allreg()
     cpu.A = 0xA1B2C3E4;
     cpu.B = 0xFFFFFFFF;
     
-    comp.Set(0, Assembler().AssembleString("test", "push.a")[0]);
-    comp.Set(1, Assembler().AssembleString("test", "pop.a")[0]);
+    comp.Set(0, Assembler().AssembleString("test", "section .text\npush.a")[0]);
+    comp.Set(1, Assembler().AssembleString("test", "section .text\npop.a")[0]);
 
     comp.Step();
     equals(cpu.SP, 0xFCF);

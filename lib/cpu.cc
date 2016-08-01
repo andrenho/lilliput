@@ -11,7 +11,6 @@ void CPU::Reset()
     }
 }
 
-
 // {{{ void CPU::Step()
 
 void CPU::Step()
@@ -174,26 +173,49 @@ void CPU::Step()
         case JMP:
             PC = Take(pars[0]);
             return;
-/*
-        case JSR:    ADVANCE_PC(pars); _push32(cpu, PC); PC = Take(pars[0]); return;
-        case RET:    PC = _pop32(cpu); return;
-        case HALT:   abort();  // TODO
-        case IRET:   abort();  // TODO
-        case PUSHB:  _push8(cpu, static_cast<uint8_t>(Take(pars[0]))); break;
-        case PUSHW:  _push16(cpu, static_cast<uint16_t>(Take(pars[0]))); break;
-        case PUSHD:  _push32(cpu, Take(pars[0])); break;
-        case PUSH_A: for(int i=0; i<=11; ++i) _push32(cpu, cpu->reg[i]); break;
-        case POPB:   Apply(pars[0], _pop8(cpu)); break;
-        case POPW:   Apply(pars[0], _pop16(cpu)); break;
-        case POPD:   Apply(pars[0], _pop32(cpu)); break;
-        case POP_A:  for(int i=11; i>=0; --i) cpu->reg[i] = _pop32(cpu); break;
-        case POPX:   for(size_t i=0; i<Take(pars[0]); ++i) _pop8(cpu); break;
-        case NOP:    break;
-        case DBG:    lvm_addbreakpoint(cpu, rPC+1); break;
-        case INVALID:
+        case JSR:
+            Push32(PC + sz);
+            PC = Take(pars[0]);
+            return;
+        case RET:
+            PC = Pop32(); return;
+        case PUSHB:  
+            Push8(static_cast<uint8_t>(Take(pars[0]))); 
+            break;
+        case PUSHW:
+            Push16(static_cast<uint16_t>(Take(pars[0]))); 
+            break;
+        case PUSHD:
+            Push32(Take(pars[0])); 
+            break;
+        case PUSH_A:
+            for(int i=0; i<=11; ++i) { 
+                Push32(Register[i]);
+            }
+            break;
+        case POPB:
+            Apply(pars[0], Pop8());
+            break;
+        case POPW:
+            Apply(pars[0], Pop16());
+            break;
+        case POPD:
+            Apply(pars[0], Pop32());
+            break;
+        case POP_A:
+            for(int i=11; i>=0; --i) { 
+                Register[i] = Pop32();
+            }
+            break;
+        case POPX:
+            for(size_t i=0; i<Take(pars[0]); ++i) {
+                Pop8();
+            }
+            break;
+        case NOP:
+            break;
         default:
-
- */
+            throw logic_error("Invalid opcode");
     }
 
     PC += sz;
@@ -308,6 +330,7 @@ uint32_t CPU::Take(Parameter const& orig)
 
 // }}}
 
+// {{{ flags
 
 bool CPU::Flag(enum Flag f) const
 {
@@ -322,5 +345,49 @@ void CPU::setFlag(enum Flag f, bool value)
     FL = static_cast<uint32_t>(new_value);
 }
 
+// }}}
+
+// {{{ stack operations
+
+void CPU::Push8(uint8_t value)
+{
+    comp.Set(SP, value);
+    SP -= 1;
+}
+
+void CPU::Push16(uint16_t value)
+{
+    SP -= 1;
+    comp.Set16(SP, value);
+    SP -= 1;
+}
+
+void CPU::Push32(uint32_t value)
+{
+    SP -= 3;
+    comp.Set32(SP, value);
+    SP -= 1;
+}
+
+uint8_t CPU::Pop8() {
+    SP += 1;
+    return comp.Get(SP);
+}
+
+uint16_t CPU::Pop16() {
+    SP += 1;
+    uint16_t value = comp.Get16(SP);
+    SP += 1;
+    return value;
+}
+
+uint32_t CPU::Pop32() {
+    SP += 1;
+    uint32_t value = comp.Get32(SP);
+    SP += 3;
+    return value;
+}
+
+// }}}
 
 }  // namespace luisavm

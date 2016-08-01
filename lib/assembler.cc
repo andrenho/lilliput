@@ -256,9 +256,16 @@ void Assembler::Instruction(string const& inst, string const& pars, Pos const& p
             [this](Parameter const& p){ return p.type; });
 
     // find instruction
+    auto upgrade = [](vector<ParameterType> const& pars) -> vector<ParameterType> {
+        vector<ParameterType> p;
+        for(auto const& par: pars) {
+            p.push_back((par == V8 || par == V16) ? V32 : par);
+        }
+        return p;
+    };
     uint8_t i=0;
     for(auto const& op: opcodes) {   // opcodes in 'opcodes.hh'
-        if(inst == op.description && partype == op.parameter) {
+        if(inst == op.description && (partype == op.parameter || upgrade(partype) == op.parameter)) {
             if(_mp.find(pos.filename) == _mp.end()) {
                 _mp[pos.filename] = {};
             }
@@ -403,7 +410,7 @@ vector<uint8_t> Assembler::AssembleString(string const& filename, string const& 
                  data(R"(^\.d([bwd])\s+(.+)$)", regex_constants::icase),
                  bss(R"(^\.res([bwd])\s+([xbA-Za-z0-9]+)$)", regex_constants::icase),
                  ascii(R"(^\.ascii(z?)\s+(.+)$)", regex_constants::icase),
-                 inst(R"(^([\w\.]+)\s+(.+)$)", regex_constants::icase);
+                 inst(R"(^([\w\.]+)(?:\s+(.+)?)?$)", regex_constants::icase);
 
     // parse code
     string line;

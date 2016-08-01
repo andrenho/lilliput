@@ -54,6 +54,13 @@ private:
     void     Apply(Parameter const& dest, uint32_t value, uint8_t sz=0);
     uint32_t Take(Parameter const& orig);
 
+    void Push8(uint8_t value);
+    void Push16(uint16_t value);
+    void Push32(uint32_t value);
+    uint8_t Pop8();
+    uint16_t Pop16();
+    uint32_t Pop32();
+
     class LuisaVM& comp;
 };
 
