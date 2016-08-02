@@ -2,6 +2,7 @@
 #define VIDEO_HH_
 
 #include <cstdint>
+#include <array>
 #include <functional>
 using namespace std;
 
@@ -20,10 +21,11 @@ public:
         function<void()>                                   update_screen;
     };
 
-    explicit Video(Callbacks const& cb) : cb(cb) {}
+    explicit Video(Callbacks const& cb);
 
 private:
     Callbacks cb;
+    array<uint8_t,16> _char_bg;
 };
 
 }  // namespace luisavm
