@@ -1,6 +1,7 @@
 #include "luisavm.hh"
 
 #include <exception>
+#include <fstream>
 using namespace std;
 
 namespace luisavm {
@@ -11,6 +12,26 @@ LuisaVM::LuisaVM(uint32_t physical_memory_size)
     _devices.push_back(make_unique<CPU>(*this));
 }
 
+// {{{ step/reset
+
+void LuisaVM::Reset()
+{
+    for(auto& dev: _devices) {
+        dev->Reset();
+    }
+}
+
+
+void LuisaVM::Step() 
+{
+    for(auto& dev: _devices) {
+        dev->Step();
+    }
+}
+
+// }}}
+
+// {{{ memory management
 
 uint8_t LuisaVM::Get(uint32_t pos) const
 {
@@ -67,27 +88,29 @@ void LuisaVM::Set32(uint32_t pos, uint32_t data)
     Set(pos+3, static_cast<uint8_t>(data >> 24));
 }
 
+// }}}
 
-void LuisaVM::Reset()
+// {{{ rom loading
+
+void
+LuisaVM::LoadROM(string const& rom_filename, string const& map_filename)
 {
-    for(auto& dev: _devices) {
-        dev->Reset();
+    ifstream ifs(rom_filename, ios::binary|ios::ate);
+    ifstream::pos_type pos = ifs.tellg();
+    if(pos < 0) {
+        throw runtime_error("Error reading file " + rom_filename);
     }
-}
 
-
-void LuisaVM::Step() 
-{
-    for(auto& dev: _devices) {
-        dev->Step();
+    if(static_cast<size_t>(pos) >= PhysicalMemory().size()) {
+        throw runtime_error("Memory is too small to accomodate such a large ROM.");
     }
+
+    ifs.seekg(0, ios::beg);
+    ifs.read(reinterpret_cast<char*>(&PhysicalMemory()[0]), pos);
+
+    // TODO - load map
 }
 
-
-CPU& LuisaVM::cpu() const
-{
-    return *static_cast<CPU*>(_devices[0].get());
-}
-
+// }}}
 
 }  // namespace luisavm

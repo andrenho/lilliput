@@ -17,9 +17,10 @@ public:
         function<void(uint8_t)>                            change_border_color;
         function<uint32_t(uint16_t, uint16_t, uint8_t*)>   upload_sprite;
         function<void(uint32_t, uint16_t, uint16_t)>       draw_sprite;
+        function<void()>                                   update_screen;
     };
 
-    explicit Video(Callbacks const& cb);
+    explicit Video(Callbacks const& cb) : cb(cb) {}
 
 private:
     Callbacks cb;

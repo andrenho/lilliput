@@ -19,7 +19,7 @@ endif
 #
 # add cflags/libraries
 #
-CPPFLAGS += -fpic -Ilib `pkg-config --cflags sdl2`
+CPPFLAGS += -fpic -Ilib
 
 ifeq ($(OS),Windows_NT)
   SOFLAGS += -Wl,--out-implib,libluisavm.a
@@ -73,6 +73,8 @@ profile: luisavm
 	  sed -e 's/^ *//' -e 's/$$/:/' >> $*.d
 	@rm -f $*.d.tmp
 
+main.o: CPPFLAGS += -fpic -Ilib `pkg-config --cflags sdl2`
+
 # 
 # other dependencies
 #
@@ -89,7 +91,7 @@ luisavm: libluisavm.so main.o
 	$(CXX) main.o -o $@ $(TARGET_LDFLAGS) $(LDFLAGS) -Wl,-rpath=. -L. -lluisavm `pkg-config --libs sdl2`
 
 las: libluisavm.so las.o
-	$(CXX) las.o -o $@ $(TARGET_LDFLAGS) $(LDFLAGS) -Wl,-rpath=. -L. -lluisavm `pkg-config --libs sdl2`
+	$(CXX) las.o -o $@ $(TARGET_LDFLAGS) $(LDFLAGS) -Wl,-rpath=. -L. -lluisavm
 
 libluisavm.so: $(OBJS_LIB)
 	$(CXX) -shared $^ -o $@ $(TARGET_LDFLAGS) $(LDFLAGS) $(SOFLAGS)

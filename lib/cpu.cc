@@ -214,8 +214,9 @@ void CPU::Step()
             break;
         case NOP:
             break;
+        case INVALID:
         default:
-            throw logic_error("Invalid opcode");
+            throw logic_error("Invalid opcode " + to_string(op));
     }
 
     PC += sz;

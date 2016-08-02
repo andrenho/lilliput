@@ -14,7 +14,7 @@ enum Instruction {
     OR, XOR, AND, SHL, SHR, NOT,
     ADD, SUB, CMP, MUL, IDIV, MOD, INC, DEC,
     BZ, BNZ, BNEG, BPOS, BGT, BGTE, BLT, BLTE, BV, BNV,
-    JMP, JSR, RET, IRET,
+    JMP, JSR, RET,
     PUSHB, PUSHW, PUSHD, PUSH_A, POPB, POPW, POPD, POP_A, POPX,
     NOP,
     INVALID 
@@ -146,26 +146,25 @@ static array<Opcode, 255> opcodes = {{
     { "jsr",  JSR,  { REG, } },               // 0x66
     { "jsr",  JSR,  { V32, } },               // 0x67
     { "ret",  RET,  {} },                     // 0x68
-    { "iret", IRET, {} },                     // 0x69
 
     // stack
-    { "pushb",  PUSHB,  { REG, } },             // 0x6A
-    { "pushb",  PUSHB,  { V8, } },              // 0x6B
-    { "pushw",  PUSHW,  { REG, } },             // 0x6C
-    { "pushw",  PUSHW,  { V16, } },             // 0x6D
-    { "pushd",  PUSHD,  { REG, } },             // 0x6E
-    { "pushd",  PUSHD,  { V32, } },             // 0x6F
-    { "push.a", PUSH_A, {} },                   // 0x70
-    { "popb",   POPB,   { REG, } },             // 0x71
-    { "popw",   POPW,   { REG, } },             // 0x72
-    { "popd",   POPD,   { REG, } },             // 0x73
-    { "pop.a",  POP_A,  {} },                   // 0x74
-    { "popx",   POPX,   { REG, } },             // 0x75
-    { "popx",   POPX,   { V8, } },              // 0x76
-    { "popx",   POPX,   { V16, } },             // 0x77
+    { "pushb",  PUSHB,  { REG, } },             // 0x69
+    { "pushb",  PUSHB,  { V8, } },              // 0x6A
+    { "pushw",  PUSHW,  { REG, } },             // 0x6B
+    { "pushw",  PUSHW,  { V16, } },             // 0x6C
+    { "pushd",  PUSHD,  { REG, } },             // 0x6D
+    { "pushd",  PUSHD,  { V32, } },             // 0x6E
+    { "push.a", PUSH_A, {} },                   // 0x6F
+    { "popb",   POPB,   { REG, } },             // 0x60
+    { "popw",   POPW,   { REG, } },             // 0x61
+    { "popd",   POPD,   { REG, } },             // 0x62
+    { "pop.a",  POP_A,  {} },                   // 0x63
+    { "popx",   POPX,   { REG, } },             // 0x64
+    { "popx",   POPX,   { V8, } },              // 0x65
+    { "popx",   POPX,   { V16, } },             // 0x66
 
     // other
-    { "nop", NOP,  {} },                     // 0x78
+    { "nop", NOP,  {} },                        // 0x67
 }};
 
 }

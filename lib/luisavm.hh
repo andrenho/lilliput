@@ -30,12 +30,16 @@ public:
 
     vector<uint8_t>& PhysicalMemory() { return _physical_memory; }
 
-    void LoadROM(vector<uint8_t> const& data);
-    void LoadROM(string const& filename);
+    void LoadROM(string const& rom_filename, string const& map_filename);
+    
+    template<typename D, typename ...Args>
+    void AddDevice(Args&&... args) {
+        _devices.push_back(make_unique<D>(args...));
+    }
 
     static const uint32_t COMMAND_POS = 0xFFFF0000;
 
-    CPU& cpu() const;
+    CPU& cpu() const { return *static_cast<CPU*>(_devices[0].get()); }
 
 private:
     vector<unique_ptr<Device>> _devices;
