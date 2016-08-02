@@ -81,7 +81,7 @@ public:
         zoom = opt.zoom;
         LoadROM();
         InitializeSDL();
-        SetupVideo();
+        /* luisavm::Video& video = */SetupVideo();
     }
 
 
@@ -144,7 +144,7 @@ private:
     }
 
 
-    void SetupVideo() 
+    luisavm::Video& SetupVideo() 
     {
         // {{{ video functions
 
@@ -225,7 +225,7 @@ private:
 
         // }}}
 
-        comp.AddDevice<luisavm::Video>(cb);
+        return comp.AddDevice<luisavm::Video>(cb);
     }
 
 

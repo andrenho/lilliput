@@ -82,7 +82,7 @@ lib/font.xbm: data/font.png
 	convert $< -depth 1 -monochrome $@
 	sed -i 's/static char/static unsigned char/g' $@
 
-lib/video.c: lib/font.xbm
+lib/video.cc: lib/font.xbm
 
 #
 # link

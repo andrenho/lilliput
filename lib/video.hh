@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <array>
 #include <functional>
+#include <map>
 using namespace std;
 
 #include "device.hh"
@@ -12,6 +13,9 @@ namespace luisavm {
 
 class Video : public Device {
 public:
+    static const int COLUMNS = 53,
+                     LINES   = 26;
+
     struct Callbacks {
         function<void(uint8_t, uint8_t, uint8_t, uint8_t)> setpal;
         function<void(uint8_t)>                            clrscr;
@@ -23,9 +27,15 @@ public:
 
     explicit Video(Callbacks const& cb);
 
+    void DrawChar(char c, uint16_t x, uint16_t y, uint8_t fg, uint8_t bg) const;
+    void UpdateScreen() const { cb.update_screen(); }
+
 private:
+    uint32_t LoadCharSprite(char c, uint8_t fg) const;
+
     Callbacks cb;
     array<uint8_t,16> _char_bg;
+    mutable map<uint32_t, uint32_t>_char_sprite;
 };
 
 }  // namespace luisavm

@@ -33,8 +33,9 @@ public:
     void LoadROM(string const& rom_filename, string const& map_filename);
     
     template<typename D, typename ...Args>
-    void AddDevice(Args&&... args) {
+    D& AddDevice(Args&&... args) {
         _devices.push_back(make_unique<D>(args...));
+        return *static_cast<D*>(_devices.back().get());
     }
 
     static const uint32_t COMMAND_POS = 0xFFFF0000;
