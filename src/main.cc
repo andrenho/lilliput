@@ -236,6 +236,55 @@ private:
             switch(e.type) {
                 case SDL_QUIT:
                     return false;
+                // {{{ keyboard events
+                case SDL_KEYDOWN:
+                case SDL_KEYUP: {
+                        uint8_t mod = 0;
+                        uint32_t key = e.key.keysym.sym;
+                        switch(e.key.keysym.sym) {
+                            case SDLK_F1:       key = luisavm::F1;  break;
+                            case SDLK_F2:       key = luisavm::F2;  break;
+                            case SDLK_F3:       key = luisavm::F3;  break;
+                            case SDLK_F4:       key = luisavm::F4;  break;
+                            case SDLK_F5:       key = luisavm::F5;  break;
+                            case SDLK_F6:       key = luisavm::F6;  break;
+                            case SDLK_F7:       key = luisavm::F7;  break;
+                            case SDLK_F8:       key = luisavm::F8;  break;
+                            case SDLK_F9:       key = luisavm::F9;  break;
+                            case SDLK_F10:      key = luisavm::F10; break;
+                            case SDLK_F11:      key = luisavm::F11; break;
+                            case SDLK_F12:      key = luisavm::F12; break;
+                            case SDLK_INSERT:   key = luisavm::INSERT; break;
+                            case SDLK_HOME:     key = luisavm::HOME;   break;
+                            case SDLK_DELETE:   key = luisavm::DELETE; break;
+                            case SDLK_END:      key = luisavm::END;    break;
+                            case SDLK_PAGEDOWN: key = luisavm::PGDOWN; break;
+                            case SDLK_PAGEUP:   key = luisavm::PGUP;   break;
+                            case SDLK_LEFT:     key = luisavm::LEFT;   break;
+                            case SDLK_RIGHT:    key = luisavm::RIGHT;  break;
+                            case SDLK_UP:       key = luisavm::UP;     break;
+                            case SDLK_DOWN:     key = luisavm::DOWN;   break;
+                            case SDLK_LSHIFT: case SDLK_RSHIFT: key = 0; mod = luisavm::SHIFT; break;
+                            case SDLK_LCTRL:  case SDLK_RCTRL:  key = 0; mod = luisavm::CONTROL; break;
+                            case SDLK_LALT:   case SDLK_RALT:   key = 0; mod = luisavm::ALT; break;
+                                break;
+                        }
+                        if(key >= 0x40000000) {
+                            break;
+                        }
+                        if(e.key.keysym.mod & KMOD_CTRL)  mod |= luisavm::CONTROL;
+                        if(e.key.keysym.mod & KMOD_SHIFT) mod |= luisavm::SHIFT;
+                        if(e.key.keysym.mod & KMOD_ALT)   mod |= luisavm::ALT;
+                        /*
+                        if(e.key.state == SDL_PRESSED) {
+                            lvm_keypressed(comp, key, mod);
+                        } else {
+                            lvm_keyreleased(comp, key, mod);
+                        }
+                        */
+                    }
+                    break;
+                // }}}
             }
         }
         return true;

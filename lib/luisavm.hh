@@ -10,6 +10,7 @@ using namespace std;
 #include "assembler.hh"
 #include "device.hh"
 #include "cpu.hh"
+#include "keyboard.hh"
 #include "video.hh"
 
 namespace luisavm {
