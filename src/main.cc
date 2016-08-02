@@ -225,7 +225,9 @@ private:
 
         // }}}
 
-        return comp.AddDevice<luisavm::Video>(cb);
+        luisavm::Video& video = comp.AddDevice<luisavm::Video>(cb);
+        comp.AddDevice<luisavm::Debugger>(video);
+        return video;
     }
 
 

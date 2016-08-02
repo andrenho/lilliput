@@ -12,6 +12,7 @@ using namespace std;
 #include "cpu.hh"
 #include "keyboard.hh"
 #include "video.hh"
+#include "debugger.hh"
 
 namespace luisavm {
 

@@ -9,7 +9,7 @@ namespace luisavm {
 LuisaVM::LuisaVM(uint32_t physical_memory_size)
 {
     _physical_memory.resize(physical_memory_size, 0);
-    _devices.push_back(make_unique<CPU>(*this));
+    AddDevice<CPU>(*this);
 }
 
 // {{{ step/reset
