@@ -76,11 +76,11 @@ draw_box(Debugger* dbg, uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2, uint
     lvm_draw_char(dbg->comp, 191, x2, y1, fg, bg);
     lvm_draw_char(dbg->comp, 217, x2, y2, fg, bg);
     lvm_draw_char(dbg->comp, 192, x1, y2, fg, bg);
-    for(int x=x1+1; x<x2; ++x) {
+    for(uint16_t x=x1+1; x<x2; ++x) {
         lvm_draw_char(dbg->comp, 196, x, y1, fg, bg);
         lvm_draw_char(dbg->comp, 196, x, y2, fg, bg);
     }
-    for(int y=y1+1; y<y2; ++y) {
+    for(uint16_t y=y1+1; y<y2; ++y) {
         lvm_draw_char(dbg->comp, 179, x1, y, fg, bg);
         lvm_draw_char(dbg->comp, 179, x2, y, fg, bg);
     }
@@ -102,7 +102,7 @@ logical_update(Debugger* dbg)
         for(int j=0; j<8; ++j) {
             uint8_t data = lvm_get(dbg->comp, addr);
             print(dbg, 15 + (j*3), i+2, 10, 0, "%02X", data);
-            char* printable = (data >= 32 && data < 127) ? (char[]) { data, NULL } : ".";
+            const char* printable = (data >= 32 && data < 127) ? (char[]) { data, '\0' } : ".";
             print(dbg, 41 + j, i+2, 10, 0, "%s", printable);
         }
     }
