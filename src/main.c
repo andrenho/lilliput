@@ -8,7 +8,7 @@
 
 #define WIDTH  318
 #define HEIGHT 234
-#define BORDER  10
+#define BORDER  20
 #define ZOOM     2
 
 static SDL_Window* window = NULL;

@@ -11,11 +11,16 @@ typedef enum State {
     ST_LOGICAL,
 } State;
 
+typedef struct Logical {
+    uint32_t top_addr;
+} Logical;
+
 typedef struct Debugger {
     bool          active;
     LVM_Computer* comp;
     State         state;
     bool          dirty;
+    Logical       logical;
 } Debugger;
 
 // {{{ CONSTRUCTOR/DESTRUCTOR
@@ -28,6 +33,7 @@ debugger_init(LVM_Computer* comp, bool active)
     dbg->comp = comp;
     dbg->state = ST_LOGICAL;
     dbg->dirty = true;
+    dbg->logical = (Logical) { .top_addr = 0x0 };
 
     syslog(LOG_DEBUG, "Debugger created.");
 
@@ -84,18 +90,24 @@ static void
 logical_update(Debugger* dbg)
 {
     print(dbg, 0, 0, 10, 0, "Logical memory");
-    draw_box(dbg, 1, 1, 49, 23, 10, 0);
+    print(dbg, 30, 0, 10, 8, "[F?]");
+    print(dbg, 38, 0, 10, 0, "- choose device");
+
+    draw_box(dbg, 1, 1, 50, 24, 10, 0);
 
     // addresses
-    for(uint32_t addr=0; addr<21; ++addr) {
-        print(dbg, 3, addr+2, 10, 0, "%08X:", addr);
-        for(int i=0; i<8; ++i) {
-            print(dbg, 14 + (i*3), addr+2, 10, 0, "%02X", 0);
-            print(dbg, 40 + i, addr+2, 10, 0, ".");
+    for(uint32_t i=0; i<22; ++i) {
+        uint32_t addr = dbg->logical.top_addr + (i*0x8);
+        print(dbg, 3, i+2, 10, 0, "%08X:", addr);
+        for(int j=0; j<8; ++j) {
+            uint8_t data = lvm_get(dbg->comp, addr);
+            print(dbg, 15 + (j*3), i+2, 10, 0, "%02X", data);
+            char* printable = (data >= 32 && data < 127) ? (char[]) { data, NULL } : ".";
+            print(dbg, 41 + j, i+2, 10, 0, "%s", printable);
         }
     }
 
-    print(dbg, 34, 24, 10, 0, "Offset: %08X", 0);
+    print(dbg, 34, 25, 10, 0, "Offset: %08X", lvm_offset(dbg->comp));
 }
 
 // }}}
