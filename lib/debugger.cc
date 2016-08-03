@@ -46,7 +46,10 @@ Debugger::Keypressed(Keyboard::KeyPress const& kp)
     if(kp.key >= F1 && kp.key <= F8) {
         _selected = static_cast<int>(kp.key) - static_cast<int>(F1);
         _screens[_selected]->dirty = true;
+        return;
     }
+
+    _screens[_selected]->Keypressed(kp);
 }
 
 
