@@ -39,7 +39,8 @@ public:
 
     static const uint32_t COMMAND_POS = 0xFFFF0000;
 
-    CPU& cpu() const { return *static_cast<CPU*>(_devices[0].get()); }
+    CPU&      cpu() const      { return *static_cast<CPU*>(_devices[0].get()); }
+    Keyboard& keyboard() const { return *static_cast<Keyboard*>(_devices[1].get()); }
 
 private:
     vector<unique_ptr<Device>> _devices;

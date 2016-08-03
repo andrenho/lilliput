@@ -277,13 +277,12 @@ private:
                         if(e.key.keysym.mod & KMOD_CTRL)  mod |= luisavm::CONTROL;
                         if(e.key.keysym.mod & KMOD_SHIFT) mod |= luisavm::SHIFT;
                         if(e.key.keysym.mod & KMOD_ALT)   mod |= luisavm::ALT;
-                        /*
-                        if(e.key.state == SDL_PRESSED) {
-                            lvm_keypressed(comp, key, mod);
-                        } else {
-                            lvm_keyreleased(comp, key, mod);
-                        }
-                        */
+                        luisavm::KeyState ks = (e.key.state == SDL_PRESSED) ? luisavm::PRESSED : luisavm::RELEASED;
+                        comp.keyboard().Queue.push({ 
+                            key, 
+                            static_cast<luisavm::KeyboardModifier>(mod), 
+                            ks 
+                        });
                     }
                     break;
                 // }}}

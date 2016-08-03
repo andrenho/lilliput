@@ -30,6 +30,7 @@ public:
     void DrawChar(char c, uint16_t x, uint16_t y, uint8_t fg, uint8_t bg) const;
     int Print(uint16_t x, uint16_t y, uint8_t fg, uint8_t bg, string const& str) const;
 
+    void ClearScreen(uint8_t color) const { cb.clrscr(color); }
     void UpdateScreen() const { cb.update_screen(); }
 
 private:

@@ -10,6 +10,7 @@ LuisaVM::LuisaVM(uint32_t physical_memory_size)
 {
     _physical_memory.resize(physical_memory_size, 0);
     AddDevice<CPU>(*this);
+    AddDevice<Keyboard>();
 }
 
 // {{{ step/reset
@@ -127,7 +128,7 @@ LuisaVM::LoadROM(string const& rom_filename, string const& map_filename)
 Video& LuisaVM::AddVideo(Video::Callbacks const& cb)
 {
     Video& video = AddDevice<Video>(cb);
-    _debugger = &AddDevice<Debugger>(video);
+    _debugger = &AddDevice<Debugger>(video, keyboard());
     return video;
 }
 
