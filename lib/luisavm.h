@@ -18,7 +18,7 @@ void lvm_debuglog(bool active);
 typedef struct LVM_Computer LVM_Computer;
 typedef struct LVM_CPU LVM_CPU;
 
-LVM_Computer* lvm_computercreate(uint32_t physical_memory_size);
+LVM_Computer* lvm_computercreate(uint32_t physical_memory_size, bool debugger_active);
 void          lvm_computerdestroy(LVM_Computer* comp);
 
 void          lvm_step(LVM_Computer* comp, size_t force_time_us);
@@ -75,5 +75,11 @@ void        lvm_cpusetflag(LVM_CPU* cpu, LVM_CPUFlag f, bool value);
 void        lvm_addbreakpoint(LVM_CPU* cpu, uint32_t pos);
 void        lvm_removebreakpoint(LVM_CPU* cpu, uint32_t pos);
 bool        lvm_isbreakpoint(LVM_CPU* cpu, uint32_t pos);
+
+//
+// DEBUGGER
+//
+bool        lvm_debuggeractive(LVM_Computer* computer);
+void        lvm_debuggerupdate(LVM_Computer* computer);
 
 #endif
