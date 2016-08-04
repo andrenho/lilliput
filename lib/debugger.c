@@ -12,6 +12,7 @@
 typedef enum State {
     ST_LOGICAL,
     ST_PHYSICAL,
+    ST_CPU,
     ST_QUESTION,
 } State;
 
@@ -22,6 +23,11 @@ typedef struct Logical {
 typedef struct Physical {
     uint32_t top_addr;
 } Physical;
+
+typedef struct CPU {
+    uint32_t code_start;
+    uint32_t top_addr;
+} CPU;
 
 typedef struct Question {
     State    return_to;
@@ -38,6 +44,7 @@ typedef struct Debugger {
     bool          dirty;
     Logical       logical;
     Physical      physical;
+    CPU           cpu;
     Question      question;
 } Debugger;
 
@@ -302,6 +309,117 @@ physical_keypressed(Debugger* debugger, uint32_t chr, uint8_t modifiers)
 
 // }}}
 
+// {{{ CPU
+
+static void
+cpu_inst(uint32_t addr, char buf[40])
+{
+    sprintf(buf, "data");
+}
+
+
+static uint8_t
+cpu_inst_sz(uint32_t addr)
+{
+    return 1;
+}
+
+    
+static void
+cpu_update(Debugger* dbg)
+{
+    print(dbg, 0, 0, 10, 0, "CPU");
+    print(dbg, 33, 0, 10, 8, "[F?]"); print(dbg, 38, 0, 10, 0, "- choose device");
+    print(dbg, 0, 25, 10, 8, "[G]"); print(dbg, 4, 25, 10, 0, "- go to");
+
+    draw_box(dbg, 1, 1, 45, 24, 10, 0, true, false);
+
+    // registers
+    const char* reg[] = {
+        "A ", "B ", "C ", "D ", "E ", "F ", "G ", "H ", 
+        "I ", "J ", "K ", "L ", "FP", "SP", "PC", "FL"
+    };
+    for(size_t i=0; i<16; ++i) {
+        print(dbg, 47, i+2, 10, 0, "%s: %02X", reg[i], 0);
+    }
+
+    // flags
+    const char* flags[] = {
+        "Y", "V", "Z", "S", "G", "L",
+    };
+    for(size_t i=0; i<6; ++i) {
+        print(dbg, i+47, 19, 10, 0, "%s", flags[i]);
+        print(dbg, i+47, 20, 10, 0, "%d", 0);
+    }
+
+    // instructions
+    uint32_t addr = 0;
+    uint8_t y = 0;
+    for(uint32_t i=0; ; ++i) {
+        if(addr >= dbg->cpu.top_addr) {
+            char buf[40];
+            print(dbg, 3, i+2, 10, 0, "%08X:", addr);
+            cpu_inst(addr, buf);
+            print(dbg, 15, i+2, 10, 0, "%s", buf);
+            ++y;
+            if(y == 22)
+                break;
+        }
+        addr += cpu_inst_sz(addr);
+    }
+}
+
+
+static void
+cpu_advance(Debugger* debugger)
+{
+}
+
+
+static void
+cpu_regress(Debugger* debugger)
+{
+}
+
+
+static void 
+cpu_keypressed(Debugger* debugger, uint32_t chr)
+{
+    switch(chr) {
+        case DOWN:
+            cpu_advance(debugger);
+            break;
+        case UP:
+            cpu_regress(debugger);
+            break;
+        case PGDOWN:
+            for(int i=0; i<23; ++i) {
+                cpu_advance(debugger);
+            }
+            break;
+        case PGUP:
+            for(int i=0; i<23; ++i) {
+                cpu_regress(debugger);
+            }
+            break;
+        case 'g':
+            /*
+            debugger->question = (Question) {
+                .return_to = ST_PHYSICAL,
+                .text = "Go to address:",
+                .response = 0,
+                .ok = false,
+            };
+            memset(debugger->question.buffer, 0, sizeof debugger->question.buffer);
+            debugger->state = ST_QUESTION;
+            debugger->dirty = true;
+            */
+            break;
+    }
+}
+
+// }}}
+
 // {{{ QUESTION
 
 static void 
@@ -363,6 +481,9 @@ debugger_update(Debugger* dbg)
             case ST_PHYSICAL:
                 physical_update(dbg);
                 break;
+            case ST_CPU:
+                cpu_update(dbg);
+                break;
             case ST_QUESTION:
                 question_update(dbg);
                 break;
@@ -387,6 +508,11 @@ void debugger_keypressed(Debugger* debugger, uint32_t chr, uint8_t modifiers)
             debugger->state = ST_PHYSICAL;
             debugger->dirty = true;
             break;
+        case F3:
+            lvm_clrscr(debugger->comp);
+            debugger->state = ST_CPU;
+            debugger->dirty = true;
+            break;
         default:
             switch(debugger->state) {
                 case ST_LOGICAL:
@@ -394,6 +520,9 @@ void debugger_keypressed(Debugger* debugger, uint32_t chr, uint8_t modifiers)
                     break;
                 case ST_PHYSICAL:
                     physical_keypressed(debugger, chr, modifiers);
+                    break;
+                case ST_CPU:
+                    cpu_keypressed(debugger, chr);
                     break;
                 case ST_QUESTION:
                     question_keypressed(debugger, chr);
