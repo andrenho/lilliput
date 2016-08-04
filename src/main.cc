@@ -266,6 +266,7 @@ private:
                             case SDLK_RIGHT:    key = luisavm::RIGHT;  break;
                             case SDLK_UP:       key = luisavm::UP;     break;
                             case SDLK_DOWN:     key = luisavm::DOWN;   break;
+                            case SDLK_RETURN:   key = luisavm::ENTER;  break;
                             case SDLK_LSHIFT: case SDLK_RSHIFT: key = 0; mod = luisavm::SHIFT; break;
                             case SDLK_LCTRL:  case SDLK_RCTRL:  key = 0; mod = luisavm::CONTROL; break;
                             case SDLK_LALT:   case SDLK_RALT:   key = 0; mod = luisavm::ALT; break;

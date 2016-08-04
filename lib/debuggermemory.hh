@@ -16,6 +16,8 @@ public:
 private:
     LuisaVM& _comp;
     uint32_t _top_addr = 0x0;
+    bool     _ask_goto = false;
+    string   _goto_temp = "";
 };
 
 }

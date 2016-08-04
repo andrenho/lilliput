@@ -13,7 +13,7 @@ enum Key : uint32_t {
     F1=14, F2, F3, F4, F5, F6, F7, F8, F9, F10, F11, F12,
     INSERT, HOME, DELETE, END, PGUP, PGDOWN,
     LEFT, RIGHT, UP, DOWN,
-    ESC=27, TAB=9, BACKSPACE=8,
+    ESC=27, TAB=9, BACKSPACE=8, ENTER=13,
 };
 enum KeyState { PRESSED, RELEASED };
 

@@ -35,7 +35,7 @@ Debugger::Step()
     // update screen
     if(_screens[_selected]->dirty) {
         _screens[_selected]->Update();
-        _screens[_selected]->dirty = true;
+        _screens[_selected]->dirty = false;
     }
 }
 

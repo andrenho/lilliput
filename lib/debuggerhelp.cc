@@ -29,10 +29,6 @@ void DebuggerHelp::Update() {
     _video.Print(28, 4, 10, 0, "- next (skip subroutines)");
     _video.Print(26, 6, 10, 8, "C");
     _video.Print(28, 6, 10, 0, "- continue");
-    _video.Print(26, 8, 10, 8, "G");
-    _video.Print(28, 8, 10, 0, "- go to");
-    _video.Print(26, 10, 10, 8, "B");
-    _video.Print(28, 10, 10, 0, "- add breakpoint");
 
     _video.UpdateScreen();
 }
