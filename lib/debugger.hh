@@ -1,9 +1,7 @@
 #ifndef DEBUGGER_HH_
 #define DEBUGGER_HH_
 
-#include "device.hh"
-#include "video.hh"
-#include "keyboard.hh"
+#include "luisavm.hh"
 #include "debuggerscreen.hh"
 
 #include <memory>
@@ -14,7 +12,7 @@ namespace luisavm {
 
 class Debugger : public Device {
 public:
-    Debugger(Video& video, Keyboard& keyboard);
+    Debugger(LuisaVM& comp, Video& video);
     void Step() override;
 
     bool Active = true;

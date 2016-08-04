@@ -1,18 +1,19 @@
 #include "debugger.hh"
 
 #include "debuggerhelp.hh"
+#include "debuggermemory.hh"
 #include "debuggernotimplemented.hh"
 
 namespace luisavm {
 
-Debugger::Debugger(Video& video, Keyboard& keyboard)
-    : _keyboard(keyboard)
+Debugger::Debugger(LuisaVM& comp, Video& video)
+    : _keyboard(comp.keyboard())
 {
     _screens.push_back(make_unique<DebuggerHelp>(video));
     _screens.push_back(make_unique<DebuggerNotImplemented>(video));
     _screens.push_back(make_unique<DebuggerNotImplemented>(video));
     _screens.push_back(make_unique<DebuggerNotImplemented>(video));
-    _screens.push_back(make_unique<DebuggerNotImplemented>(video));
+    _screens.push_back(make_unique<DebuggerMemory>(comp, video));
     _screens.push_back(make_unique<DebuggerNotImplemented>(video));
     _screens.push_back(make_unique<DebuggerNotImplemented>(video));
     _screens.push_back(make_unique<DebuggerNotImplemented>(video));

@@ -12,7 +12,6 @@ using namespace std;
 #include "cpu.hh"
 #include "keyboard.hh"
 #include "video.hh"
-#include "debugger.hh"
 
 namespace luisavm {
 
@@ -46,7 +45,7 @@ private:
     vector<unique_ptr<Device>> _devices;
     vector<uint8_t> _physical_memory;
 
-    Debugger* _debugger = nullptr;
+    class Debugger* _debugger = nullptr;
     
     template<typename D, typename ...Args>
     D& AddDevice(Args&&... args) {

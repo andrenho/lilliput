@@ -65,6 +65,41 @@ Video::DrawChar(char c, uint16_t x, uint16_t y, uint8_t fg, uint8_t bg) const
 }
 
 
+void 
+Video::DrawBox(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2, uint8_t fg, uint8_t bg, bool clear, bool shadow) const
+{
+    DrawChar(218, x1, y1, fg, bg);
+    DrawChar(191, x2, y1, fg, bg);
+    DrawChar(217, x2, y2, fg, bg);
+    DrawChar(192, x1, y2, fg, bg);
+    for(uint16_t x=x1+1; x<x2; ++x) {
+        DrawChar(196, x, y1, fg, bg);
+        DrawChar(196, x, y2, fg, bg);
+    }
+    for(uint16_t y=y1+1; y<y2; ++y) {
+        DrawChar(179, x1, y, fg, bg);
+        DrawChar(179, x2, y, fg, bg);
+    }
+
+    if(clear) {
+        for(uint16_t x=x1+1; x<x2; ++x) {
+            for(uint16_t y=y1+1; y<y2; ++y) {
+                DrawChar(' ', x, y, fg, bg);
+            }
+        }
+    }
+
+    if(shadow) {
+        for(uint16_t x=x1+1; x<=(x2+1); ++x) {
+            DrawChar(176, x, y2+1, fg, bg);
+        }
+        for(uint16_t y=y1+1; y<=(y2+1); ++y) {
+            DrawChar(176, x2+1, y, fg, bg);
+        }
+    }
+}
+
+
 uint32_t
 Video::LoadCharSprite(char c, uint8_t fg) const
 {

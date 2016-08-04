@@ -4,6 +4,8 @@
 #include <fstream>
 using namespace std;
 
+#include "debugger.hh"
+
 namespace luisavm {
 
 LuisaVM::LuisaVM(uint32_t physical_memory_size)
@@ -128,7 +130,7 @@ LuisaVM::LoadROM(string const& rom_filename, string const& map_filename)
 Video& LuisaVM::AddVideo(Video::Callbacks const& cb)
 {
     Video& video = AddDevice<Video>(cb);
-    _debugger = &AddDevice<Debugger>(video, keyboard());
+    _debugger = &AddDevice<Debugger>(*this, video);
     return video;
 }
 

@@ -28,7 +28,15 @@ public:
     explicit Video(Callbacks const& cb);
 
     void DrawChar(char c, uint16_t x, uint16_t y, uint8_t fg, uint8_t bg) const;
-    int Print(uint16_t x, uint16_t y, uint8_t fg, uint8_t bg, string const& str) const;
+    void DrawBox(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2, uint8_t fg, uint8_t bg, bool clear=true, bool shadow=false) const;
+    int  Print(uint16_t x, uint16_t y, uint8_t fg, uint8_t bg, string const& str) const;
+
+    template <typename ...Args>
+    int Printf(uint16_t x, uint16_t y, uint8_t fg, uint8_t bg, Args... args) const {
+        static char buf[512];
+        snprintf(buf, sizeof buf, args...);
+        return Print(x, y, fg, bg, string(buf));
+    }
 
     void ClearScreen(uint8_t color) const { cb.clrscr(color); }
     void UpdateScreen() const { cb.update_screen(); }
