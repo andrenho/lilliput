@@ -92,7 +92,6 @@ logical_update(Debugger* dbg)
     print(dbg, 0, 0, 10, 0, "Logical memory");
     print(dbg, 33, 0, 10, 8, "[F?]"); print(dbg, 38, 0, 10, 0, "- choose device");
     print(dbg, 0, 25, 10, 8, "[G]"); print(dbg, 4, 25, 10, 0, "- go to");
-    print(dbg, 13, 25, 10, 8, "[O]"); print(dbg, 17, 25, 10, 0, "- change offset");
 
     draw_box(dbg, 1, 1, 50, 24, 10, 0);
 

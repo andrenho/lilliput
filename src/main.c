@@ -9,7 +9,7 @@
 #define WIDTH  318
 #define HEIGHT 234
 #define BORDER  20
-#define ZOOM     2
+#define ZOOM     4
 
 static SDL_Window* window = NULL;
 static SDL_Renderer* ren = NULL;
