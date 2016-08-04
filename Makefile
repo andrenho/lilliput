@@ -3,7 +3,8 @@ VERSION = 0.2
 VPATH := src lib
 
 OBJS_LIB := luisavm.o cpu.o video.o test.o assembler.o \
-	debugger.o debuggerhelp.o debuggermemory.o debuggernotimplemented.o
+	debugger.o debuggerhelp.o debuggermemory.o debuggerkeyboard.o \
+	debuggernotimplemented.o
 
 .DEFAULT_GOAL := release
 
