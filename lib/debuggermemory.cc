@@ -23,7 +23,7 @@ void DebuggerMemory::Keypressed(Keyboard::KeyPress const& kp)
                 _ask_goto = false;
                 break;
             case ENTER:
-                _top_addr = static_cast<uint32_t>(stoll(_goto_temp, 0, 16));
+                _top_addr = static_cast<uint32_t>(stoll(_goto_temp, nullptr, 16));
                 _top_addr /= 8; _top_addr *= 8;
                 if(_top_addr > ph_size) {
                     _top_addr = ph_size - 0xB0;

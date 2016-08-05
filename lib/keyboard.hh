@@ -1,7 +1,7 @@
 #ifndef KEYBOARD_HH_
 #define KEYBOARD_HH_
 
-#include <queue>
+#include <deque>
 using namespace std;
 
 #include "device.hh"
@@ -23,11 +23,12 @@ public:
         uint32_t         key;
         KeyboardModifier mod;
         KeyState         state;
+        bool             no_debugger = false;
     };
 
-    queue<KeyPress> Queue;
+    deque<KeyPress> Queue;
 
-    void Reset() override { Queue = queue<KeyPress>(); }
+    void Reset() override { Queue = decltype(Queue)(); }
 };
 
 }  // namespace luisavm

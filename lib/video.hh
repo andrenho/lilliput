@@ -32,9 +32,12 @@ public:
     int  Print(uint16_t x, uint16_t y, uint8_t fg, uint8_t bg, string const& str) const;
 
     template <typename ...Args>
-    int Printf(uint16_t x, uint16_t y, uint8_t fg, uint8_t bg, Args... args) const {
+    int Printf(uint16_t x, uint16_t y, uint8_t fg, uint8_t bg, Args&&... args) const {
         static char buf[512];
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wformat-nonliteral"
         snprintf(buf, sizeof buf, args...);
+#pragma GCC diagnostic pop
         return Print(x, y, fg, bg, string(buf));
     }
 

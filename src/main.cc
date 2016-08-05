@@ -279,7 +279,7 @@ private:
                         if(e.key.keysym.mod & KMOD_SHIFT) mod |= luisavm::SHIFT;
                         if(e.key.keysym.mod & KMOD_ALT)   mod |= luisavm::ALT;
                         luisavm::KeyState ks = (e.key.state == SDL_PRESSED) ? luisavm::PRESSED : luisavm::RELEASED;
-                        comp.keyboard().Queue.push({ 
+                        comp.keyboard().Queue.push_back({ 
                             key, 
                             static_cast<luisavm::KeyboardModifier>(mod), 
                             ks 

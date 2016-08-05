@@ -24,13 +24,17 @@ Debugger::Debugger(LuisaVM& comp, Video& video)
 void 
 Debugger::Step()
 {
+    // TODO - copy_if kp.no_debugger
+
     // verify keypress
     while(!_keyboard.Queue.empty()) {
         auto kp = _keyboard.Queue.back();
-        if(kp.state == PRESSED) {
+        if(kp.state == PRESSED && !kp.no_debugger) {
             Keypressed(kp);
         }
-        _keyboard.Queue.pop();
+        if(!kp.no_debugger) {
+            _keyboard.Queue.pop_front();
+        }
     }
 
     // update screen

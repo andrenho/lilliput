@@ -15,7 +15,11 @@ public:
     void Update() override;
 
 private:
+    string KeyDescription(Keyboard::KeyPress const& kp) const;
+
     LuisaVM& _comp;
+    bool _waiting_press = false;
+    KeyState _waiting_state = PRESSED;
 };
 
 }
