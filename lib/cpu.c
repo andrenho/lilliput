@@ -6,9 +6,9 @@
 
 typedef struct LVM_CPU {
     LVM_Computer* computer;
-    uint32_t reg[16];
-    uint32_t* breakpoints;
-    size_t    bkp_count;
+    uint32_t      reg[16];
+    uint32_t*     breakpoints;
+    size_t        bkp_count;
 } LVM_CPU;
 
 #pragma GCC diagnostic push

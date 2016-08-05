@@ -5,6 +5,9 @@
 #include <stdint.h>
 #include <stdlib.h>
 
+#define CH_COLUMNS 53
+#define CH_LINES   26
+
 //
 // LOGS
 // 
@@ -81,5 +84,18 @@ bool        lvm_isbreakpoint(LVM_CPU* cpu, uint32_t pos);
 //
 bool        lvm_debuggeractive(LVM_Computer* computer);
 void        lvm_debuggerupdate(LVM_Computer* computer);
+
+// 
+// KEYBOARD
+//
+typedef enum { CONTROL=0b1, SHIFT=0b10, ALT=0b100 } KeyboardModifiers;
+typedef enum {
+    F1=14, F2, F3, F4, F5, F6, F7, F8, F9, F10, F11, F12,
+    INSERT, HOME, DELETE, END, PGUP, PGDOWN,
+    LEFT, RIGHT, UP, DOWN,
+    ESC=27, TAB=9, BACKSPACE=8,
+} Key;
+void        lvm_keypressed(LVM_Computer* computer, uint32_t chr, uint8_t modifiers);
+void        lvm_keyreleased(LVM_Computer* computer, uint32_t chr, uint8_t modifiers);
 
 #endif
