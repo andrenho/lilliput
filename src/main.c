@@ -5,11 +5,13 @@
 
 #include "luisavm.h"
 #include <SDL2/SDL.h>
+#include <getopt.h>
 
 #define WIDTH  318
 #define HEIGHT 234
 #define BORDER  20
-#define ZOOM     2
+
+int ZOOM = 2;
 
 static SDL_Window* window = NULL;
 static SDL_Renderer* ren = NULL;
@@ -21,6 +23,12 @@ typedef struct Sprites {
 } Sprites;
 static Sprites sprites = { 0, NULL };
 
+typedef struct Options {
+    const char* rom_file;
+    uint32_t    memory_size;
+    uint8_t     zoom;
+    bool        start_with_debugger;
+} Options;
 
 // {{{ CALLBACKS
 
@@ -160,18 +168,77 @@ static bool get_events(LVM_Computer* comp)
 
 // }}}
 
+// {{{ COMMANDLINE OPTIONS
+
+Options parse_args(int argc, char* argv[])
+{
+    Options opt = {
+        .rom_file = NULL,
+        .memory_size = 4,
+        .zoom = 2,
+        .start_with_debugger = true,
+    };
+
+    int c;
+
+    while(1) {
+        // int this_option_optind = optind ? optind : 1;
+        int option_index = 0;
+        static struct option long_options[] = {
+            {"memory",  required_argument, 0,  'm' },
+            {"zoom",    required_argument, 0,  'z' },
+            {"help",    no_argument,       0,  'h' },
+            {0,         0,                 0,  0 }
+        };
+
+        c = getopt_long(argc, argv, "m:z:vh", long_options, &option_index);
+        if(c == -1)
+            break;
+
+        switch(c) {
+            case 'm':
+                opt.memory_size = strtol(optarg, NULL, 10);
+                break;
+            case 'z':
+                opt.zoom = strtol(optarg, NULL, 10);
+                break;
+            case 'h':
+                printf("Options:\n");
+                printf("   -m, --memory      memory size, in kB\n");
+                printf("   -z, --zoom        zoom of the display\n");
+                printf("   -h, --help        this help\n");
+                exit(EXIT_SUCCESS);
+            case '?':
+                exit(EXIT_FAILURE);
+            default:
+                abort();
+        }
+    }
+
+    if(optind < argc) {
+        opt.rom_file = argv[optind];
+    }
+
+    return opt;
+}
+
+// }}}
+
 // {{{ MAIN
 
-int main()
+int main(int argc, char* argv[])
 {
     // 
     // initialization
     //
+    Options opt = parse_args(argc, argv);
 
-    LVM_Computer* computer = lvm_computercreate(4 * 1024, true);  // TODO
+    LVM_Computer* computer = lvm_computercreate(opt.memory_size * 1024, opt.start_with_debugger);  // TODO
     lvm_addcpu(computer);
-    srand(3000);
-    for(int i=0; i<10000; ++i) { lvm_set(computer, i, rand() % 0xFF); }
+    if(opt.rom_file) {
+        lvm_loadromfile(computer, opt.rom_file);
+    }
+    ZOOM = opt.zoom;
 
     if(SDL_Init(SDL_INIT_VIDEO) != 0) {
         fprintf(stderr, "SDL_Init error: %s\n", SDL_GetError());
