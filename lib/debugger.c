@@ -649,7 +649,7 @@ cpu_update(Debugger* dbg)
 
     // registers
     for(size_t i=0; i<16; ++i) {
-        print(dbg, 47, i+2, 10, 0, "%s%s: %02X", regs[i], (i<12) ? " " : "", lvm_cpuregister(cpu, i));
+        print(dbg, (i%4)*13, 22+(i/4), 10, 0, "%s%s:%08X", regs[i], (i<12) ? " " : "", lvm_cpuregister(cpu, i));
     }
 
     // flags
@@ -659,6 +659,7 @@ cpu_update(Debugger* dbg)
     }
 
     // instructions
+    /*
     uint32_t addr = 0;
     uint8_t y = 0;
     for(uint32_t i=dbg->cpu.code_start; ; ++i) {
@@ -677,6 +678,7 @@ cpu_update(Debugger* dbg)
         }
         addr += cpu_inst_sz(dbg->comp, addr);
     }
+    */
 }
 
 
