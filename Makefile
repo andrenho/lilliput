@@ -18,7 +18,7 @@ endif
 #
 # add cflags/libraries
 #
-CFLAGS += -fpic -Ilib `pkg-config --cflags sdl2`
+CFLAGS += -fpic -Ilib `pkg-config --cflags sdl2 lua`
 LDFLAGS  += -fuse-ld=gold
 
 #
@@ -80,7 +80,7 @@ lib/video.c: lib/font.xbm
 # link
 #
 luisavm: libluisavm.so $(OBJS_EXE)
-	$(CC) $(OBJS_EXE) -o $@ $(TARGET_LDFLAGS) $(LDFLAGS) -Wl,-rpath=. -L. -lluisavm `pkg-config --libs sdl2`
+	$(CC) $(OBJS_EXE) -o $@ $(TARGET_LDFLAGS) $(LDFLAGS) -Wl,-rpath=. -L. -lluisavm `pkg-config --libs sdl2 lua`
 
 libluisavm.so: $(OBJS_LIB)
 	$(CC) -shared $^ -o $@ $(TARGET_LDFLAGS) $(LDFLAGS)
