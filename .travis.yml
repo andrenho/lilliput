@@ -13,5 +13,5 @@ install:
     - pushd lua-5.3.3 && make linux && sudo make install && popd
 compiler:
     - clang
-    - gcc
+    - gcc 
 script: make test
