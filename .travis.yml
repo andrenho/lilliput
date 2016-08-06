@@ -6,6 +6,7 @@ before_install:
     - sudo apt-get update -qq
 install:
     - sudo apt-get install libXxf86vm-dev cmake libsdl2-dev gcc-6
+    - sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-4.6 100
     - wget --no-check-certificate https://www.lua.org/ftp/lua-5.3.3.tar.gz
     - tar zxpvf lua-5.3.3.tar.gz
     - pushd lua-5.3.3 && make linux && sudo make install && popd
