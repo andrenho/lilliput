@@ -86,7 +86,7 @@ libluisavm.so: $(OBJS_LIB)
 	$(CC) -shared $^ -o $@ $(TARGET_LDFLAGS) $(LDFLAGS)
 
 bindings/lua/luisavm.so: bindings/lua/luisavm.c libluisavm.so
-	$(CC) bindings/lua/luisavm.c -shared -o $@ $(CFLAGS) $(TARGET_CFLAGS) `pkg-config --cflags --libs lua5.2` -Wl,-rpath=. -L. -lluisavm
+	$(CC) bindings/lua/luisavm.c -shared -o $@ $(CFLAGS) $(TARGET_CFLAGS) `pkg-config --cflags --libs lua5.2` -Wl,-rpath=. -L. -lluisavm 
 
 # 
 # install
