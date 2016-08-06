@@ -643,13 +643,13 @@ cpu_update(Debugger* dbg)
 
     print(dbg, 0, 0, 10, 0, "CPU");
     print(dbg, 33, 0, 10, 8, "[F?]"); print(dbg, 38, 0, 10, 0, "- choose device");
-    print(dbg, 0, 25, 10, 8, "[S]"); print(dbg, 4, 25, 10, 0, "- step");
+    print(dbg, 47, 2, 10, 8, "[S]"); print(dbg, 50, 2, 10, 0, "tep");
 
-    draw_box(dbg, 0, 1, 46, 24, 10, 0, true, false);
+    draw_box(dbg, 0, 1, 46, 21, 10, 0, true, false);
 
     // registers
     for(size_t i=0; i<16; ++i) {
-        print(dbg, 47, i+2, 10, 0, "%s%s: %02X", regs[i], (i<12) ? " " : "", lvm_cpuregister(cpu, i));
+        print(dbg, (i%4)*13, 22+(i/4), 10, 0, "%s%s: %08X", regs[i], (i<12) ? " " : "", lvm_cpuregister(cpu, i));
     }
 
     // flags
@@ -672,7 +672,7 @@ cpu_update(Debugger* dbg)
                 print(dbg, 2, y+2, 0, 10, "%08X:  %s", addr, buf);
             }
             ++y;
-            if(y == 22)
+            if(y == 19)
                 break;
         }
         addr += cpu_inst_sz(dbg->comp, addr);
