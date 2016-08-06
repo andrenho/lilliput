@@ -10,18 +10,15 @@
 #include "device.h"
 #include "debugger.h"
 
-#define ROM_POSITION      0xEF000000
 #define KEYBOARD_POSITION 0xF0000000
 #define VIDEO_POSITION    0xF8000000
 
-typedef struct ROM ROM;
 typedef struct Video Video;
 
 extern LVM_CPU* lvm_createcpu(LVM_Computer* comp);
 extern void     lvm_destroycpu(LVM_CPU* cpu);
 extern void     lvm_cpustep(LVM_CPU* cpu);
 extern void     lvm_cpureset(LVM_CPU* cpu);
-extern ROM*     rom_init(uint32_t sz, uint8_t* data_new_ownership);
 extern Video*   video_init(VideoCallbacks cbs);
 
 typedef struct LVM_Computer {
@@ -304,16 +301,12 @@ lvm_cpu(LVM_Computer* comp, size_t n)
 void
 lvm_loadrom(LVM_Computer* comp, uint32_t sz, uint8_t* data)
 {
-    for(int i=0; comp->device[i]; ++i) {
-        if(comp->device[i]->type == DEV_ROM) {
-            syslog(LOG_ERR, "A ROM was already loaded.");
-            return;
-        }
+    if(sz > lvm_physicalmemorysz(comp)) {
+        syslog(LOG_ERR, "Memory is too small to accomodate such a large ROM.");
+        exit(EXIT_FAILURE);
     }
 
-    ROM* rom = rom_init((uint32_t)sz, data);
-    lvm_adddevice(comp, (Device*)rom, ROM_POSITION);
-    lvm_setoffset(comp, ROM_POSITION);
+    memcpy(comp->physical_memory, data, sz);
 }
 
 
