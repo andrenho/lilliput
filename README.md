@@ -1,2 +1,2 @@
-# lilliput
+# luisavm
 A tiny computer emulator
