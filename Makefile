@@ -99,12 +99,10 @@ dist:
 	tar -czf luisavm-$(VERSION).tar.gz luisavm-$(VERSION)
 	rm -rf luisavm-$(VERSION)/
 
-
 distcheck: dist
 	tar zxpvf luisavm-$(VERSION).tar.gz
-	cd luisavm-$(VERSION)
-	make test
-	cd ..
+	rm luisavm-$(VERSION).tar.gz
+	cd luisavm-$(VERSION) && make test
 	rm -rf luisavm-$(VERSION)
 
 install: luisavm
