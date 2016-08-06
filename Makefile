@@ -18,7 +18,7 @@ endif
 #
 # add cflags/libraries
 #
-CFLAGS += -fpic -Ilib `pkg-config --cflags sdl2 lua5.2`
+CFLAGS += -fpic -Ilib `pkg-config --cflags sdl2`
 LDFLAGS  += -fuse-ld=gold
 
 #
@@ -80,13 +80,13 @@ lib/video.c: lib/font.xbm
 # link
 #
 luisavm: libluisavm.so $(OBJS_EXE)
-	$(CC) $(OBJS_EXE) -o $@ $(TARGET_LDFLAGS) $(LDFLAGS) -Wl,-rpath=. -L. -lluisavm `pkg-config --libs sdl2 lua5.2`
+	$(CC) $(OBJS_EXE) -o $@ $(TARGET_LDFLAGS) $(LDFLAGS) -Wl,-rpath=. -L. -lluisavm `pkg-config --libs sdl2`
 
 libluisavm.so: $(OBJS_LIB)
 	$(CC) -shared $^ -o $@ $(TARGET_LDFLAGS) $(LDFLAGS)
 
 bindings/lua/luisavm.so: bindings/lua/luisavm.c libluisavm.so
-	$(CC) bindings/lua/luisavm.c -shared -o $@ $(CFLAGS) $(TARGET_CFLAGS) `pkg-config --cflags --libs lua` -Wl,-rpath=. -L. -lluisavm
+	$(CC) bindings/lua/luisavm.c -shared -o $@ $(CFLAGS) $(TARGET_CFLAGS) `pkg-config --cflags --libs lua5.2` -Wl,-rpath=. -L. -lluisavm
 
 # 
 # install
