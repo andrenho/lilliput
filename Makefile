@@ -91,6 +91,20 @@ bindings/lua/luisavm.so: bindings/lua/luisavm.c libluisavm.so
 # 
 # install
 #
+dist:
+	mkdir luisavm-$(VERSION)
+	cp --parents bindings/lua/doc.txt bindings/lua/*.c \
+		build/*.txt data/* lib/*.c lib/*.h lib/*.xbm LICENSE Makefile src/*.c test/*.lua \
+		luisavm-$(VERSION)
+	tar -czf luisavm-$(VERSION).tar.gz luisavm-$(VERSION)
+	rm -rf luisavm-$(VERSION)/
+
+distcheck: dist
+	tar zxpvf luisavm-$(VERSION).tar.gz
+	rm luisavm-$(VERSION).tar.gz
+	cd luisavm-$(VERSION) && make test
+	rm -rf luisavm-$(VERSION)
+
 install: luisavm
 	cp libluisavm.so /usr/lib
 	cp luisavm /usr/local/bin/
