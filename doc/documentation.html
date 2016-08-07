@@ -30,11 +30,64 @@ RAM and video memory.</p>
 
 <h2>Installation</h2>
 
+The following prerequisites are required for installing luisavm:
+
+<ul>
+    <li><a href="https://gcc.gnu.org/gcc-6/">gcc-6</a> or <a href="http://clang.llvm.org/">clang</a>
+    <li><a href="https://www.libsdl.org/">SDL2</a>
+    <li><a href="https://www.lua.org/">lua 5.3</a> (only for running tests and building the Lua binding)
+</ul>
+
+<p>Installation is simply a matter of running:</p>
+
+<pre>
+    $ make
+    # make install
+</pre>
+
+<p>If Lua is installed, the unit tests can be run with</p>
+
+<pre>
+    $ make test
+</pre>
+
 <h2>Invocation</h2>
 
-<h3>Executable</h3>
+<p>The <i>luisavm</i> emulator can be run with the following syntax:</p>
 
-T
+<pre>    luisavm [OPTIONS] [ROMFILE]</pre>
+
+<p>where the options are:</p>
+
+<table border=1>
+    <tr>
+        <th>Short option</th>
+        <th>Long option</th>
+        <th>Description</th>
+        <th>Default value</th>
+    </tr>
+    <tr>
+        <td><code>-m</code></td>
+        <td><code>--memory</code></td>
+        <td>Amount of physical RAM avaliable, in kB</td>
+        <td>4 kB</td>
+    </tr>
+    <tr>
+        <td><code>-z</code></td>
+        <td><code>--zoom</code></td>
+        <td>Amount of zoom in the display</td>
+        <td>2</td>
+    </tr>
+    <tr>
+        <td><code>-h</code></td>
+        <td><code>--help</code></td>
+        <td>Display help for the executable</td>
+        <td></td>
+    </tr>
+</table>
+
+<p>The <code>ROMFILE</code> parameter can be used to load a ROM file into the memory.
+The code will be loaded in position <code>0x0</code> of the memory.</p>
 
 <h2>VM Architecture</h2>
 
