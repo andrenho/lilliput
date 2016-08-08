@@ -632,11 +632,102 @@ are at most two parameters per instruction. Therefore, a instruction can be from
 
 <h2>Debugger</h2>
 
+<p>A debugger is avaliable for stepping through guest code and seeing the 
+internals of the devices. When <i>luisavm</i> is started, the debugger is
+started automatically. <!-- TODO --></p>
+
+<p>The keys for controlling the keyboard are:</p>
+
+<table border="1">
+    <tr><th>Key</th><th>Funtion</th></tr>
+    <tr><td>F1</td><td>Debug CPU</td></tr>
+    <tr><td>F2</td><td>Debug logical memory</td></tr>
+    <tr><td>F3</td><td>Debug physical memory</td></tr>
+    <tr><td>G</td><td>Go to specific location</td></tr>
+    <tr><td>S</td><td>Step one cycle in the VM (CPU debugger only)</td></tr>
+</table>
+
 <h2>Assembler</h2>
+
+<p>An assembler is not yet available. Code must be written byte by byte, like
+in the old days...</p>
 
 <h2>Guest applications</h2>
 
+<p>There are currently no guest applications available.</p>
+
 <h2>Embedding</h2>
+
+<p><i>luisavm</i> is avaliable as a library called <code>libluisavm.so</code>.
+This library can be used to embed the emulator in other applications. Useful
+functions are:</p>
+
+<p><code>LVM_Computer* lvm_computercreate(uint32_t physical_memory_size, bool debugger_active);</code><br>
+<div style="text-indent: 50px;">Create a new computer. Multiple computers can be created.</div></p>
+
+<p><code>void lvm_computerdestroy(LVM_Computer* comp);</code><br>
+<div style="text-indent: 50px;">Destroy the computer and clean up the memory.</div></p>
+
+<p><code>LVM_CPU* lvm_addcpu(LVM_Computer* comp);</code><br>
+<div style="text-indent: 50px;">Add a CPU to the computer</div></p>
+
+<p><pre>typedef struct VideoCallbacks {
+    void    (*setpal)(uint8_t idx, uint8_t r, uint8_t g, uint8_t b);
+    void    (*clrscr)(uint8_t color);
+    void    (*change_border_color)(uint8_t color);
+    uint32_t(*upload_sprite)(uint16_t w, uint16_t h, uint8_t* data);
+    void    (*draw_sprite)(uint32_t sprite, uint16_t pos_x, uint16_t pos_y);
+} VideoCallbacks;
+
+void lvm_setupvideo(LVM_Computer* comp, VideoCallbacks cbs);</pre><br>
+<div style="text-indent: 50px;">Setup the video. The callback parameter is a
+struct containing function pointers to functions provided by the caller.</div></p>
+
+<p><code>uint8_t lvm_get(LVM_Computer* comp, uint32_t pos)</code><br>
+<div style="text-indent: 50px;">Read data from logical memory.</div></p>
+
+<p><code>void lvm_step(LVM_Computer* comp, size_t force_time_us);</code><br>
+<div style="text-indent: 50px;">Step one cycle in the VM.</div></p>
+
+<p><code>bool lvm_loadromfile(LVM_Computer* comp, const char* filename)</code><br>
+<div style="text-indent: 50px;">Load a ROM file into the memory.</div></p>
+
+<p>Other functions are available in the file <code>luisavm.h</code>. An example
+application follows:</p>
+
+<pre>
+int main(int argc, char* argv[])
+{
+    // initialize computer
+
+    LVM_Computer* computer = lvm_computercreate(16, false);
+    lvm_addcpu(computer);
+    if(argc > 1) {
+        lvm_loadromfile(computer, argv[1]);
+    }
+
+    initialize_my_graphical_library();
+
+    lvm_setupvideo(computer, (VideoCallbacks) {
+        my_setpal,
+        my_clrscr,
+        my_change_border_color,
+        my_upload_sprite,
+        my_draw_sprite,
+    });
+
+    // main loop
+
+    while(my_window_is_open()) {
+        lvm_step(computer, 0);
+        my_update_graphics();
+    }
+
+    // finalization
+
+    lvm_computerdestroy(computer);
+}
+</pre>
 
 </body>
 </html>
