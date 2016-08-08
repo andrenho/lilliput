@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>luisavm documentation</title>
+</head>
+
+<body>
+
+<h1>luisavm 0.1 documentation</h1>
+<hr>
+
+<p>This is the documentation for the <b>luisavm</b> project.<p>
+
+<p><b>luisavm</b> is an emulator for a fictional computer. This computer is in
+the same style as a 80s computer (like Commodore 64 or MSX) but with modern
+computer amenities, such as a much faster microprocessor and almost "infinite"
+RAM and video memory.</p>
+
+<p>This emulator has several uses:</p>
+<ul>
+    <li>Since it is a very simple architecture, it can be used for learning 
+        about computer architecture and low level software;
+    <li>It can be used for writing operating systems and, since the architecture 
+        is simple, testing new ideas on operating system development;
+    <li>It can be embedded in application as a DLL, running multiple VMs at the same
+        time;
+    <li>It can be used for writing games and other types of software.
+</ul>
+
+<p><span style="color: red;"><i>luisavm</i> is still in development, and at this stage
+is basically unusable.</span> However, all the information in this documentation
+is correct and already implemented.</p>
+
+<img src="sshot.png" alt="luisavm screenshot">
+
+<h2>Installation</h2>
+
+The following prerequisites are required for installing luisavm:
+
+<ul>
+    <li><a href="https://gcc.gnu.org/gcc-6/">gcc-6</a> or <a href="http://clang.llvm.org/">clang</a>
+    <li><a href="https://www.libsdl.org/">SDL2</a>
+    <li><a href="https://www.lua.org/">lua 5.3</a> (only for running tests and building the Lua binding)
+</ul>
+
+<p>Installation is simply a matter of running:</p>
+
+<pre>
+    $ make
+    # make install
+</pre>
+
+<p>If Lua is installed, the unit tests can be run with</p>
+
+<pre>
+    $ make test
+</pre>
+
+<h2>Invocation</h2>
+
+<p>The <i>luisavm</i> emulator can be run with the following syntax:</p>
+
+<pre>    luisavm [OPTIONS] [ROMFILE]</pre>
+
+<p>where the options are:</p>
+
+<table border=1>
+    <tr>
+        <th>Short option</th>
+        <th>Long option</th>
+        <th>Description</th>
+        <th>Default value</th>
+    </tr>
+    <tr>
+        <td><code>-m</code></td>
+        <td><code>--memory</code></td>
+        <td>Amount of physical RAM avaliable, in kB</td>
+        <td>4 kB</td>
+    </tr>
+    <tr>
+        <td><code>-z</code></td>
+        <td><code>--zoom</code></td>
+        <td>Amount of zoom in the display</td>
+        <td>2</td>
+    </tr>
+    <tr>
+        <td><code>-h</code></td>
+        <td><code>--help</code></td>
+        <td>Display help for the executable</td>
+        <td></td>
+    </tr>
+</table>
+
+<p>The <code>ROMFILE</code> parameter can be used to load a ROM file into the memory.
+The code will be loaded in position <code>0x0</code> of the memory.</p>
+
+<p>In the current version, <i>luisavm</i> will start directly with the debugger.</p> <!-- TODO -->
+
+<h2>VM Architecture</h2>
+
+<h3>Memory</h3>
+
+<p><b>luisavm</b> has two kinds of memory: logical and physical memory.</p>
+
+<p><i>Logical memory</i> is a virtual area of memory which can be used to access 
+the memories of all devices. All memory access happens through the logical memory.<p>
+
+<p>The logical memory has 4 Gb of addressable space, from <code>0x0</code> to
+<code>0xFFFF_FFFF</code>. Devices are mapped into the logical memory in the following
+arrangement:</p>
+
+<table border="1">
+    <tr>
+        <td>0x0000_0000</td>
+        <td>Physical memory (RAM)</td>
+    </tr>
+    <tr>
+        <td>?</td>
+        <td>Inaccessible area (depends on RAM size)</td>
+    </tr>
+    <tr>
+        <td>0xF000_0000</td>
+        <td>Device area</td>
+    </td>
+</table>
+
+<p>The physical memory (RAM) is accessible from the logical position starting in
+<code>0x0</code>. The device area starts at <code>0xF000_0000</code>, although there
+are no devices with memory yet.</p>
+
+<!-- TODO: add offset information -->
+
+<h3>CPU</h3>
+
+<p>The <i>luisavm</i> has a custom 32-bit CPU. The CPU is little-endian and has 16 32-bit registers:</p>
+
+<table border="1">
+    <tr><th>Number</th><th>Register</th><th>Pourpose</th></tr>
+    <tr><td><code>0x0</code></td><td><code>A</code></td><td rowspan="12">General pourpose registers</td></tr>
+    <tr><td><code>0x1</code></td><td><code>B</code></td></tr>
+    <tr><td><code>0x2</code></td><td><code>C</code></td></tr>
+    <tr><td><code>0x3</code></td><td><code>D</code></td></tr>
+    <tr><td><code>0x4</code></td><td><code>E</code></td></tr>
+    <tr><td><code>0x5</code></td><td><code>F</code></td></tr>
+    <tr><td><code>0x6</code></td><td><code>G</code></td></tr>
+    <tr><td><code>0x7</code></td><td><code>H</code></td></tr>
+    <tr><td><code>0x8</code></td><td><code>I</code></td></tr>
+    <tr><td><code>0x9</code></td><td><code>J</code></td></tr>
+    <tr><td><code>0xA</code></td><td><code>K</code></td></tr>
+    <tr><td><code>0xB</code></td><td><code>L</code></td></tr>
+    <tr><td><code>0xC</code></td><td><code>FP</code></td><td>Frame pointer (used for recursive functions)</td></tr>
+    <tr><td><code>0xD</code></td><td><code>SP</code></td><td>Stack pointer (points to the top of the stack)</td></tr>
+    <tr><td><code>0xE</code></td><td><code>PC</code></td><td>Program counter (points to the next instruction)</td></tr>
+    <tr><td><code>0xF</code></td><td><code>FL</code></td><td>Flags (see below)</td></tr>
+</table>
+
+<p>The CPU architecture is orthogonal - that is, any instruction can operate on any register.</p>
+
+<p>The <code>FL</code> registers contains a set of flags that are affected by different
+operations. Each flag in one bit in the register:</p>
+
+<table border="1">
+    <tr><th>Bit</th><th>Flag</th><th>Event</th></tr>
+    <tr><td><code>0</code></td><td><code>Y</code></td><td>Last instruction caused a <i>carry</i></td></tr>
+    <tr><td><code>1</code></td><td><code>V</code></td><td>Last instruction caused a <i>overflow</i></td></tr>
+    <tr><td><code>2</code></td><td><code>Z</code></td><td>Last instruction's result was zero</td></tr>
+    <tr><td><code>3</code></td><td><code>S</code></td><td>Last instruction's result was under zero (that is: the 31th bit was set)</td></tr>
+    <tr><td><code>4</code></td><td><code>GT</code></td><td>Last comparison instruction was <i>greater than</i></td></tr>
+    <tr><td><code>5</code></td><td><code>LT</code></td><td>Last comparison instruction was <i>less than</i></td></tr>
+</table>
+
+<p>Each instruction in memory is formed by the instruction itself (first byte) 
+and the parameters. The parameters can go from 1 to 4 bytes in length, and there
+are at most two parameters per instruction. Therefore, a instruction can be from
+1 to 9 bytes in length.</p>
+
+<p>The parameters can be one of the following types:</p>
+
+<ul>
+    <li><i>reg</i> - an register. In this case, the register number from the 
+        register table above is used. If the two parameters are registers,
+        one single byte is used for both. Example: <code>mov B, C</code> copies
+        the value in the register <code>C</code> to the register <code>B</code>;
+    <li><i>v8</i>, <i>v16</i> or <i>v16</i> - A straight number, that can be
+        8, 16 or 32 bits. For example, the instruction <code>add J, 0x1234</code>
+        will sum <code>0x1234</code> to the register <code>J</code>;
+    <li><i>indreg</i> - returs the value in the memory position of the value
+        stored in the register. The register is represented in brackets. For 
+        example, if the register <code>K</code> contains <code>0xABCD</code>,
+        the instruction <code>mov A, [K]</code> will set the value of the
+        register <code>A</code> to the value stored in memory position
+        <code>0xABCD</code>;
+    <li><i>indv32</i> - this is the same as <i>indreg</i>, but it returns the
+        value in a declared memory position. For example, <code>mov8 F, [0x1234]</code>
+        will get the value in memory position <code>0x1234</code> and copy it
+        to the register <code>F</code>.
+</ul>
+
+<p>The table below presents the instruction set:</p>
+
+<table border="1">
+    <tr><th>Group</th><th>Opcode</th><th>Instruction</th><th>Parameters</th><th>Description</th><th>Pseudocode</th></tr>
+    <tr>
+        <td rowspan="35">Movement</td>
+        <td><code>0x01</code></td>
+        <td rowspan="4"><code>mov</code></td>
+        <td><i>reg</i>, <i>reg</i></td>
+        <td rowspan="4">Moves data from one location to the other</td>
+        <td rowspan="4"><code>dest = origin</code></td>
+    </tr>
+    <tr><td><code>0x02</code></td><td><i>reg</i>, <i>v8</i></td></tr>
+    <tr><td><code>0x03</code></td><td><i>reg</i>, <i>v16</i></td></tr>
+    <tr><td><code>0x04</code></td><td><i>reg</i>, <i>v32</i></td></tr>
+
+    <tr>
+        <td><code>0x05</code></td>
+        <td rowspan="10"><code>movb</code></td>
+        <td><i>reg</i>, <i>indreg</i></td>
+        <td rowspan="10">Moves 8-bit data from one location to the other</td>
+        <td rowspan="10"><code>dest = (8bit)origin</code></td>
+    </tr>
+    <tr><td><code>0x06</code></td><td><i>reg</i>, <i>indv32</i></td></tr>
+    <tr><td><code>0x07</code></td><td><i>indreg</i>, <i>reg</i></td></tr>
+    <tr><td><code>0x08</code></td><td><i>indreg</i>, <i>v8</i></td></tr>
+    <tr><td><code>0x09</code></td><td><i>indreg</i>, <i>indreg</i></td></tr>
+    <tr><td><code>0x0A</code></td><td><i>indreg</i>, <i>indv32</i></td></tr>
+    <tr><td><code>0x0B</code></td><td><i>indv32</i>, <i>reg</i></td></tr>
+    <tr><td><code>0x0C</code></td><td><i>indv32</i>, <i>v8</i></td></tr>
+    <tr><td><code>0x0D</code></td><td><i>indv32</i>, <i>indreg</i></td></tr>
+    <tr><td><code>0x0E</code></td><td><i>indv32</i>, <i>indv32</i></td></tr>
+
+    <tr>
+        <td><code>0x0F</code></td>
+        <td rowspan="10"><code>movw</code></td>
+        <td><i>reg</i>, <i>indreg</i></td>
+        <td rowspan="10">Moves 16-bit data from one location to the other</td>
+        <td rowspan="10"><code>dest = (16bit)origin</code></td>
+    </tr>
+    <tr><td><code>0x10</code></td><td><i>reg</i>, <i>indv32</i></td></tr>
+    <tr><td><code>0x11</code></td><td><i>indreg</i>, <i>reg</i></td></tr>
+    <tr><td><code>0x12</code></td><td><i>indreg</i>, <i>v16</i></td></tr>
+    <tr><td><code>0x13</code></td><td><i>indreg</i>, <i>indreg</i></td></tr>
+    <tr><td><code>0x14</code></td><td><i>indreg</i>, <i>indv32</i></td></tr>
+    <tr><td><code>0x15</code></td><td><i>indv32</i>, <i>reg</i></td></tr>
+    <tr><td><code>0x16</code></td><td><i>indv32</i>, <i>v16</i></td></tr>
+    <tr><td><code>0x17</code></td><td><i>indv32</i>, <i>indreg</i></td></tr>
+    <tr><td><code>0x18</code></td><td><i>indv32</i>, <i>indv32</i></td></tr>
+
+    <tr>
+        <td><code>0x19</code></td>
+        <td rowspan="10"><code>movd</code></td>
+        <td><i>reg</i>, <i>indreg</i></td>
+        <td rowspan="10">Moves 32-bit data from one location to the other</td>
+        <td rowspan="10"><code>dest = (32bit)origin</code></td>
+    </tr>
+    <tr><td><code>0x1A</code></td><td><i>reg</i>, <i>indv32</i></td></tr>
+    <tr><td><code>0x1B</code></td><td><i>indreg</i>, <i>reg</i></td></tr>
+    <tr><td><code>0x1C</code></td><td><i>indreg</i>, <i>v32</i></td></tr>
+    <tr><td><code>0x1D</code></td><td><i>indreg</i>, <i>indreg</i></td></tr>
+    <tr><td><code>0x1E</code></td><td><i>indreg</i>, <i>indv32</i></td></tr>
+    <tr><td><code>0x1F</code></td><td><i>indv32</i>, <i>reg</i></td></tr>
+    <tr><td><code>0x20</code></td><td><i>indv32</i>, <i>v32</i></td></tr>
+    <tr><td><code>0x21</code></td><td><i>indv32</i>, <i>indreg</i></td></tr>
+    <tr><td><code>0x22</code></td><td><i>indv32</i>, <i>indv32</i></td></tr>
+
+    <tr>
+        <td><code>0x23</code></td>
+        <td><code>swap</code></td>
+        <td><i>reg</i>, <i>reg</i></td>
+        <td>Swap the values of the registers</td>
+        <td><code>t = par1; par1 = par2; par2 = t</code></td>
+    </tr>
+
+    <tr>
+        <td rowspan="17">Logic</td>
+        <td><code>0x24</code></td>
+        <td rowspan="4"><code>or</code></td>
+        <td><i>reg</i>, <i>reg</i></td>
+        <td rowspan="4">Logical OR instruction</td>
+        <td rowspan="4"><code>dest |= origin</code></td>
+    </tr>
+    <tr><td><code>0x25</code></td><td><i>reg</i>, <i>v8</i></td></tr>
+    <tr><td><code>0x26</code></td><td><i>reg</i>, <i>v16</i></td></tr>
+    <tr><td><code>0x27</code></td><td><i>reg</i>, <i>v32</i></td></tr>
+
+    <tr>
+        <td><code>0x28</code></td>
+        <td rowspan="4"><code>xor</code></td>
+        <td><i>reg</i>, <i>reg</i></td>
+        <td rowspan="4">Logical XOR instruction</td>
+        <td rowspan="4"><code>dest ^= origin</code></td>
+    </tr>
+    <tr><td><code>0x29</code></td><td><i>reg</i>, <i>v8</i></td></tr>
+    <tr><td><code>0x2A</code></td><td><i>reg</i>, <i>v16</i></td></tr>
+    <tr><td><code>0x2B</code></td><td><i>reg</i>, <i>v32</i></td></tr>
+
+    <tr>
+        <td><code>0x2C</code></td>
+        <td rowspan="4"><code>and</code></td>
+        <td><i>reg</i>, <i>reg</i></td>
+        <td rowspan="4">Logical AND instruction</td>
+        <td rowspan="4"><code>dest &amp;= origin</code></td>
+    </tr>
+    <tr><td><code>0x2D</code></td><td><i>reg</i>, <i>v8</i></td></tr>
+    <tr><td><code>0x2E</code></td><td><i>reg</i>, <i>v16</i></td></tr>
+    <tr><td><code>0x2F</code></td><td><i>reg</i>, <i>v32</i></td></tr>
+
+    <tr>
+        <td><code>0x30</code></td>
+        <td rowspan="2"><code>shl</code></td>
+        <td><i>reg</i>, <i>reg</i></td>
+        <td rowspan="2">Shift <i>n</i> bytes left</td>
+        <td rowspan="2"><code>dest &lt;&lt;= origin</code></td>
+    </tr>
+    <tr><td><code>0x31</code></td><td><i>reg</i>, <i>v8</i></td></tr>
+
+    <tr>
+        <td><code>0x32</code></td>
+        <td rowspan="2"><code>shl</code></td>
+        <td><i>reg</i>, <i>reg</i></td>
+        <td rowspan="2">Shift <i>n</i> bytes right</td>
+        <td rowspan="2"><code>dest &gt;&gt;= origin</code></td>
+    </tr>
+    <tr><td><code>0x33</code></td><td><i>reg</i>, <i>v8</i></td></tr>
+
+    <tr>
+        <td><code>0x34</code></td>
+        <td><code>not</code></td>
+        <td><i>reg</i></td>
+        <td>Invert the value in the registers (NOT operator)</td>
+        <td><code>par = ~par</code></td>
+    </tr>
+
+    <tr>
+        <td rowspan="27">Arithmetic</td>
+        <td><code>0x35</code></td>
+        <td rowspan="4"><code>add</code></td>
+        <td><i>reg</i>, <i>reg</i></td>
+        <td rowspan="4">Arithmetic sum. Set the flag <code>Y</code> in case of carry.</td>
+        <td rowspan="4"><code>dest += origin + Y</code></td>
+    </tr>
+    <tr><td><code>0x36</code></td><td><i>reg</i>, <i>v8</i></td></tr>
+    <tr><td><code>0x37</code></td><td><i>reg</i>, <i>v16</i></td></tr>
+    <tr><td><code>0x38</code></td><td><i>reg</i>, <i>v32</i></td></tr>
+
+    <tr>
+        <td><code>0x39</code></td>
+        <td rowspan="4"><code>sub</code></td>
+        <td><i>reg</i>, <i>reg</i></td>
+        <td rowspan="4">Arithmetic subtraction. Set the flag <code>Y</code> in case of carry.</td>
+        <td rowspan="4"><code>dest -= origin + Y</code></td>
+    </tr>
+    <tr><td><code>0x3A</code></td><td><i>reg</i>, <i>v8</i></td></tr>
+    <tr><td><code>0x3B</code></td><td><i>reg</i>, <i>v16</i></td></tr>
+    <tr><td><code>0x3C</code></td><td><i>reg</i>, <i>v32</i></td></tr>
+
+    <tr>
+        <td><code>0x3D</code></td>
+        <td rowspan="5"><code>cmp</code></td>
+        <td><i>reg</i>, <i>reg</i></td>
+        <td rowspan="5">Perform a subtraction, but does not set the result, only the flags. This is the only instruction that sets the flags <code>GT</code> and <code>LT</code>.</td>
+        <td rowspan="5"><code>[flags] = dest - origin</code></td>
+    </tr>
+    <tr><td><code>0x3E</code></td><td><i>reg</i>, <i>v8</i></td></tr>
+    <tr><td><code>0x3F</code></td><td><i>reg</i>, <i>v16</i></td></tr>
+    <tr><td><code>0x40</code></td><td><i>reg</i>, <i>v32</i></td></tr>
+    <tr><td><code>0x41</code></td><td><i>reg</i></td></tr>
+
+    <tr>
+        <td><code>0x42</code></td>
+        <td rowspan="4"><code>mul</code></td>
+        <td><i>reg</i>, <i>reg</i></td>
+        <td rowspan="4">Multiply two numbers. Sets the <code>V</code> flag (overflow) it the result is above 32 bits.</td>
+        <td rowspan="4"><code>dest *= origin</code></td>
+    </tr>
+    <tr><td><code>0x43</code></td><td><i>reg</i>, <i>v8</i></td></tr>
+    <tr><td><code>0x44</code></td><td><i>reg</i>, <i>v16</i></td></tr>
+    <tr><td><code>0x45</code></td><td><i>reg</i>, <i>v32</i></td></tr>
+
+    <tr>
+        <td><code>0x46</code></td>
+        <td rowspan="4"><code>idiv</code></td>
+        <td><i>reg</i>, <i>reg</i></td>
+        <td rowspan="4">Perfoms an integer division.</td>
+        <td rowspan="4"><code>dest //= origin</code></td>
+    </tr>
+    <tr><td><code>0x47</code></td><td><i>reg</i>, <i>v8</i></td></tr>
+    <tr><td><code>0x48</code></td><td><i>reg</i>, <i>v16</i></td></tr>
+    <tr><td><code>0x49</code></td><td><i>reg</i>, <i>v32</i></td></tr>
+
+    <tr>
+        <td><code>0x4A</code></td>
+        <td rowspan="4"><code>mod</code></td>
+        <td><i>reg</i>, <i>reg</i></td>
+        <td rowspan="4">Calculate the modulo of two numbers.</td>
+        <td rowspan="4"><code>dest %= origin</code></td>
+    </tr>
+    <tr><td><code>0x4B</code></td><td><i>reg</i>, <i>v8</i></td></tr>
+    <tr><td><code>0x4C</code></td><td><i>reg</i>, <i>v16</i></td></tr>
+    <tr><td><code>0x4D</code></td><td><i>reg</i>, <i>v32</i></td></tr>
+
+    <tr>
+        <td><code>0x4E</code></td>
+        <td><code>inc</code></td>
+        <td><i>reg</i></td>
+        <td>Increment the value in the register by one</td>
+        <td><code>++par</code></td>
+    </tr>
+
+    <tr>
+        <td><code>0x4F</code></td>
+        <td><code>dec</code></td>
+        <td><i>reg</i></td>
+        <td>Decrement the value in the register by one</td>
+        <td><code>--par</code></td>
+    </tr>
+
+    <tr>
+        <td rowspan="25">Branches</td>
+        <td><code>0x50</code></td>
+        <td rowspan="2"><code>bz</code></td>
+        <td><i>reg</i></td>
+        <td rowspan="2">If <code>Z</code> flag is set, jump to instuction in parameter.</td>
+        <td rowspan="2"><code>if (Z) PC = par</code></td>
+    </tr>
+    <tr><td><code>0x51</code></td><td><i>v32</i></td></tr>
+
+    <tr>
+        <td><code>0x52</code></td>
+        <td rowspan="2"><code>bnz</code></td>
+        <td><i>reg</i></td>
+        <td rowspan="2">If <code>Z</code> flag is not set, jump to instuction in parameter.</td>
+        <td rowspan="2"><code>if (!Z) PC = par</code></td>
+    </tr>
+    <tr><td><code>0x53</code></td><td><i>v32</i></td></tr>
+
+    <tr>
+        <td><code>0x54</code></td>
+        <td rowspan="2"><code>bneg</code></td>
+        <td><i>reg</i></td>
+        <td rowspan="2">If <code>S</code> flag is set, jump to instuction in parameter.</td>
+        <td rowspan="2"><code>if (S) PC = par</code></td>
+    </tr>
+    <tr><td><code>0x55</code></td><td><i>v32</i></td></tr>
+
+    <tr>
+        <td><code>0x56</code></td>
+        <td rowspan="2"><code>bpos</code></td>
+        <td><i>reg</i></td>
+        <td rowspan="2">If <code>S</code> flag is not set, jump to instuction in parameter.</td>
+        <td rowspan="2"><code>if (!S) PC = par</code></td>
+    </tr>
+    <tr><td><code>0x57</code></td><td><i>v32</i></td></tr>
+
+    <tr>
+        <td><code>0x58</code></td>
+        <td rowspan="2"><code>bgt</code></td>
+        <td><i>reg</i></td>
+        <td rowspan="2">If <code>GT</code> flag is set, jump to instuction in parameter.</td>
+        <td rowspan="2"><code>if (GT) PC = par</code></td>
+    </tr>
+    <tr><td><code>0x59</code></td><td><i>v32</i></td></tr>
+
+    <tr>
+        <td><code>0x5A</code></td>
+        <td rowspan="2"><code>bgte</code></td>
+        <td><i>reg</i></td>
+        <td rowspan="2">If <code>GT</code> and <code>Z</code> flag is set, jump to instuction in parameter.</td>
+        <td rowspan="2"><code>if (GT &amp;&amp; Z) PC = par</code></td>
+    </tr>
+    <tr><td><code>0x5B</code></td><td><i>v32</i></td></tr>
+
+    <tr>
+        <td><code>0x5C</code></td>
+        <td rowspan="2"><code>blt</code></td>
+        <td><i>reg</i></td>
+        <td rowspan="2">If <code>LT</code> flag is set, jump to instuction in parameter.</td>
+        <td rowspan="2"><code>if (LT) PC = par</code></td>
+    </tr>
+    <tr><td><code>0x5D</code></td><td><i>v32</i></td></tr>
+
+    <tr>
+        <td><code>0x5E</code></td>
+        <td rowspan="2"><code>blte</code></td>
+        <td><i>reg</i></td>
+        <td rowspan="2">If <code>LT</code> and <code>Z</code> flag is set, jump to instuction in parameter.</td>
+        <td rowspan="2"><code>if (LT &amp;&amp; Z) PC = par</code></td>
+    </tr>
+    <tr><td><code>0x5F</code></td><td><i>v32</i></td></tr>
+
+    <tr>
+        <td><code>0x60</code></td>
+        <td rowspan="2"><code>bv</code></td>
+        <td><i>reg</i></td>
+        <td rowspan="2">If <code>V</code> flag is set, jump to instuction in parameter.</td>
+        <td rowspan="2"><code>if (V) PC = par</code></td>
+    </tr>
+    <tr><td><code>0x61</code></td><td><i>v32</i></td></tr>
+
+    <tr>
+        <td><code>0x62</code></td>
+        <td rowspan="2"><code>bnv</code></td>
+        <td><i>reg</i></td>
+        <td rowspan="2">If <code>V</code> flag is not set, jump to instuction in parameter.</td>
+        <td rowspan="2"><code>if (!V) PC = par</code></td>
+    </tr>
+    <tr><td><code>0x63</code></td><td><i>v32</i></td></tr>
+
+    <tr>
+        <td><code>0x64</code></td>
+        <td rowspan="2"><code>jmp</code></td>
+        <td><i>reg</i></td>
+        <td rowspan="2">Unconditionally jumps to instruction in parameter.</td>
+        <td rowspan="2"><code>PC = par</code></td>
+    </tr>
+    <tr><td><code>0x65</code></td><td><i>v32</i></td></tr>
+
+    <tr>
+        <td><code>0x66</code></td>
+        <td rowspan="2"><code>jsr</code></td>
+        <td><i>reg</i></td>
+        <td rowspan="2">Jump to subroutine: stores the next instruction in the stack, and jump to location</td>
+        <td rowspan="2"><code>push(PC); PC = par</code></td>
+    </tr>
+    <tr><td><code>0x67</code></td><td><i>v32</i></td></tr>
+
+    <tr>
+        <td><code>0x68</code></td>
+        <td><code>ret</code></td>
+        <td><i>reg</i></td>
+        <td>Return from subroutine: pops value from stack and jump to it</td>
+        <td><code>PC = pop()</code></td>
+    </tr>
+
+    <tr>
+        <td rowspan="14">Stack operations</td>
+        <td><code>0x6A</code></td>
+        <td rowspan="2"><code>pushb</code></td>
+        <td><i>reg</i></td>
+        <td rowspan="2">Push one byte into the stack</td>
+        <td rowspan="2"><code>[SP] = par; SP -= 1</code>
+    </tr>
+    <tr><td><code>0x6B</code></td><td><i>v8</i></td></tr>
+
+    <tr>
+        <td><code>0x6C</code></td>
+        <td rowspan="2"><code>pushw</code></td>
+        <td><i>reg</i></td>
+        <td rowspan="2">Push one word (two bytes) into the stack</td>
+        <td rowspan="2"><code>[SP] = par; SP -= 2</code>
+    </tr>
+    <tr><td><code>0x6D</code></td><td><i>v16</i></td></tr>
+
+    <tr>
+        <td><code>0x6E</code></td>
+        <td rowspan="2"><code>pushd</code></td>
+        <td><i>reg</i></td>
+        <td rowspan="2">Push one double-word (four bytes) into the stack</td>
+        <td rowspan="2"><code>[SP] = par; SP -= 4</code>
+    </tr>
+    <tr><td><code>0x6F</code></td><td><i>v32</i></td></tr>
+
+    <tr>
+        <td><code>0x70</code></td>
+        <td><code>push.a</code></td>
+        <td></td>
+        <td>Push all registers (except FP, SP, PC and FL) into the stack</td>
+        <td><code>for(i = 0..11) push(reg[i])</td>
+    </tr>
+
+    <tr>
+        <td><code>0x71</code></td>
+        <td><code>popb</code></td>
+        <td><i>reg</i></td>
+        <td>Pop one byte from the stack, and store it in the register</td>
+        <td><code>par = [SP]; SP += 1</code></td>
+    </tr>
+
+    <tr>
+        <td><code>0x72</code></td>
+        <td><code>popw</code></td>
+        <td><i>reg</i></td>
+        <td>Pop one word (two bytes) from the stack, and store it in the register</td>
+        <td><code>par = [SP]; SP += 2</code></td>
+    </tr>
+
+    <tr>
+        <td><code>0x73</code></td>
+        <td><code>popd</code></td>
+        <td><i>reg</i></td>
+        <td>Pop one double-word (four bytes) from the stack, and store it in the register</td>
+        <td><code>par = [SP]; SP += 4</code></td>
+    </tr>
+
+    <tr>
+        <td><code>0x74</code></td>
+        <td><code>pop.a</code></td>
+        <td></td>
+        <td>Pop all registers (except FP, SP, PC and FL) from the stack</td>
+        <td><code>for(i = 11..0) reg[i] = pop()</td>
+    </tr>
+
+    <tr>
+        <td><code>0x75</code></td>
+        <td rowspan="3"><code>popx</code></td>
+        <td><i>reg</i></td>
+        <td rowspan="3">Pop <i>n</i> bytes from the stack, discarding them</td>
+        <td rowspan="3"><code>SP += 4</code>
+    </tr>
+    <tr><td><code>0x76</code></td><td><i>v8</i></td></tr>
+    <tr><td><code>0x77</code></td><td><i>v16</i></td></tr>
+    
+    <tr>
+        <td rowspan="2">Others</td>
+        <td><code>0x78</code></td>
+        <td><code>nop</code></td>
+        <td></td>
+        <td>Does nothing for one cycle</td>
+        <td><code>/* do nothing */</code></td>
+    </tr>
+
+    <tr>
+        <td><code>0x7A</code></td>
+        <td><code>dbg</code></td>
+        <td></td>
+        <td>Enter the debugger. Use as a breakpoint for debugging applications.</td>
+        <td><code>debugger()</code></td>
+    </tr>
+
+</table>
+
+<h2>Debugger</h2>
+
+<p>A debugger is avaliable for stepping through guest code and seeing the 
+internals of the devices. When <i>luisavm</i> is started, the debugger is
+started automatically. <!-- TODO --></p>
+
+<p>The keys for controlling the keyboard are:</p>
+
+<table border="1">
+    <tr><th>Key</th><th>Funtion</th></tr>
+    <tr><td>F1</td><td>Debug CPU</td></tr>
+    <tr><td>F2</td><td>Debug logical memory</td></tr>
+    <tr><td>F3</td><td>Debug physical memory</td></tr>
+    <tr><td>G</td><td>Go to specific location</td></tr>
+    <tr><td>S</td><td>Step one cycle in the VM (CPU debugger only)</td></tr>
+</table>
+
+<h2>Assembler</h2>
+
+<p>An assembler is not yet available. Code must be written byte by byte, like
+in the old days...</p>
+
+<h2>Guest applications</h2>
+
+<p>There are currently no guest applications available.</p>
+
+<h2>Embedding</h2>
+
+<p><i>luisavm</i> is avaliable as a library called <code>libluisavm.so</code>.
+This library can be used to embed the emulator in other applications. Useful
+functions are:</p>
+
+<p><code>LVM_Computer* lvm_computercreate(uint32_t physical_memory_size, bool debugger_active);</code><br>
+<div style="text-indent: 50px;">Create a new computer. Multiple computers can be created.</div></p>
+
+<p><code>void lvm_computerdestroy(LVM_Computer* comp);</code><br>
+<div style="text-indent: 50px;">Destroy the computer and clean up the memory.</div></p>
+
+<p><code>LVM_CPU* lvm_addcpu(LVM_Computer* comp);</code><br>
+<div style="text-indent: 50px;">Add a CPU to the computer</div></p>
+
+<p><pre>typedef struct VideoCallbacks {
+    void    (*setpal)(uint8_t idx, uint8_t r, uint8_t g, uint8_t b);
+    void    (*clrscr)(uint8_t color);
+    void    (*change_border_color)(uint8_t color);
+    uint32_t(*upload_sprite)(uint16_t w, uint16_t h, uint8_t* data);
+    void    (*draw_sprite)(uint32_t sprite, uint16_t pos_x, uint16_t pos_y);
+} VideoCallbacks;
+
+void lvm_setupvideo(LVM_Computer* comp, VideoCallbacks cbs);</pre><br>
+<div style="text-indent: 50px;">Setup the video. The callback parameter is a
+struct containing function pointers to functions provided by the caller.</div></p>
+
+<p><code>uint8_t lvm_get(LVM_Computer* comp, uint32_t pos)</code><br>
+<div style="text-indent: 50px;">Read data from logical memory.</div></p>
+
+<p><code>void lvm_step(LVM_Computer* comp, size_t force_time_us);</code><br>
+<div style="text-indent: 50px;">Step one cycle in the VM.</div></p>
+
+<p><code>bool lvm_loadromfile(LVM_Computer* comp, const char* filename)</code><br>
+<div style="text-indent: 50px;">Load a ROM file into the memory.</div></p>
+
+<p>Other functions are available in the file <code>luisavm.h</code>. An example
+application follows:</p>
+
+<pre>
+int main(int argc, char* argv[])
+{
+    // initialize computer
+
+    LVM_Computer* computer = lvm_computercreate(16, false);
+    lvm_addcpu(computer);
+    if(argc > 1) {
+        lvm_loadromfile(computer, argv[1]);
+    }
+
+    initialize_my_graphical_library();
+
+    lvm_setupvideo(computer, (VideoCallbacks) {
+        my_setpal,
+        my_clrscr,
+        my_change_border_color,
+        my_upload_sprite,
+        my_draw_sprite,
+    });
+
+    // main loop
+
+    while(my_window_is_open()) {
+        lvm_step(computer, 0);
+        my_update_graphics();
+    }
+
+    // finalization
+
+    lvm_computerdestroy(computer);
+}
+</pre>
+
+</body>
+</html>

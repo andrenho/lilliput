@@ -93,7 +93,7 @@ bindings/lua/luisavm.so: bindings/lua/luisavm.c libluisavm.so
 #
 dist:
 	mkdir luisavm-$(VERSION)
-	cp --parents bindings/lua/doc.txt bindings/lua/*.c \
+	cp --parents bindings/lua/doc.txt bindings/lua/*.c doc/* \
 		build/*.txt data/* lib/*.c lib/*.h lib/*.xbm LICENSE Makefile src/*.c test/*.lua \
 		luisavm-$(VERSION)
 	tar -czf luisavm-$(VERSION).tar.gz luisavm-$(VERSION)
