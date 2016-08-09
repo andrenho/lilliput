@@ -4,7 +4,7 @@ VPATH := src lib
 
 OBJS_LIB := luisavm.o cpu.o video.o test.o assembler.o \
 	debugger.o debuggerhelp.o debuggermemory.o debuggerkeyboard.o \
-	debuggernotimplemented.o debuggervideo.o
+	debuggernotimplemented.o debuggervideo.o debuggercpu.o
 
 .DEFAULT_GOAL := release
 

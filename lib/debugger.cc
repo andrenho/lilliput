@@ -3,6 +3,7 @@
 #include "debuggerhelp.hh"
 #include "debuggermemory.hh"
 #include "debuggerkeyboard.hh"
+#include "debuggercpu.hh"
 #include "debuggervideo.hh"
 #include "debuggernotimplemented.hh"
 
@@ -13,7 +14,7 @@ Debugger::Debugger(LuisaVM& comp, Video& video)
 {
     _screens.push_back(make_unique<DebuggerHelp>(video));
     _screens.push_back(make_unique<DebuggerNotImplemented>(video));
-    _screens.push_back(make_unique<DebuggerNotImplemented>(video));
+    _screens.push_back(make_unique<DebuggerCPU>(comp, video));
     _screens.push_back(make_unique<DebuggerNotImplemented>(video));
     _screens.push_back(make_unique<DebuggerMemory>(comp, video));
     _screens.push_back(make_unique<DebuggerKeyboard>(comp, video));
