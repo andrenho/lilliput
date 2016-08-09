@@ -1,7 +1,6 @@
 #include "luisavm.h"
 
 #include <string.h>
-#include <syslog.h>
 
 #include "device.h"
 #include "font.xbm"

@@ -21,7 +21,13 @@ endif
 # add cflags/libraries
 #
 CFLAGS += -fpic -Ilib `pkg-config --cflags sdl2`
-LDFLAGS  += -fuse-ld=gold
+
+ifeq ($(OS),Windows_NT)
+  SOFLAGS += -Wl,--out-implib,libluisavm.a
+else
+  LDFLAGS += -fuse-ld=gold
+  SOFLAGS += -lrt
+endif
 
 #
 # add warnings
@@ -85,7 +91,7 @@ luisavm: libluisavm.so $(OBJS_EXE)
 	$(CC) $(OBJS_EXE) -o $@ $(TARGET_LDFLAGS) $(LDFLAGS) -Wl,-rpath=. -L. -lluisavm `pkg-config --libs sdl2`
 
 libluisavm.so: $(OBJS_LIB)
-	$(CC) -shared $^ -o $@ $(TARGET_LDFLAGS) $(LDFLAGS) -lrt
+	$(CC) -shared $^ -o $@ $(TARGET_LDFLAGS) $(LDFLAGS) $(SOFLAGS)
 
 bindings/lua/luisavm.so: bindings/lua/luisavm.c libluisavm.so
 	$(CC) bindings/lua/luisavm.c -shared -o $@ $(CFLAGS) $(TARGET_CFLAGS) `pkg-config --cflags --libs lua` -Wl,-rpath=. -L. -lluisavm
