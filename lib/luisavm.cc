@@ -27,7 +27,7 @@ void LuisaVM::Reset()
 
 void LuisaVM::Step() 
 {
-    if(_debugger && _debugger->Active) {
+    if(_debugger != nullptr && _debugger->Active) {
         _debugger->Step();
     } else {
         StepDevices();
@@ -49,11 +49,13 @@ uint8_t LuisaVM::Get(uint32_t pos) const
 {
     if(pos < _physical_memory.size()) {
         return _physical_memory.at(pos);
-    } else if(pos < COMMAND_POS) {
+    } 
+    
+    if(pos < COMMAND_POS) {
         return 0;
-    } else {
-        throw logic_error("not implemented");
     }
+
+    throw logic_error("not implemented");
 }
 
 
@@ -132,6 +134,22 @@ Video& LuisaVM::AddVideo(Video::Callbacks const& cb)
     Video& video = AddDevice<Video>(cb);
     _debugger = &AddDevice<Debugger>(*this, video);
     return video;
+}
+
+// }}}
+
+// {{{ user events
+
+void 
+LuisaVM::RegisterKeyEvent(Keyboard::KeyPress const& kp)
+{
+    if(_debugger != nullptr && _debugger->Active) {
+        if(kp.state == PRESSED) {
+            _debugger->Keypressed(kp);
+        }
+    } else {
+        keyboard().Queue.push_back(kp);
+    }
 }
 
 // }}}

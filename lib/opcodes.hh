@@ -4,6 +4,7 @@
 #include <array>
 #include <string>
 #include <vector>
+using namespace std;
 
 namespace luisavm {
 
@@ -167,6 +168,6 @@ static array<Opcode, 255> opcodes = {{
     { "nop", NOP,  {} },                        // 0x67
 }};
 
-}
+}  // namespace luisavm
 
 #endif

@@ -22,6 +22,6 @@ private:
     KeyState _waiting_state = PRESSED;
 };
 
-}
+}   // namespace luisavm
 
 #endif

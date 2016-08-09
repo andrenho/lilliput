@@ -35,9 +35,9 @@ Video::Video(Callbacks const& cb) : cb(cb)
     // initialize palette
     for(uint8_t i=0; i<255; ++i) {
         cb.setpal(i, 
-            (uint8_t)(default_palette[i] >> 16),
-            (uint8_t)((default_palette[i] >> 8) & 0xFF),
-            (uint8_t)(default_palette[i] & 0xFF));
+            static_cast<uint8_t>(default_palette[i] >> 16),
+            static_cast<uint8_t>((default_palette[i] >> 8) & 0xFF),
+            static_cast<uint8_t>(default_palette[i] & 0xFF));
     }
 
     // initialize screen
@@ -110,14 +110,14 @@ Video::LoadCharSprite(char c, uint8_t fg) const
     }
 
     array<uint8_t, CHAR_W * CHAR_H> data;
-    size_t sx = (size_t)((static_cast<uint8_t>(c) / 16) * CHAR_W),
-           sy = (size_t)((static_cast<uint8_t>(c) % 16) * CHAR_H);
+    size_t sx = (static_cast<uint8_t>(c) / 16) * CHAR_W,
+           sy = (static_cast<uint8_t>(c) % 16) * CHAR_H;
     int i = 0;
     for(size_t y = sy; y < (sy + CHAR_H); ++y) {
         for(size_t x = sx; x < (sx + CHAR_W); ++x) {
             size_t f = x + (y * font_width);
             uint8_t bit = ((font_bits[f/8]) >> (f % 8)) & 1;
-            data[i++] = (bit ? fg : TRANSPARENT);
+            data[i++] = (bit != 0u ? fg : TRANSPARENT);
         }
     }
 

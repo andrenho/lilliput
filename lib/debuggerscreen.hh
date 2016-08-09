@@ -8,7 +8,7 @@ namespace luisavm {
 
 class DebuggerScreen {
 public:
-    DebuggerScreen(Video& video) : _video(video) {}
+    explicit DebuggerScreen(Video& video) : _video(video) {}
 
     virtual void Keypressed(Keyboard::KeyPress const& kp) { (void) kp; }
 

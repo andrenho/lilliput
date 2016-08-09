@@ -15,7 +15,7 @@ void DebuggerMemory::Keypressed(Keyboard::KeyPress const& kp)
     auto ph_size = _comp.PhysicalMemory().size();
 
     if(_ask_goto) {
-        if(isxdigit(kp.key) && _goto_temp.size() < 8) {
+        if(isxdigit(kp.key) != 0 && _goto_temp.size() < 8) {
             _goto_temp += toupper(kp.key);
         }
         switch(kp.key) {
@@ -114,4 +114,4 @@ void DebuggerMemory::Update()
     _video.UpdateScreen();
 }
 
-}
+}  // namespace luisavm

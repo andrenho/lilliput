@@ -20,6 +20,6 @@ private:
     string   _goto_temp = "";
 };
 
-}
+}   // namespace luisavm
 
 #endif

@@ -82,7 +82,7 @@ void CPU::Step()
                 uint32_t p0 = Take(pars[0]), p1 = pars.size() == 1 ? p0 : Take(pars[1]);
                 uint32_t diff = p0 - p1 - static_cast<uint32_t>(Flag(Flag::Y));
                 setFlag(Flag::Z, diff == 0);
-                setFlag(Flag::S, (diff >> 31) & 1);
+                setFlag(Flag::S, ((diff >> 31) & 1) != 0);
                 setFlag(Flag::V, false);
                 setFlag(Flag::Y, (static_cast<int64_t>(p0) - static_cast<int64_t>(p1) - static_cast<int64_t>(Flag(Flag::Y))) < 0);
                 setFlag(Flag::GT, p0 > p1);
@@ -264,7 +264,7 @@ vector<CPU::Parameter> CPU::ParseParameters(Opcode const& opcode, uint8_t& sz) c
 void CPU::Apply(Parameter const& dest, uint32_t value, uint8_t sz)
 {
     setFlag(Z, value == 0);
-    setFlag(S, (value >> 31) & 1);
+    setFlag(S, ((value >> 31) & 1) != 0);
     setFlag(V, false);
     setFlag(Y, false);
     setFlag(GT, false);
@@ -342,7 +342,7 @@ bool CPU::Flag(enum Flag f) const
 void CPU::setFlag(enum Flag f, bool value)
 {
     int64_t new_value = FL;
-    new_value ^= (-value ^ new_value) & (1 << static_cast<int>(f));
+    new_value ^= (-static_cast<int>(value) ^ new_value) & (1 << static_cast<int>(f));
     FL = static_cast<uint32_t>(new_value);
 }
 

@@ -14,6 +14,7 @@ class Debugger : public Device {
 public:
     Debugger(LuisaVM& comp, Video& video);
     void Step() override;
+    void Keypressed(Keyboard::KeyPress const& kp);
 
     bool Active = true;
 
@@ -21,8 +22,6 @@ private:
     Keyboard& _keyboard;
     vector<unique_ptr<DebuggerScreen>> _screens;
     uint8_t _selected = 0;
-
-    void Keypressed(Keyboard::KeyPress const& kp);
 };
 
 }  // namespace luisavm

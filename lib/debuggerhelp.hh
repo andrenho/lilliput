@@ -7,7 +7,7 @@ namespace luisavm {
 
 class DebuggerHelp : public DebuggerScreen {
 public:
-    DebuggerHelp(Video& video) : DebuggerScreen(video) {}
+    explicit DebuggerHelp(Video& video) : DebuggerScreen(video) {}
 
     void Update() override;
 };

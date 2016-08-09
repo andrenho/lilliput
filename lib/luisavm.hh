@@ -8,8 +8,8 @@
 using namespace std;
 
 #include "assembler.hh"
-#include "device.hh"
 #include "cpu.hh"
+#include "device.hh"
 #include "keyboard.hh"
 #include "video.hh"
 
@@ -36,10 +36,12 @@ public:
 
     Video& AddVideo(Video::Callbacks const& cb);
 
+    void RegisterKeyEvent(Keyboard::KeyPress const& kp);
+
     static const uint32_t COMMAND_POS = 0xFFFF0000;
 
-    CPU&      cpu() const      { return *static_cast<CPU*>(_devices[0].get()); }
-    Keyboard& keyboard() const { return *static_cast<Keyboard*>(_devices[1].get()); }
+    CPU&      cpu() const      { return *dynamic_cast<CPU*>(_devices[0].get()); }
+    Keyboard& keyboard() const { return *dynamic_cast<Keyboard*>(_devices[1].get()); }
 
 private:
     vector<unique_ptr<Device>> _devices;

@@ -14,7 +14,7 @@ enum Flag { Y, V, Z, S, GT, LT };
 
 class CPU : public Device {
 public:
-    CPU(class LuisaVM& comp) : comp(comp) {}
+    explicit CPU(class LuisaVM& comp) : comp(comp) {}
     void Reset() override;
     void Step() override;
 
