@@ -12,6 +12,7 @@ using namespace std;
 namespace luisavm {
 
 class Video : public Device {
+    friend class DebuggerVideo;
 public:
     static const int COLUMNS = 53,
                      LINES   = 26;
@@ -22,6 +23,7 @@ public:
         function<void(uint8_t)>                            change_border_color;
         function<uint32_t(uint16_t, uint16_t, uint8_t*)>   upload_sprite;
         function<void(uint32_t, uint16_t, uint16_t)>       draw_sprite;
+        function<void(uint32_t, uint16_t&, uint16_t&)>     sprite_size;
         function<void()>                                   update_screen;
     };
 
@@ -49,7 +51,7 @@ private:
 
     Callbacks cb;
     array<uint8_t,16> _char_bg;
-    mutable map<uint32_t, uint32_t>_char_sprite;
+    mutable map<uint32_t, uint32_t> _char_sprite;
 };
 
 }  // namespace luisavm

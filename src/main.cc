@@ -210,19 +210,34 @@ private:
         auto draw_sprite = [&](uint32_t sprite_idx, uint16_t pos_x, uint16_t pos_y) {
             Uint32 format;
             int access, w, h;
-            SDL_QueryTexture(sprites.at(sprite_idx-1), &format, &access, &w, &h);
-            SDL_Rect r = { (pos_x+BORDER) * zoom, (pos_y+BORDER) * zoom, w * zoom, h * zoom };
-            SDL_RenderCopy(ren, sprites.at(sprite_idx-1), nullptr, &r);
+            if(sprite_idx != 0 && sprite_idx <= sprites.size()) {
+                SDL_QueryTexture(sprites.at(sprite_idx-1), &format, &access, &w, &h);
+                SDL_Rect r = { (pos_x+BORDER) * zoom, (pos_y+BORDER) * zoom, w * zoom, h * zoom };
+                SDL_RenderCopy(ren, sprites.at(sprite_idx-1), nullptr, &r);
+            }
+        };
+
+        auto sprite_size = [&](uint32_t sprite_idx, uint16_t& w, uint16_t& h) {
+            Uint32 format;
+            int access, _w, _h;
+            if(sprite_idx != 0 && sprite_idx <= sprites.size()) {
+                SDL_QueryTexture(sprites.at(sprite_idx-1), &format, &access, &_w, &_h);
+                w = static_cast<uint16_t>(_w);
+                h = static_cast<uint16_t>(_h);
+            } else {
+                w = h = 0;
+            }
         };
 
         auto update_screen = [&]() {
             SDL_RenderPresent(ren);
         };
+
 #pragma GCC diagnostic pop
 
         luisavm::Video::Callbacks cb { 
             setpal, clrscr, change_border_color, upload_sprite, draw_sprite,
-            update_screen
+            sprite_size, update_screen
         };
 
         // }}}
