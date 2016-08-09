@@ -1,6 +1,31 @@
-#include <syslog.h>
-
 #include "luisavm.h"
+
+#ifdef __WIN32
+
+#include <stdarg.h>
+#include <stdio.h>
+
+void syslog(int priority, const char* fmt, ...)
+{
+    (void) priority;
+    va_list ap;
+
+    va_start(ap, fmt);
+    vfprintf(stderr, fmt, ap);
+    fprintf(stderr, "\n");
+    fflush(stderr);
+    va_end(ap);
+}
+
+void 
+lvm_debuglog(bool active)
+{
+    (void) active;
+}
+
+#else
+
+#include <syslog.h>
 
 __attribute__((constructor)) static void 
 init()
@@ -27,3 +52,5 @@ fini()
 {
     closelog();
 }
+
+#endif

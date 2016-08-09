@@ -2,7 +2,6 @@
 
 #include <assert.h>
 #include <stdlib.h>
-#include <syslog.h>
 
 typedef struct LVM_CPU {
     LVM_Computer* computer;

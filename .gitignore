@@ -4,3 +4,5 @@ luisavm
 *.d
 *.o
 *.supp
+*.a
+*.exe
