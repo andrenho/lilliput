@@ -5,6 +5,8 @@ VPATH := src lib
 OBJS_EXE := main.o
 OBJS_LIB := log.o cpu.o computer.o video.o palette.o debugger.o keyboard.o
 
+.DEFAULT_GOAL := release
+
 #
 # compilation options
 #
