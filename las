@@ -313,9 +313,9 @@ end  --}}}
 
 function add_instruction(assembler, inst, pars)  --{{{
    -- find parameters types and values
-   local ptype, pvalue = {}, {}
+   local ptype, pvalue, plabel = {}, {}, {}
    for _,par in ipairs(pars) do
-      local pt, value
+      local pt, value, label
       if registers[par:lower()] then
          pt = 'reg'
          value = registers[par:lower()]
@@ -338,11 +338,12 @@ function add_instruction(assembler, inst, pars)  --{{{
          pt = 'indv32'
          value = assert(convert_value(par:gsub('[%[%]]', '')))
       elseif par:match('%[%w[%a_]*%]') then
-         table.insert(assembler.labels_ref, { label=par:match('^%[%w[%a_]*%]$'), pos=#assembler.text })
+         label = par:match('^%[%w[%a_]*%]$')
          value = 0
-         pt = 'v32'
+         pt = 'indv32'
+         label = true
       elseif par:match('%w[%a_]*') then
-         table.insert(assembler.labels_ref, { label=par, pos=#assembler.text })
+         label = par
          value = 0
          pt = 'v32'
       else 
@@ -350,6 +351,7 @@ function add_instruction(assembler, inst, pars)  --{{{
       end
       ptype[#ptype+1] = pt
       pvalue[#pvalue+1] = value
+      plabel[#plabel+1] = label
    end
 
    -- find instruction
@@ -368,6 +370,9 @@ function add_instruction(assembler, inst, pars)  --{{{
       table.insert(assembler.text, (pvalue[1] << 4) | pvalue[2])
    else
       for i=1,2 do
+         if plabel[i] then
+            table.insert(assembler.labels_ref, { label=plabel[i], pos=#assembler.text })
+         end
          if ptype[i] then
             if ptype[i]:sub(1,3) == 'reg' or ptype[i] == 'v8' then
                table.insert(assembler.text, pvalue[i])
@@ -388,7 +393,27 @@ function add_instruction(assembler, inst, pars)  --{{{
 
 end --}}}
 
-function compile(source, filename)  -- {{{
+function replace_labels(assembler) --{{{
+   for _,v in ipairs(assembler.labels_ref) do
+      local label = assembler.labels[v.label]
+      if label then
+         local addr = label.pos
+         if label.section == '.data' then
+            addr = addr + #assembler.text
+         elseif label.section == '.bss' then
+            addr = addr + #assembler.text + #assembler.data
+         end
+         assembler.text[v.pos+1] = addr & 0xFF
+         assembler.text[v.pos+2] = (addr >> 8) & 0xFF
+         assembler.text[v.pos+3] = (addr >> 16) & 0xFF
+         assembler.text[v.pos+4] = (addr >> 24) & 0xFF
+      else
+         assembler_error("Label "..v.label.." not found")  -- TODO
+      end
+   end
+end  --}}}
+
+function compile(source, filename)  --{{{
    local assembler = {
       text = {},
       data = {},
@@ -474,6 +499,9 @@ function compile(source, filename)  -- {{{
 ::nxt::
       nline = nline+1
    end
+
+   -- replace labels
+   replace_labels(assembler)
 
    -- create binary
    local binary = {}
