@@ -1,14 +1,5 @@
 #!/usr/bin/env lua
 
--- Features:
---   * areas
---   * text compilation
---   * data, bss (db, rb, etc...)
---   * labels and local labels
---   * constants
---   * comments
---   * include files
-
 -- {{{ PREPARATION/DEBUGGING
 
 -- {{{ strict 
@@ -237,12 +228,43 @@ function convert_value(par)  --{{{
    end
 end  --}}}
 
+function preprocess_file(filename, new_source)  --{{{
+   local fin = io.open(filename, 'r')
+   local source = fin:read('*all')
+   fin:close()
+   local nline = 1
+   for line in source:gmatch("([^\n]+)\n?") do  -- split lines
+      local import = line:match('%%import%s+(.+)')
+      if import then
+         preprocess_file(import, new_source)
+      else
+         table.insert(new_source, '<'..filename..':'..nline..'>'..line)
+      end
+      nline = nline+1
+   end
+   return table.concat(new_source, "\n")
+end
+
+function preprocess(filename, source)
+   local new_source = {}
+   local nline = 1
+   for line in source:gmatch("([^\n]+)\n?") do  -- split lines
+      local import = line:match('%%import%s+(.+)')
+      if import then
+         preprocess_file(import, new_source)
+      else
+         table.insert(new_source, '<'..filename..':'..nline..'>'..line)
+      end
+      nline = nline+1
+   end
+   return table.concat(new_source, "\n")
+end  --}}}
+
 function add_label(assembler, lbl) --{{{
    -- label name
    if lbl:sub(1,1) == '.' then
-      lbl = assembler.current_file..':'..assembler.current_label..':'..lbl
+      lbl = assembler.current_label..':'..lbl
    elseif lbl:sub(1,1) ~= '@' then
-      lbl = assembler.current_file..':'..lbl
       assembler.current_label = lbl
    end
    -- find position
@@ -355,9 +377,7 @@ function add_instruction(assembler, inst, pars)  --{{{
       -- replace label
       if label then
          if label:sub(1,1) == '.' then
-            label = assembler.current_file..':'..assembler.current_label..':'..label
-         elseif label:sub(1,1) ~= '@' then
-            label = assembler.current_file..':'..label
+            label = assembler.current_label..':'..label
          end
       end
 
@@ -437,14 +457,23 @@ function compile(source, filename)  --{{{
       labels_ref = {},
       current_label = '',
    }
+   local map = {}
+
+   source = preprocess(assembler.current_file, source)
 
    local nline = 1
    for line in source:gmatch("([^\n]+)\n?") do  -- split lines
       assembler.current_line = line
       assembler.nline = nline
+
       -- remove comments
       local newline = line:match('^(.*);.*$')
       if newline then line = newline end
+
+      -- extract filename/line number
+      local pp_filename, pp_nline = line:gmatch("<([^:]+):(%d+)>")()
+      pp_nline = tonumber(pp_nline)
+      line = line:gsub("<.*>", "")
 
       -- %define
       local def, val = line:gmatch('%%define%s+([^%s]+)%s+([^%s]+)')()
@@ -499,9 +528,11 @@ function compile(source, filename)  --{{{
          local inst, pars = line:gmatch('([%w%.]+)%s+(.+)')()
          if inst then
             if assembler.section ~= '.text' then assembler_error(assembler, 'Unexpected token') end
+            if not map[pp_filename] then map[pp_filename] = {} end
+            map[pp_filename] = { #assembler.text, pp_nline }
             local par = {}
             for p in pars:gmatch('([%w%[%]%.@]+),?%s*') do par[#par+1] = p end
-            add_instruction(assembler, inst, par)
+            add_instruction(assembler, inst, par, map)
             goto nxt
          end
       end
@@ -524,7 +555,14 @@ function compile(source, filename)  --{{{
          binary[#binary+1] = data 
       end
    end
-   return binary
+   
+   -- create map
+   local tmap = {}
+   for file,_ in pairs(map) do tmap[#tmap+1] = file end
+   tmap[#tmap+1] = '**'
+   for file,v in pairs(map) do tmap[#tmap+1] = file..':'..v[1]..':'..v[2] end
+
+   return binary, table.concat(tmap, '\n')
 end -- }}}
 
 -- }}}
@@ -647,8 +685,8 @@ function display_help()
    print("las [OPTIONS] [SOURCE_FILE]")
    print("Options:")
    print("  -o FILENAME   binary output filename")
-   print("  -t          run tests")
-   print("  -h          display this help")
+   print("  -m FILENAME   create map file")
+   print("  -h            display this help")
    os.exit(true)
 end
 
@@ -658,6 +696,7 @@ function parse_commandline()
       run_tests = false,
       output_file = nil,
       source_file = nil,
+      map_file = nil,
    }
 
    local switch
@@ -669,6 +708,8 @@ function parse_commandline()
          opt.run_tests = true
       elseif switch == '-o' then
          opt.output_file = assert(table.remove(arg, 1), 'output filename needed')
+      elseif switch == '-m' then
+         opt.map_file = assert(table.remove(arg, 1), 'map filename needed')
       elseif switch == '-h' then
          display_help()
       elseif switch:sub(1, 1) ~= '-' and #arg == 0 then
@@ -695,10 +736,15 @@ else
       local fin = io.open(opt.source_file, 'r')
       local source = fin:read('*all')
       fin:close()
-      local data = compile(source, opt.source_file)
+      local data, map = compile(source, opt.source_file)
       local fout = io.open(outfile, 'wb')
       fout:write(string.char(table.unpack(data)))
       fout:close()
+      if opt.map_file then
+         local fout = io.open(opt.map_file, 'wb')
+         fout:write(map)
+         fout:close()
+      end
    else
       io.stderr:write("Source file not defined.\n")
       os.exit(false)
