@@ -116,12 +116,14 @@ distcheck: dist
 install: luisavm
 	cp libluisavm.so /usr/lib
 	cp luisavm /usr/local/bin/
+	cp las /usr/local/bin
 	cp lib/luisavm.h /usr/local/include
 	ldconfig
 
 uninstall:
 	rm /usr/lib/libluisavm.so
 	rm /usr/local/bin/luisavm
+	rm /usr/local/bin/las
 	rm /usr/local/include/luisavm.h
 
 #
@@ -138,7 +140,7 @@ debug-test: bindings/lua/luisavm.so
 	@LUA_CPATH="$LUA_CPATH;bindings/lua/?.so" gdb --args lua test/test.lua
 
 cloc:
-	cloc Makefile src/*.h src/*.c lib/*.h lib/*.c test/*.lua bindings/lua/*.c
+	cloc Makefile src/*.h src/*.c lib/*.h lib/*.c test/*.lua bindings/lua/*.c las
 
 check-leaks: debug
 	valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes --suppressions=build/luisavm.supp ./luisavm -D

@@ -10,6 +10,7 @@ set foldmethod=marker
 " make program
 set makeprg=clear\ \&\&\ make
 nnoremap <Leader>T :!clear && make test<cr>
+nnoremap <Leader>y :!clear && ./las -t<cr>
 nnoremap <Leader>C :make! clean<cr>
 nnoremap <Leader>r :!clear && make debug && ./luisavm<cr>
 nnoremap <Leader>G :!git commit -a && git push<CR>
