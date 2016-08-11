@@ -221,6 +221,7 @@ local opcodes = {  --{{{ ...  }
 local registers = { a=0, b=1, c=2, d=3, e=4, f=5, g=6, h=7, i=8, j=9, k=10, l=11, fp=12, sp=13, pc=14, fl=15 }
 
 function assembler_error(assembler, msg)  --{{{
+   assert(type(assembler) == 'table' and type(msg) == 'string')
    error('** '..msg..' in '..assembler.current_file..':'..assembler.nline..' -> '..assembler.current_line)
 end  --}}}
 
@@ -236,16 +237,15 @@ function convert_value(par)  --{{{
    end
 end  --}}}
 
-function preproc(assembler, line)  --{{{
-   local cmd, def, val = line:gmatch('([^%s]+)%s+([^%s]+)%s+([^%s]+)')()
-   if cmd ~= '%define' then
-      assembler_error('Unknown directive')
-   end
-   assembler.constants[def] = val
-end  --}}}
-
 function add_label(assembler, lbl) --{{{
-   -- TODO - local, global labels
+   -- label name
+   if lbl:sub(1,1) == '.' then
+      lbl = assembler.current_file..':'..assembler.current_label..':'..lbl
+   elseif lbl:sub(1,1) ~= '@' then
+      lbl = assembler.current_file..':'..lbl
+      assembler.current_label = lbl
+   end
+   -- find position
    local pos
    if assembler.section == '.text' then
       pos = #assembler.text
@@ -351,6 +351,16 @@ function add_instruction(assembler, inst, pars)  --{{{
       end
       ptype[#ptype+1] = pt
       pvalue[#pvalue+1] = value
+
+      -- replace label
+      if label then
+         if label:sub(1,1) == '.' then
+            label = assembler.current_file..':'..assembler.current_label..':'..label
+         elseif label:sub(1,1) ~= '@' then
+            label = assembler.current_file..':'..label
+         end
+      end
+
       plabel[#plabel+1] = label
    end
 
@@ -408,7 +418,7 @@ function replace_labels(assembler) --{{{
          assembler.text[v.pos+3] = (addr >> 16) & 0xFF
          assembler.text[v.pos+4] = (addr >> 24) & 0xFF
       else
-         assembler_error("Label "..v.label.." not found")  -- TODO
+         assembler_error(assembler, "Label "..v.label.." not found")  -- TODO
       end
    end
 end  --}}}
@@ -425,6 +435,7 @@ function compile(source, filename)  --{{{
       constants = {},
       labels = {},
       labels_ref = {},
+      current_label = '',
    }
 
    local nline = 1
@@ -435,11 +446,13 @@ function compile(source, filename)  --{{{
       local newline = line:match('^(.*);.*$')
       if newline then line = newline end
 
-      -- is it a preprocessor directive?
-      if line:sub(1,1) == '%' then
-         preproc(assembler, line)
+      -- %define
+      local def, val = line:gmatch('%%define%s+([^%s]+)%s+([^%s]+)')()
+      if def then
+         assembler.constants[def] = val
          goto nxt
       end
+
       do
          -- define section
          local section = line:match('section (%.%w+)')
@@ -485,7 +498,7 @@ function compile(source, filename)  --{{{
          -- instruction
          local inst, pars = line:gmatch('([%w%.]+)%s+(.+)')()
          if inst then
-            if assembler.section ~= '.text' then assembly_error('Unexpected token') end
+            if assembler.section ~= '.text' then assembler_error(assembler, 'Unexpected token') end
             local par = {}
             for p in pars:gmatch('([%w%[%]%.@]+),?%s*') do par[#par+1] = p end
             add_instruction(assembler, inst, par)
@@ -598,11 +611,32 @@ section .text
 jmp test
 test: mov A, B]], { 0x65, 0x5, 0x0, 0x0, 0x0, 0x1, 0x1 })
 
-   -- TODO - test local label
-   -- TODO - label on data
-   -- TODO - label on bss
-   -- TODO - import files
-   -- TODO - test global label
+   ----------------------------
+   test('local label', [[
+section .text
+a: jmp .test
+.test: mov A, B
+b: jmp .test
+.test: mov A, B]], { 0x65, 5, 0, 0, 0, 0x1, 0x1,
+                     0x65, 12, 0, 0, 0, 0x1, 0x1 })
+
+   ----------------------------
+   test('label on data', [[
+section .text
+jmp test
+section .data
+test: .db 0]], { 0x65, 5, 0, 0, 0, 0 })
+   
+   ----------------------------
+   test('label on bss', [[
+section .text
+jmp test
+section .bss
+.resb 4
+test: .resb 4]], { 0x65, 9, 0, 0, 0 })
+
+   ----------------------------
+   test('import', '%import test/test.s', { 0x1, 0x1 })
 end
 
 -- }}}
