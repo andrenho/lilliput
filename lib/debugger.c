@@ -41,6 +41,18 @@ typedef struct Question {
 typedef struct Source {
 } Source;
 
+typedef struct FilePos {
+    ssize_t file;
+    size_t line;
+    size_t pc;
+} FilePos;
+
+typedef struct Map {
+    const char**  filename;
+    const char*** contents;
+    FilePos*      pos;
+} Map;
+
 typedef struct Debugger {
     bool          active;
     LVM_Computer* comp;
@@ -51,6 +63,7 @@ typedef struct Debugger {
     CPU           cpu;
     Source        source;
     Question      question;
+    Map           map;
 } Debugger;
 
 // {{{ CONSTRUCTOR/DESTRUCTOR
@@ -67,6 +80,7 @@ debugger_init(LVM_Computer* comp, bool active)
     dbg->physical = (Physical) { .top_addr = 0x0 };
     dbg->cpu = (CPU) { .code_start = 0x0, .top_addr = 0x0 };
     dbg->source = (Source) {};
+    dbg->map = (Map) { 0 };
 
     syslog(LOG_DEBUG, "Debugger created.");
 
@@ -77,6 +91,7 @@ debugger_init(LVM_Computer* comp, bool active)
 void
 debugger_free(Debugger* dbg)
 {
+    // TODO - clear map
     free(dbg);
 }
 
@@ -900,6 +915,57 @@ void debugger_keypressed(Debugger* debugger, uint32_t chr, uint8_t modifiers)
 void 
 debugger_loadmap(Debugger* debugger, const char* filename)
 {
+    Map* map = &debugger->map;
+    FILE* mainf = fopen(filename, "r");
+    assert(mainf); // TODO
+
+    size_t i = 0;
+    size_t n; char* fname;
+    while(fscanf(mainf, "%zu:%ms\n", &n, &fname)) {
+        
+        // get filename
+        map->filename = realloc(map->filename, sizeof(const char*) * (i+1));
+        map->filename[i] = fname;
+
+        // get file contents
+        const char** contents = NULL;
+        ssize_t read;
+        size_t len;
+        char* line = NULL;
+
+        FILE* f = fopen(fname, "r");
+        assert(f); // TODO
+        size_t j = 0;
+        while((read = getline(&line, &len, f)) != -1) {
+            line[strlen(line)-1] = '\0';  // remove final enter
+            contents = realloc(contents, sizeof(const char*) * (j+1));
+            contents[j] = strdup(line);
+            ++j;
+        }
+        free(line);
+        fclose(f);
+
+        map->contents= realloc(map->filename, sizeof(const char*) * (i+1));
+        map->contents[i] = contents;
+
+        ++i;
+    }
+
+    // divider
+    char* stars;
+    fscanf(mainf, "%ms\n", &stars);
+    assert(strcmp(stars, "**") == 0);
+    free(stars);
+
+    // read file:line:pc combination
+    ssize_t file;
+    size_t line;
+    size_t pc;
+    while(fscanf(mainf, "%zd:%zu:%zu\n", &file, &line, &pc)) {
+        printf("%zd:%zu:%zu\n", file, line, pc);
+    }
+
+    fclose(mainf);
 }
 
 // }}}

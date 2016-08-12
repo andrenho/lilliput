@@ -529,7 +529,7 @@ function compile(source, filename)  --{{{
          if inst then
             if assembler.section ~= '.text' then assembler_error(assembler, 'Unexpected token') end
             if not map[pp_filename] then map[pp_filename] = {} end
-            table.insert(map[pp_filename], { #assembler.text, pp_nline })
+            table.insert(map[pp_filename], { pp_nline, #assembler.text })
             local par = {}
             for p in pars:gmatch('([%w%[%]%.@]+),?%s*') do par[#par+1] = p end
             add_instruction(assembler, inst, par, map)
