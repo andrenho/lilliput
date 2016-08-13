@@ -1,2 +1,0 @@
--Wunsafe-loop-optimizations
--Wlogical-op -Wnull-dereference -Wmisleading-indentation
