@@ -41,6 +41,8 @@ private:
     vector<uint8_t> _physical_memory;
 };
 
+void run_tests();
+
 }  // namespace luisavm
 
 #endif

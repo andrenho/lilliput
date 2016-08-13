@@ -2,8 +2,8 @@ VERSION = 0.2
 
 VPATH := src lib
 
-OBJS_EXE := main.o test.o
-OBJS_LIB := luisavm.o cpu.o
+OBJS_EXE := main.o
+OBJS_LIB := luisavm.o cpu.o test.o
 
 .DEFAULT_GOAL := release
 

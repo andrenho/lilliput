@@ -4,6 +4,8 @@
 #include <iostream>
 using namespace std;
 
+namespace luisavm {
+
 // {{{ test infrastructure
 
 struct test_failed : exception {
@@ -47,7 +49,7 @@ static void luisavm_tests()
     cout << "# luisavm\n";
     cout << "#\n";
 
-    luisavm::LuisaVM c;
+    LuisaVM c;
     c.Set(0x12, 0xAF);
     equals(c.Get(0x12), 0xAF, "memory set");
 
@@ -81,20 +83,22 @@ static void cpu_tests()
 
 static void cpu_santiy()
 {
-    luisavm::LuisaVM c;
+    LuisaVM c;
 
     cout << "# sanity\n";
-    luisavm::CPU& cpu = c.cpu();
+    CPU& cpu = c.cpu();
 
     cpu.A = 0x24;
     cpu.B = 0xBF;
     equals(cpu.B, 0xBF);
     equals(cpu.A, 0x24);
 
-    equals(cpu.Flag(luisavm::Flag::Z), false);
-    cpu.setFlag(luisavm::Flag::Z, true);
-    equals(cpu.Flag(luisavm::Flag::Z), true);
+    equals(cpu.Flag(Flag::Z), false);
+    cpu.setFlag(Flag::Z, true);
+    equals(cpu.Flag(Flag::Z), true);
     equals(cpu.FL, 0x4);
 }
 
 // }}}
+
+}  // namespace luisavm

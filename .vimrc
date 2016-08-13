@@ -30,8 +30,8 @@ map <Leader>m   :b lib/luisavm.cc<CR>
 map <Leader>c   :b lib/cpu.cc<CR>
 map <Leader>v   :b lib/video.cc<CR>
 map <Leader>d   :b lib/debugger.cc<CR>
-map <Leader>t   :b src/test.cc<CR>
-map <Leader>a   :b src/assembler.cc<CR>
+map <Leader>a   :b lib/assembler.cc<CR>
+map <Leader>t   :b lib/test.cc<CR>
 map <Leader>M   :b Makefile<CR>
 map <Leader>V   :b .vimrc<CR>
 

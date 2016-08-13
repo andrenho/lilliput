@@ -82,7 +82,7 @@ int main(int argc, char* argv[])
 
     // run tests?
     if(opt.run_tests) {
-        run_tests();
+        luisavm::run_tests();
         return EXIT_SUCCESS;
     }
 }
