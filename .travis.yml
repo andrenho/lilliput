@@ -5,11 +5,11 @@ before_install:
     - sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
     - sudo apt-get update -qq
 install:
-    - sudo apt-get install libXxf86vm-dev cmake libsdl2-dev gcc-6
-    - sudo rm /usr/bin/gcc
-    - sudo ln -s /usr/bin/gcc-6 /usr/bin/gcc
+    - sudo apt-get install libXxf86vm-dev cmake libsdl2-dev g++-6
+    - sudo rm /usr/bin/g++
+    - sudo ln -s /usr/bin/g++-6 /usr/bin/g++
 compiler:
-    - clang
-    - gcc 
+    - clang++
+    - g++ 
 script: make test
 #script: make distcheck
