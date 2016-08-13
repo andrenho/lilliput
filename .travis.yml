@@ -11,5 +11,4 @@ install:
 compiler:
     - clang++
     - g++ 
-script: make test
-#script: make distcheck
+script: make distcheck
