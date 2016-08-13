@@ -16,33 +16,30 @@ nnoremap <Leader>r :!clear && make debug && ./luisavm -M map test.bin<cr>
 nnoremap <Leader>G :!git commit -a && git push<CR>
 
 " open all files
-e src/main.c
+e src/main.cc
 args Makefile
-args src/*.h
-args src/*.c
-args lib/*.h
-args lib/*.c
-args test/test.lua
-args bindings/lua/luisavm.c
+args src/*.hh
+args src/*.cc
+args lib/*.hh
+args lib/*.cc
 args .vimrc
 b 1
 map <Leader>x   :b src/main.cc<CR>
-map <Leader>h   :b lib/luisavm.h<CR>
-map <Leader>m   :b lib/computer.c<CR>
-map <Leader>c   :b lib/cpu.c<CR>
-map <Leader>v   :b lib/video.c<CR>
-map <Leader>d   :b lib/debugger.c<CR>
-map <Leader>t   :b test/test.lua<CR>
-map <Leader>l   :b bindings/lua/luisavm.c<CR>
+map <Leader>h   :b lib/luisavm.hh<CR>
+map <Leader>m   :b lib/luisavm.cc<CR>
+map <Leader>c   :b lib/cpu.cc<CR>
+map <Leader>v   :b lib/video.cc<CR>
+map <Leader>d   :b lib/debugger.cc<CR>
+map <Leader>t   :b src/test.cc<CR>
 map <Leader>M   :b Makefile<CR>
 map <Leader>V   :b .vimrc<CR>
 
 " swap between cc and hh
 function! SwapBuffers()
-  if expand("%:e") == "c"
-    exe "b" fnameescape(expand("%:r").".h")
-  elseif expand("%:e") == "h"
-    exe "b" fnameescape(expand("%:r").".c")
+  if expand("%:e") == "cc"
+    exe "b" fnameescape(expand("%:r").".hh")
+  elseif expand("%:e") == "hh"
+    exe "b" fnameescape(expand("%:r").".cc")
   endif
 endfunction
 map <Leader>.  :call SwapBuffers()<CR>

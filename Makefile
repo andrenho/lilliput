@@ -2,15 +2,15 @@ VERSION = 0.2
 
 VPATH := src lib
 
-OBJS_EXE := main.o
-OBJS_LIB := temp.o
+OBJS_EXE := main.o test.o
+OBJS_LIB := luisavm.o cpu.o
 
 .DEFAULT_GOAL := release
 
 #
 # compilation options
 #
-CPPFLAGS = -std=c++17 -DVERSION=\"$(VERSION)\" -D_GNU_SOURCE
+CPPFLAGS = -std=c++14 -DVERSION=\"$(VERSION)\" -D_GNU_SOURCE
 ifdef FORCE_COLOR
   CPPFLAGS += -fdiagnostics-color=always
 else
@@ -140,7 +140,7 @@ gen-suppressions: debug
 	sed -i -e '/^==.*$$/d' build/luisavm.supp
 
 lint:
-	clang-tidy lib/*.hh lib/*.cc src/*.cc "-checks=*,-google-build-using-namespace,-google-readability-todo,-cppcoreguidelines-pro-type-reinterpret-cast,-cppcoreguidelines-pro-bounds-array-to-pointer-decay,-cppcoreguidelines-pro-type-const-cast,-cert-err52-cpp,-cppcoreguidelines-pro-bounds-pointer-arithmetic,-cppcoreguidelines-pro-type-union-access,-cppcoreguidelines-pro-bounds-constant-array-index,-clang-analyzer-alpha.core.CastToStruct" -- -I. --std=c++14 -DVERSION=\"$(VERSION)\"
+	clang-tidy lib/*.hh lib/*.cc src/*.cc "-checks=*,-google-build-using-namespace,-google-readability-todo,-cppcoreguidelines-pro-type-reinterpret-cast,-cppcoreguidelines-pro-bounds-array-to-pointer-decay,-cppcoreguidelines-pro-type-const-cast,-cert-err52-cpp,-cppcoreguidelines-pro-bounds-pointer-arithmetic,-cppcoreguidelines-pro-type-union-access,-cppcoreguidelines-pro-bounds-constant-array-index,-clang-analyzer-alpha.core.CastToStruct" -- -I. -Ilib --std=c++14 -DVERSION=\"$(VERSION)\"
 
 clean:
 	rm -f luisavm libluisavm.so *.o *.d

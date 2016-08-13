@@ -1,16 +1,21 @@
-#ifndef COMPUTER_HH_
-#define COMPUTER_HH_
+#ifndef LUISAVM_HH_
+#define LUISAVM_HH_
 
 #include <cstdint>
+#include <memory>
 #include <string>
 #include <vector>
 using namespace std;
 
+#include "device.hh"
+#include "cpu.hh"
+#include "video.hh"
+
 namespace luisavm {
 
-class Computer {
+class LuisaVM {
 public:
-    Computer(uint32_t physical_memory_size);
+    explicit LuisaVM(uint32_t physical_memory_size = 16*1024);
 
     void Reset();
     void Step();  // TODO - time
@@ -22,13 +27,20 @@ public:
     uint32_t Get32(uint32_t pos) const;
     void     Set32(uint32_t pos, uint32_t data);
 
-    uint8_t* PhysicalMemory();
-    uint32_t PhysicalMemorySize();
+    vector<uint8_t>& PhysicalMemory() { return _physical_memory; }
 
     void LoadROM(vector<uint8_t> const& data);
     void LoadROM(string const& filename);
+
+    static const uint32_t COMMAND_POS = 0xFFFF0000;
+
+    CPU& cpu() const;
+
+private:
+    vector<unique_ptr<Device>> _devices;
+    vector<uint8_t> _physical_memory;
 };
 
-}
+}  // namespace luisavm
 
 #endif
