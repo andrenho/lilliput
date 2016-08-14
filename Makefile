@@ -3,7 +3,7 @@ VERSION = 0.2
 VPATH := src lib
 
 OBJS_EXE := main.o
-OBJS_LIB := luisavm.o cpu.o test.o
+OBJS_LIB := luisavm.o cpu.o test.o assembler.o
 
 .DEFAULT_GOAL := release
 
@@ -92,6 +92,9 @@ luisavm: libluisavm.so $(OBJS_EXE)
 libluisavm.so: $(OBJS_LIB)
 	$(CXX) -shared $^ -o $@ $(TARGET_LDFLAGS) $(LDFLAGS) $(SOFLAGS)
 
+luisavm-tests: libluisavm.so tests.o
+	$(CXX) tests.o -o $@ $(TARGET_LDFLAGS) $(LDFLAGS) -Wl,-rpath=. -L. -lluisavm
+
 # 
 # install
 #
@@ -126,8 +129,8 @@ uninstall:
 #
 test: TARGET_CPPFLAGS = -g -ggdb3 -O0 -DDEBUG -fno-inline-functions
 test: TARGET_LDFLAGS = -g
-test: luisavm
-	./luisavm -T
+test: luisavm-tests
+	./luisavm-tests
 
 cloc:
 	cloc Makefile src/*.hh src/*.cc lib/*.hh lib/*.cc test/*.lua bindings/lua/*.c las

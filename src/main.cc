@@ -18,7 +18,6 @@ struct Options {
     uint32_t memory_size = 16;
     uint8_t  zoom = 2;
     bool     start_with_debugger = true;
-    bool     run_tests = false;
 
     Options(int argc, char* argv[])
     {
@@ -30,12 +29,11 @@ struct Options {
                 {"memory",  required_argument, nullptr,  'M' },
                 {"map",     required_argument, nullptr,  'm' },
                 {"zoom",    required_argument, nullptr,  'z' },
-                {"test",    no_argument,       nullptr,  'T' },
                 {"help",    no_argument,       nullptr,  'h' },
                 {nullptr,   0,                 nullptr,   0  }
             };
 
-            c = getopt_long(argc, argv, "m:M:z:Th", long_options, &option_index);
+            c = getopt_long(argc, argv, "m:M:z:h", long_options, &option_index);
             if(c == -1) {
                 break;
             }
@@ -49,9 +47,6 @@ struct Options {
                     break;
                 case 'z':
                     zoom = strtol(optarg, nullptr, 10);
-                    break;
-                case 'T':
-                    run_tests = true;
                     break;
                 case 'h':
                     cout << "LuisaVM emulator version " VERSION "\n";
@@ -79,10 +74,4 @@ struct Options {
 int main(int argc, char* argv[])
 {
     Options opt(argc, argv);
-
-    // run tests?
-    if(opt.run_tests) {
-        luisavm::run_tests();
-        return EXIT_SUCCESS;
-    }
 }

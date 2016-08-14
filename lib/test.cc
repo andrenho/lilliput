@@ -1,4 +1,5 @@
 #include "luisavm.hh"
+#include "assembler.hh"
 
 #include <exception>
 #include <iostream>
@@ -30,14 +31,37 @@ void _equals(T&& tested, U&& expected, string const& msg1="", string const& msg2
 #define equals(test, expect, ...) \
     (_equals(test, expect, #test, ##__VA_ARGS__))
 
+void test_assembler(string const& name, string const& code, vector<uint8_t> const& expected)
+{
+    vector<uint8_t> result = Assembler().AssembleString(name, code);
+    if(result == expected) {
+        cout << "[\e[32mok\e[0m] " << name << endl;
+    } else {
+        cout << "[\e[31merr\e[0m] " << name << endl;
+        cout << "Expected: "; 
+        for(auto v: expected) {
+            cout << hex << uppercase << "0x" << static_cast<int>(v) << ", ";
+        }
+        cout << "\n";
+        cout << "Result: "; 
+        for(auto v: result) {
+            cout << hex << uppercase << "0x" << static_cast<int>(v) << ", ";
+        }
+        cout << "\n";
+        throw test_failed();
+    }
+}
+
 // }}}
 
 static void luisavm_tests();
+static void assembler_tests();
 static void cpu_tests();
 
 void run_tests()
 {
     luisavm_tests();
+    assembler_tests();
     cpu_tests();
 }
 
@@ -62,6 +86,26 @@ static void luisavm_tests()
     equals(c.PhysicalMemory()[0x3], 0x12);
 
     // TODO - offset tests
+}
+
+// }}}
+
+// {{{ assembler_tests
+
+static void assembler_tests()
+{
+    cout << "#\n";
+    cout << "# assembler\n";
+    cout << "#\n";
+
+    /*
+    test_assembler("basic test", R"(
+    section .text
+    mov D, 0x64   ; comment)", vector<uint8_t>{ 0x2, 0x3, 0x64 });
+    */
+
+    test_assembler("include", R"(%import test/test.s)", 
+            vector<uint8_t>{ 0x1, 0x1 });
 }
 
 // }}}
