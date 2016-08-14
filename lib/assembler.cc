@@ -1,5 +1,8 @@
 #include "assembler.hh"
 
+#include <cctype>
+
+#include <algorithm>
 #include <iostream>
 #include <fstream>
 #include <regex>
@@ -76,8 +79,13 @@ void Assembler::Define(string const& def, string const& val)
 
 void Assembler::Section(string const& section)
 {
-    (void) section;
-    throw logic_error(string(__PRETTY_FUNCTION__) + " not implemented");
+    string sec;
+    transform(section.begin(), section.end(), backinserter(sec), ::tolower);
+    if(sec == ".text" || sec == ".data" || sec == ".bss") {
+        _current_section = sec;
+    } else {
+        throw runtime_error("Invalid section |" + sec + "|");
+    }
 }
 
 
