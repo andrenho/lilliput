@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <iostream>
 #include <fstream>
+#include <map>
 #include <regex>
 #include <sstream>
 #include <string>
@@ -12,8 +13,7 @@ using namespace std;
 
 namespace luisavm {
 
-
-string Assembler::Preprocess(string const& filename, string const& code) const
+string Assembler::Preprocess(string const& filename, string const& code) const  // {{{
 {
     static regex import(R"(^%import\s+(.*))", regex_constants::icase);
     smatch match;
@@ -39,10 +39,9 @@ string Assembler::Preprocess(string const& filename, string const& code) const
         }
     }
     return source;
-}
+}  // }}}
 
-
-void Assembler::RemoveComments(string& line) const
+void Assembler::RemoveComments(string& line) const  // {{{
 {
     static regex comment(R"(^(.*?)\s*[^\\];.*$)");
     smatch match;
@@ -52,10 +51,9 @@ void Assembler::RemoveComments(string& line) const
     } else if(regex_search(line, match, comment)) {
         line = match.str(1);
     }
-}
+}  // }}}
 
-
-Assembler::Pos Assembler::ExtractPos(string& line) const
+Assembler::Pos Assembler::ExtractPos(string& line) const  // {{{
 {
     static regex fl(R"(^<([^:]+):(\d+)>\s*(.*)$)");
     smatch match;
@@ -67,29 +65,26 @@ Assembler::Pos Assembler::ExtractPos(string& line) const
     } else {
         throw logic_error("Invalid preprocessed line");
     }
-}
+}  // }}}
 
-
-void Assembler::Define(string const& def, string const& val)
+void Assembler::Define(string const& def, string const& val)  // {{{
 {
     (void) def; (void) val;
     throw logic_error(string(__PRETTY_FUNCTION__) + " not implemented");
-}
+}   // }}}
 
-
-void Assembler::Section(string const& section)
+void Assembler::Section(string const& section)  // {{{
 {
     string sec;
-    transform(section.begin(), section.end(), backinserter(sec), ::tolower);
+    transform(section.begin(), section.end(), back_inserter(sec), ::tolower);
     if(sec == ".text" || sec == ".data" || sec == ".bss") {
         _current_section = sec;
     } else {
         throw runtime_error("Invalid section |" + sec + "|");
     }
-}
+}  // }}}
 
-
-void Assembler::ExtractLabel(string& line) const
+void Assembler::ExtractLabel(string& line) const  // {{{
 {
     static regex label(R"(^\s*(\.?[a-z_]\w*)\s*:(.*)$)", regex_constants::icase);
     smatch match;
@@ -97,45 +92,82 @@ void Assembler::ExtractLabel(string& line) const
     if(regex_search(line, match, label)) {
         throw logic_error(string(__PRETTY_FUNCTION__) + " not implemented");
     }
-}
+}  // }}}
 
-
-void Assembler::ReplaceConstants(string& line) const
+void Assembler::ReplaceConstants(string& line) const  // {{{
 {
     (void) line;
     // TODO - not implemented
-}
+}  // }}}
 
-
-void Assembler::Data(string const& sz, string const& data)
+void Assembler::Data(string const& sz, string const& data)  // {{{
 {
     (void) sz; (void) data;
     throw logic_error(string(__PRETTY_FUNCTION__) + " not implemented");
-}
+}  // }}}
 
-
-void Assembler::BSS(string const& sz, size_t n)
+void Assembler::BSS(string const& sz, size_t n)  // {{{
 {
     (void) sz; (void) n;
     throw logic_error(string(__PRETTY_FUNCTION__) + " not implemented");
-}
+}  // }}}
 
-
-void Assembler::Ascii(bool zero, string const& data)
+void Assembler::Ascii(bool zero, string const& data)  // {{{
 {
     (void) zero; (void) data;
     throw logic_error(string(__PRETTY_FUNCTION__) + " not implemented");
+}  // }}}
+
+Assembler::Parameter Assembler::ParseParameter(string const& par) const  // {{{
+{
+    string lpar;
+    transform(par.begin(), par.end(), back_inserter(lpar), ::tolower);
+    
+    smatch match;
+    static regex indreg(R"(\[([a-z][a-z]?)\])"),
+                 indv32(R"(\[[xb\d]+\]))");
+
+    static map<string, uint8_t> reg = {
+        {"a",0}, {"b",1}, {"c",2}, {"d",3}, {"e",4}, {"f",5}, {"g",6}, {"h",7}, 
+        {"i",8}, {"j",9}, {"k",10}, {"l",11}, {"fp",12}, {"sp",13}, {"pc",14}, {"fl",15}
+    };
+
+    if(reg.find(lpar) != reg.end()) {
+        return { REG, reg.at(lpar) };
+    } else if(regex_match(lpar, match, indreg)) {
+        try {
+            return { INDREG, reg.at(match.str(1)) };
+        } catch(out_of_range&) {
+            throw runtime_error("Invalid register " + match.str(1));
+        }
+    }
+
+    if(regex_match(lpar, match, indv32)) {
+    }
 }
 
 
 void Assembler::Instruction(string const& inst, string const& pars)
 {
-    (void) inst; (void) pars;
-    throw logic_error(string(__PRETTY_FUNCTION__) + " not implemented");
-}
+    static regex rpar(R"(([^,]+),?\s*)");
+    
+    // find parameters
+    vector<string> spar;
+    copy(sregex_token_iterator(begin(pars), end(pars), rpar, 1), sregex_token_iterator(),
+            back_inserter(spar));
 
+    // find parameter type and value
+    vector<Parameter> par;
+    transform(begin(spar), end(spar), back_inserter(par),
+            [this](string const& p){ return ParseParameter(p); });
 
-vector<uint8_t> Assembler::AssembleString(string const& filename, string const& code)
+    // TODO - find instruction
+
+    // TODO - add parameters
+
+}  // }}}
+
+vector<uint8_t> Assembler::AssembleString(string const& filename, string const& code)  // {{{
 {
     smatch match;
     static regex define(R"(^%define\s+([^\s]+)\s+([^\s]+)$)", regex_constants::icase),
@@ -176,6 +208,6 @@ vector<uint8_t> Assembler::AssembleString(string const& filename, string const& 
     }
 
     return {};
-}
+}  // }}}
 
 }  // namespace luisavm

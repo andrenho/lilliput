@@ -5,6 +5,8 @@
 #include <vector>
 using namespace std;
 
+#include "opcodes.hh"
+
 namespace luisavm {
 
 class Assembler {
@@ -15,6 +17,11 @@ private:
     struct Pos {
         string filename;
         size_t n_line;
+    };
+
+    struct Parameter {
+        ParameterType type;
+        uint32_t      value;
     };
 
     string Preprocess(string const& filename, string const& code) const;
@@ -28,6 +35,8 @@ private:
     void   BSS(string const& sz, size_t n);
     void   Ascii(bool zero, string const& data);
     void   Instruction(string const& inst, string const& pars);
+
+    Parameter ParseParameter(string const& par) const;
 
     string _current_section;
 };
