@@ -1,6 +1,8 @@
 .*.swp
+.*.swo
 *.so
 luisavm
+luisavm-tests
 *.d
 *.o
 *.supp

@@ -20,7 +20,7 @@ public:
     bool Flag(enum Flag f) const;
     void setFlag(enum Flag f, bool value);
 
-    array<uint32_t, 16> Register;
+    array<uint32_t, 16> Register = {{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}};
     uint32_t& A = Register[0];
     uint32_t& B = Register[1];
     uint32_t& C = Register[2];

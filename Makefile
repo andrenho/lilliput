@@ -114,14 +114,12 @@ distcheck: dist
 install: luisavm
 	cp libluisavm.so /usr/lib
 	cp luisavm /usr/local/bin/
-	cp las /usr/local/bin
 	cp lib/luisavm.h /usr/local/include
 	ldconfig
 
 uninstall:
 	rm /usr/lib/libluisavm.so
 	rm /usr/local/bin/luisavm
-	rm /usr/local/bin/las
 	rm /usr/local/include/luisavm.h
 
 #
@@ -133,13 +131,13 @@ test: luisavm-tests
 	./luisavm-tests
 
 cloc:
-	cloc Makefile src/*.hh src/*.cc lib/*.hh lib/*.cc test/*.lua bindings/lua/*.c las
+	cloc Makefile src/*.hh src/*.cc lib/*.hh lib/*.cc test/*.lua bindings/lua/*.c
 
 check-leaks: debug
-	valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes --suppressions=build/luisavm.supp ./luisavm
+	valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes --suppressions=build/luisavm.supp ./luisavm-tests
 
 gen-suppressions: debug
-	valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes --error-limit=no --gen-suppressions=all --log-file=build/luisavm.supp ./luisavm
+	valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes --error-limit=no --gen-suppressions=all --log-file=build/luisavm.supp ./luisavm-tests
 	sed -i -e '/^==.*$$/d' build/luisavm.supp
 
 lint:
