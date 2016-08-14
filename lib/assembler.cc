@@ -41,7 +41,7 @@ string Assembler::Preprocess(string const& filename, string const& code) const
 
 void Assembler::RemoveComments(string& line) const
 {
-    static regex comment(R"(^\s*(.*?)\s*[^\\];.*$)");
+    static regex comment(R"(^(.*?)\s*[^\\];.*$)");
     smatch match;
 
     if(!line.empty() && line[0] == ';') {
@@ -54,7 +54,7 @@ void Assembler::RemoveComments(string& line) const
 
 Assembler::Pos Assembler::ExtractPos(string& line) const
 {
-    static regex fl(R"(^<([^:]+):(\d+)>(.*)$)");
+    static regex fl(R"(^<([^:]+):(\d+)>\s*(.*)$)");
     smatch match;
 
     if(regex_search(line, match, fl)) {
@@ -70,14 +70,14 @@ Assembler::Pos Assembler::ExtractPos(string& line) const
 void Assembler::Define(string const& def, string const& val)
 {
     (void) def; (void) val;
-    throw logic_error("not implemented");
+    throw logic_error(string(__PRETTY_FUNCTION__) + " not implemented");
 }
 
 
 void Assembler::Section(string const& section)
 {
     (void) section;
-    throw logic_error("not implemented");
+    throw logic_error(string(__PRETTY_FUNCTION__) + " not implemented");
 }
 
 
@@ -87,7 +87,7 @@ void Assembler::ExtractLabel(string& line) const
     smatch match;
 
     if(regex_search(line, match, label)) {
-        throw logic_error("not implemented");
+        throw logic_error(string(__PRETTY_FUNCTION__) + " not implemented");
     }
 }
 
@@ -102,28 +102,28 @@ void Assembler::ReplaceConstants(string& line) const
 void Assembler::Data(string const& sz, string const& data)
 {
     (void) sz; (void) data;
-    throw logic_error("not implemented");
+    throw logic_error(string(__PRETTY_FUNCTION__) + " not implemented");
 }
 
 
 void Assembler::BSS(string const& sz, size_t n)
 {
     (void) sz; (void) n;
-    throw logic_error("not implemented");
+    throw logic_error(string(__PRETTY_FUNCTION__) + " not implemented");
 }
 
 
 void Assembler::Ascii(bool zero, string const& data)
 {
     (void) zero; (void) data;
-    throw logic_error("not implemented");
+    throw logic_error(string(__PRETTY_FUNCTION__) + " not implemented");
 }
 
 
 void Assembler::Instruction(string const& inst, string const& pars)
 {
     (void) inst; (void) pars;
-    throw logic_error("not implemented");
+    throw logic_error(string(__PRETTY_FUNCTION__) + " not implemented");
 }
 
 
@@ -140,9 +140,9 @@ vector<uint8_t> Assembler::AssembleString(string const& filename, string const& 
     string line;
     stringstream ss(Preprocess(filename, code));
     while(getline(ss, line, '\n')) {
-        string original = line;
         RemoveComments(line);
         Pos pos = ExtractPos(line);
+        string original = line;
         if(!line.empty()) {
             if(regex_match(line, match, define)) {
                 Define(match.str(1), match.str(2));
@@ -161,7 +161,7 @@ vector<uint8_t> Assembler::AssembleString(string const& filename, string const& 
                     Instruction(match.str(1), match.str(2));
                 } else {
                     throw runtime_error("Syntax error in " + pos.filename + ":" + 
-                            to_string(pos.n_line) + ":  " + original);
+                            to_string(pos.n_line) + ":  |" + original + "|");
                 }
             }
         }
