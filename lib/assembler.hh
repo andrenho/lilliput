@@ -29,6 +29,7 @@ private:
     struct Parameter {
         ParameterType type;
         uint32_t      value;
+        string        label = "";
     };
 
     struct Label {

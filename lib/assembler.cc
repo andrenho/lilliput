@@ -145,6 +145,26 @@ void Assembler::ExtractLabel(string& line)
 
 void Assembler::ReplaceLabels()
 {
+    for(auto const& kv: _pending_labels) {
+        uint32_t const& pos = kv.first;
+        string const& label = kv.second;
+
+        try {
+            Label const& lbl = _labels.at(label);
+            uint32_t p = lbl.pos;
+            if(lbl.section == DATA) {
+                p += _text.size();
+            } else if(lbl.section == BSS) {
+                p += _text.size() + _data.size();
+            }
+            _text[pos] = static_cast<uint32_t>(p);
+            _text[pos+1] = static_cast<uint32_t>(p >> 8);
+            _text[pos+2] = static_cast<uint32_t>(p >> 16);
+            _text[pos+3] = static_cast<uint32_t>(p >> 24);
+        } catch(out_of_range&) {
+            throw runtime_error("Label '" + label + "' not found.");
+        }
+    }
 }
 
 // }}}
@@ -250,10 +270,17 @@ found:
                     _text.push_back(static_cast<uint8_t>(p.value >> 8));
                     break;
                 case V32: case INDV32:
-                    _text.push_back(static_cast<uint8_t>(p.value));
-                    _text.push_back(static_cast<uint8_t>(p.value >> 8));
-                    _text.push_back(static_cast<uint8_t>(p.value >> 16));
-                    _text.push_back(static_cast<uint8_t>(p.value >> 24));
+                    if(p.label == "") {
+                        _text.push_back(static_cast<uint8_t>(p.value));
+                        _text.push_back(static_cast<uint8_t>(p.value >> 8));
+                        _text.push_back(static_cast<uint8_t>(p.value >> 16));
+                        _text.push_back(static_cast<uint8_t>(p.value >> 24));
+                    } else {
+                        _pending_labels[_text.size()] = p.label;
+                        for(int i=0; i<4; ++i) {
+                            _text.push_back(0);
+                        }
+                    }
                     break;
                 default: throw logic_error("invalid parameter type");
             }
@@ -310,9 +337,9 @@ Assembler::Parameter Assembler::ParseParameter(string const& par)
         }
     // label?
     } catch(invalid_argument&) {
-        string lbl_name = (par[0] == '.') ? _current_label + par : par;
-        _pending_labels[_text.size()] = lbl_name;
-        return { V32, 0 };
+        Parameter p = { V32, 0 };
+        p.label = (par[0] == '.') ? _current_label + "@" + par : par;
+        return p;
     }
 
     throw runtime_error("Invalid parameter " + par);
