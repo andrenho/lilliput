@@ -125,7 +125,7 @@ Assembler::Parameter Assembler::ParseParameter(string const& par) const  // {{{
     
     smatch match;
     static regex indreg(R"(\[([a-z][a-z]?)\])"),
-                 indv32(R"(\[[xb\d]+\]))");
+                 indv32(R"(\[([xb\d]+)\])");
 
     static map<string, uint8_t> reg = {
         {"a",0}, {"b",1}, {"c",2}, {"d",3}, {"e",4}, {"f",5}, {"g",6}, {"h",7}, 
@@ -143,7 +143,28 @@ Assembler::Parameter Assembler::ParseParameter(string const& par) const  // {{{
     }
 
     if(regex_match(lpar, match, indv32)) {
+        try {
+            uint32_t value = static_cast<uint32_t>(stoll(match.str(1)));
+            return { INDV32, value };
+        } catch(invalid_argument&) {
+            throw runtime_error("Invalid indirect value " + par);
+        }
     }
+    try {
+        uint32_t value = static_cast<uint32_t>(stoll(lpar));
+        if(value <= 0xFF) {
+            return { V8, value };
+        } else if(value <= 0xFFFF) {
+            return { V16, value };
+        } else if(value <= 0xFFFFFFFF) {
+            return { V32, value };
+        }
+    } catch(invalid_argument&) {
+        // TODO - check for label
+        throw logic_error("labels not implemented");
+    }
+
+    throw runtime_error("Invalid parameter " + par);
 }
 
 
