@@ -37,6 +37,11 @@ private:
         uint32_t pos;
     };
 
+    struct Map {
+        size_t   line;
+        uint32_t pc;
+    };
+
     // preprocessing
     string Preprocess(string const& filename, string const& code) const;
     void   RemoveComments(string& line) const;
@@ -55,19 +60,21 @@ private:
     void   Ascii(bool zero, string const& data);
 
     // instruction parsing
-    void   Instruction(string const& inst, string const& pars);
+    void      Instruction(string const& inst, string const& pars, Pos const& pos);
     Parameter ParseParameter(string const& par);
 
     // linkage
     vector<uint8_t> CreateBinary() const;
+    string          CreateMap() const;
 
-    enum Section          _current_section = Section::NONE;
-    vector<uint8_t>       _text, _data;
-    uint32_t              _bss_sz = 0;
-    map<string, Label>    _labels;
-    string                _current_label;
-    map<uint32_t, string> _pending_labels;
-    map<string, string>   _defines;
+    enum Section            _current_section = Section::NONE;
+    vector<uint8_t>         _text, _data;
+    uint32_t                _bss_sz = 0;
+    map<string, Label>      _labels;
+    string                  _current_label;
+    map<uint32_t, string>   _pending_labels;
+    map<string, string>     _defines;
+    map<string,vector<Map>> _mp;
 };
 
 }  // namespace luisavm

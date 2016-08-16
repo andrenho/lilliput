@@ -18,7 +18,7 @@ void _equals(T&& tested, U&& expected, string const& msg1="", string const& msg2
 {
     string msg = (msg2 != "") ? msg2 : msg1;
 
-    if(tested == expected) {
+    if(static_cast<ssize_t>(tested) == static_cast<ssize_t>(expected)) {
         cout << "[\e[32mok\e[0m] " << msg << " == 0x" << hex << uppercase 
              << static_cast<int>(tested) << endl;
     } else {
@@ -190,13 +190,14 @@ static void assembler_tests()
             cmp     C, 0    ; TODO - this is not needed
             bnz     next
 
-    halt:   jmp     halt)", R"(0:test.s
+    halt:   jmp     halt)", R"(0:map
 **
 0:3:0
 0:4:3
 0:5:5
 0:6:8
-0:8:13)");
+0:8:13
+)");
 }
 
 // }}}

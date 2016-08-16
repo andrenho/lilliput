@@ -5,7 +5,7 @@
 #include <string>
 #include <vector>
 
-enum ParameterType { REG, V8, V16, V32, INDREG, INDV32, LABEL };
+enum ParameterType { REG, V8, V16, V32, INDREG, INDV32 };
 
 struct Opcode {
     string instruction;

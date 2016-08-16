@@ -136,7 +136,9 @@ void Assembler::ExtractLabel(string& line)
             case TEXT: pos = static_cast<uint32_t>(_text.size()); break;
             case DATA: pos = static_cast<uint32_t>(_data.size()); break;
             case BSS:  pos = _bss_sz; break;
-            default: throw runtime_error("no section defined");
+            case NONE: 
+            default: 
+                throw runtime_error("no section defined");
         }
         _labels[lbl] = { _current_section, pos };
     }
@@ -157,10 +159,10 @@ void Assembler::ReplaceLabels()
             } else if(lbl.section == BSS) {
                 p += _text.size() + _data.size();
             }
-            _text[pos] = static_cast<uint32_t>(p);
-            _text[pos+1] = static_cast<uint32_t>(p >> 8);
-            _text[pos+2] = static_cast<uint32_t>(p >> 16);
-            _text[pos+3] = static_cast<uint32_t>(p >> 24);
+            _text[pos] = static_cast<uint8_t>(p);
+            _text[pos+1] = static_cast<uint8_t>(p >> 8);
+            _text[pos+2] = static_cast<uint8_t>(p >> 16);
+            _text[pos+3] = static_cast<uint8_t>(p >> 24);
         } catch(out_of_range&) {
             throw runtime_error("Label '" + label + "' not found.");
         }
@@ -209,7 +211,15 @@ void Assembler::Data(string const& sz, string const& data)
 
 void Assembler::Bss(string const& sz, size_t n)
 {
-    _bss_sz += n;
+    if(sz == "b") {
+        _bss_sz += n;
+    } else if(sz == "w") {
+        _bss_sz += (n * 2);
+    } else if(sz == "d") {
+        _bss_sz += (n * 4);
+    } else {
+        throw logic_error("Invalid option");
+    }
 }
 
 
@@ -227,7 +237,7 @@ void Assembler::Ascii(bool zero, string const& data)
 
 // {{{ instruction parsing
 
-void Assembler::Instruction(string const& inst, string const& pars)
+void Assembler::Instruction(string const& inst, string const& pars, Pos const& pos)
 {
     static regex rpar(R"(([^,]+),?\s*)");
     
@@ -249,6 +259,10 @@ void Assembler::Instruction(string const& inst, string const& pars)
     uint8_t i=0;
     for(auto const& op: opcodes) {   // opcodes in 'opcodes.hh'
         if(inst == op.instruction && partype == op.parameter) {
+            if(_mp.find(pos.filename) == _mp.end()) {
+                _mp[pos.filename] = {};
+            }
+            _mp[pos.filename].push_back({ pos.n_line, static_cast<uint32_t>(_text.size()) });
             _text.push_back(i);
             goto found;
         }
@@ -358,6 +372,25 @@ vector<uint8_t> Assembler::CreateBinary() const
     return bin;
 }
 
+
+string Assembler::CreateMap() const
+{
+    stringstream ss;
+    int i = 0;
+    for(auto const& kv: _mp) {
+        ss << i++ << ":" << kv.first << "\n";
+    }
+    ss << "**\n";
+    i = 0;
+    for(auto const& kv: _mp) {
+        for(auto const& m: kv.second) {
+            ss << i << ":" << m.line << ":" << m.pc << "\n";
+        }
+    }
+    return ss.str();
+}
+
+
 // }}}
 
 // {{{ main assembler
@@ -394,7 +427,7 @@ vector<uint8_t> Assembler::AssembleString(string const& filename, string const& 
                 } else if(_current_section == DATA && regex_match(line, match, ascii)) {
                     Ascii(match.str(1) == "z", match.str(2));
                 } else if(_current_section == TEXT && regex_match(line, match, inst)) {
-                    Instruction(match.str(1), match.str(2));
+                    Instruction(match.str(1), match.str(2), pos);
                 } else {
                     throw runtime_error("Syntax error in " + pos.filename + ":" + 
                             to_string(pos.n_line) + ":  |" + original + "|");
@@ -405,6 +438,7 @@ vector<uint8_t> Assembler::AssembleString(string const& filename, string const& 
 
     // create binary
     ReplaceLabels();
+    mp = CreateMap();
     return CreateBinary();
 }  
 
