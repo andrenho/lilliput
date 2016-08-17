@@ -15,7 +15,7 @@ using namespace std;
 struct Options {
     string   input_file = "";
     string   output_file = "";
-    string   map_file = "";
+    bool     map_file = false;
 
     Options(int argc, char* argv[])
     {
@@ -37,7 +37,7 @@ struct Options {
 
             switch(c) {
                 case 'm':
-                    map_file = optarg;
+                    map_file = true;
                     break;
                 case 'o':
                     map_file = optarg;
@@ -45,7 +45,7 @@ struct Options {
                 case 'h':
                     cout << "LuisaVM assembler\n";
                     cout << "Options:\n";
-                    cout << "   -m, --map         map file\n";
+                    cout << "   -m, --map         create map\n";
                     cout << "   -o, --output      output file\n";
                     cout << "   -h, --help        this help\n";
                     exit(EXIT_SUCCESS);
@@ -91,7 +91,7 @@ int main(int argc, char* argv[])
     // assemble
     string data;
     try {  // NOLINT
-        data = luisavm::Assembler().AssembleString(opt.input_file, buf.str());
+        data = luisavm::Assembler().AssembleString(opt.input_file, buf.str(), opt.map_file);
     } catch(runtime_error& e) {
         cerr << e.what() << "\n";
         return EXIT_FAILURE;

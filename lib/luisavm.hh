@@ -32,7 +32,7 @@ public:
 
     vector<uint8_t>& PhysicalMemory() { return _physical_memory; }
 
-    void LoadROM(string const& rom_filename, string const& map_filename);
+    void LoadROM(string const& rom_filename);
 
     Video& AddVideo(Video::Callbacks const& cb);
 

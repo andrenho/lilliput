@@ -374,7 +374,7 @@ string Assembler::CreateBinary() const
     stringstream ss;
     ss << hex << setw(2) << setfill('0') << uppercase;
 
-    ss << "** binary\n";
+    ss << "** binary " << _text.size() + _data.size() << "\n";
 
     auto add_bin = [&ss](vector<uint8_t> const& vec, int& i) {
         for(auto d: vec) {
@@ -415,7 +415,7 @@ string Assembler::CreateMap() const
 
 // {{{ main assembler
 
-string Assembler::AssembleString(string const& filename, string const& code)
+string Assembler::AssembleString(string const& filename, string const& code, bool generate_map)
 {
     smatch match;
     static regex define(R"(^%define\s+([A-Za-z_][\w_]*)\s+([^\s]+)$)", regex_constants::icase),     // NOLINT
@@ -458,7 +458,7 @@ string Assembler::AssembleString(string const& filename, string const& code)
 
     // create binary
     ReplaceLabels();
-    return CreateBinary() + CreateMap();
+    return CreateBinary() + (generate_map ? CreateMap() : "");
 }  
 
 // }}}

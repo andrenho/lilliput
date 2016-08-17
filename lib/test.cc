@@ -33,7 +33,7 @@ void _equals(T&& tested, U&& expected, string const& msg1="", string const& msg2
 
 void test_assembler(string const& name, string const& code, vector<uint8_t> const& expected)
 {
-    string bin = Assembler().AssembleString(name, code);
+    string bin = Assembler().AssembleString(name, code, false);
     vector<uint8_t> result;  // TODO
     if(result == expected) {
         cout << "[\e[32mok\e[0m] " << name << endl;
@@ -491,8 +491,8 @@ static void stack_allreg()
     cpu.A = 0xA1B2C3E4;
     cpu.B = 0xFFFFFFFF;
     
-    comp.Set(0, Assembler().AssembleString("test", "section .text\npush.a")[0]);
-    comp.Set(1, Assembler().AssembleString("test", "section .text\npop.a")[0]);
+    comp.Set(0, Assembler().AssembleString("test", "section .text\npush.a", false)[0]);
+    comp.Set(1, Assembler().AssembleString("test", "section .text\npop.a", false)[0]);
 
     comp.Step();
     equals(cpu.SP, 0xFCF);

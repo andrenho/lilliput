@@ -107,7 +107,7 @@ void LuisaVM::Set32(uint32_t pos, uint32_t data)
 // {{{ rom loading
 
 void
-LuisaVM::LoadROM(string const& rom_filename, string const& map_filename)
+LuisaVM::LoadROM(string const& rom_filename)
 {
     ifstream ifs(rom_filename, ios::binary|ios::ate);
     ifstream::pos_type pos = ifs.tellg();
@@ -115,12 +115,18 @@ LuisaVM::LoadROM(string const& rom_filename, string const& map_filename)
         throw runtime_error("Error reading file " + rom_filename);
     }
 
+    string s1, s2;
+    size_t sz;
+    ifs >> s1 >> s2 >> sz >> "\n";
+
+    /*
     if(static_cast<size_t>(pos) >= PhysicalMemory().size()) {
         throw runtime_error("Memory is too small to accomodate such a large ROM.");
     }
 
     ifs.seekg(0, ios::beg);
     ifs.read(reinterpret_cast<char*>(&PhysicalMemory()[0]), pos);
+    */
 
     // TODO - load map
 }

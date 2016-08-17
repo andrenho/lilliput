@@ -12,7 +12,7 @@ namespace luisavm {
 
 class Assembler {
 public:
-    string AssembleString(string const& filename, string const& code);
+    string AssembleString(string const& filename, string const& code, bool generate_map);
 
 private:
     enum Section { NONE, TEXT, DATA, BSS };
