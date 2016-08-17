@@ -12,11 +12,7 @@ namespace luisavm {
 
 class Assembler {
 public:
-    vector<uint8_t> AssembleString(string const& filename, string const& code, string& mp);
-    vector<uint8_t> AssembleString(string const& filename, string const& code) {
-        string mp;
-        return AssembleString(filename, code, mp);
-    }
+    string AssembleString(string const& filename, string const& code);
 
 private:
     enum Section { NONE, TEXT, DATA, BSS };
@@ -64,8 +60,8 @@ private:
     Parameter ParseParameter(string const& par);
 
     // linkage
-    vector<uint8_t> CreateBinary() const;
-    string          CreateMap() const;
+    string CreateBinary() const;
+    string CreateMap() const;
 
     enum Section            _current_section = Section::NONE;
     vector<uint8_t>         _text, _data;

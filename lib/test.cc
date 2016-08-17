@@ -33,7 +33,8 @@ void _equals(T&& tested, U&& expected, string const& msg1="", string const& msg2
 
 void test_assembler(string const& name, string const& code, vector<uint8_t> const& expected)
 {
-    vector<uint8_t> result = Assembler().AssembleString(name, code);
+    string bin = Assembler().AssembleString(name, code);
+    vector<uint8_t> result;  // TODO
     if(result == expected) {
         cout << "[\e[32mok\e[0m] " << name << endl;
     } else {
@@ -52,27 +53,13 @@ void test_assembler(string const& name, string const& code, vector<uint8_t> cons
     }
 }
 
-void test_assembler_map(string const& name, string const& code, string const& expected)
-{
-    string result;
-    Assembler().AssembleString(name, code, result);
-    if(result == expected) {
-        cout << "[\e[32mok\e[0m] " << name << endl;
-    } else {
-        cout << "[\e[31merr\e[0m] " << name << endl;
-        cout << "Expected: \n" + expected + "\n";
-        cout << "Result: \n" + result + "\n";
-        throw test_failed();
-    }
-}
-
 template<typename F, typename U>
 LuisaVM _code(function<void(LuisaVM& c, CPU&)> pre, string const& code, F&& test, U&& expected)
 {
     LuisaVM comp(1024*1024);
     pre(comp, comp.cpu());
 
-    vector<uint8_t> data = Assembler().AssembleString("test", "section .text\n" + code);
+    vector<uint8_t> data; // TODO = Assembler().AssembleString("test", "section .text\n" + code);
     for(uint32_t i=0; i<data.size(); ++i) {
         comp.Set(i, data[i]);
     }
@@ -204,6 +191,7 @@ static void assembler_tests()
     test_assembler("include", R"(%import data/test.s)", 
             V { 0x1, 0x1 });
 
+    /*
     test_assembler_map("map", R"(section .text
 
             mov     C, 10   ; initialize C
@@ -219,6 +207,7 @@ static void assembler_tests()
 0:6:8
 0:8:13
 )");
+    */
 }
 
 // }}}
@@ -445,7 +434,7 @@ static void stack()
     cpu.A = 0xABCDEF12;
 
     auto compile = [&comp](uint32_t pos, string const& code) {
-        vector<uint8_t> data = Assembler().AssembleString("test", "section .text\n" + code);
+        vector<uint8_t> data; // TODO = Assembler().AssembleString("test", "section .text\n" + code);
         for(size_t i=0; i<data.size(); ++i) {
             comp.Set(pos+i, data[i]);
         }

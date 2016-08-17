@@ -3,6 +3,7 @@
 #include <cctype>
 
 #include <algorithm>
+#include <iomanip>
 #include <iostream>
 #include <fstream>
 #include <map>
@@ -368,27 +369,42 @@ Assembler::Parameter Assembler::ParseParameter(string const& par)
 
 // {{{ linkage
 
-vector<uint8_t> Assembler::CreateBinary() const
+string Assembler::CreateBinary() const
 {
-    vector<uint8_t> bin;
-    copy(begin(_text), end(_text), back_inserter(bin));
-    copy(begin(_data), end(_data), back_inserter(bin));
-    return bin;
+    stringstream ss;
+    ss << hex << setw(2) << setfill('0') << uppercase;
+
+    ss << "** binary\n";
+
+    auto add_bin = [&ss](vector<uint8_t> const& vec, int& i) {
+        for(auto d: vec) {
+            ss << static_cast<int>(d);
+            if(i++ % 32 == 31) {
+                ss << "\n";
+            }
+        }
+    };
+
+    int i=0;
+    add_bin(_text, i);
+    add_bin(_data, i);
+    ss << "\n";
+    
+    return ss.str();
 }
 
 
 string Assembler::CreateMap() const
 {
     stringstream ss;
-    int i = 0;
+    ss << "** map\n";
+
     for(auto const& kv: _mp) {
-        ss << i++ << ":" << kv.first << "\n";
+        ss << "% " << kv.first << "\n";
     }
-    ss << "**\n";
-    i = 0;
     for(auto const& kv: _mp) {
         for(auto const& m: kv.second) {
-            ss << i << ":" << m.line << ":" << m.pc << "\n";
+            ss << m.line << ":" << m.pc << "\n";
         }
     }
     return ss.str();
@@ -399,7 +415,7 @@ string Assembler::CreateMap() const
 
 // {{{ main assembler
 
-vector<uint8_t> Assembler::AssembleString(string const& filename, string const& code, string& mp)
+string Assembler::AssembleString(string const& filename, string const& code)
 {
     smatch match;
     static regex define(R"(^%define\s+([A-Za-z_][\w_]*)\s+([^\s]+)$)", regex_constants::icase),     // NOLINT
@@ -442,8 +458,7 @@ vector<uint8_t> Assembler::AssembleString(string const& filename, string const& 
 
     // create binary
     ReplaceLabels();
-    mp = CreateMap();
-    return CreateBinary();
+    return CreateBinary() + CreateMap();
 }  
 
 // }}}

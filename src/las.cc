@@ -89,33 +89,20 @@ int main(int argc, char* argv[])
     buf << t.rdbuf();
 
     // assemble
-    string mp;
-    vector<uint8_t> data;
+    string data;
     try {  // NOLINT
-        data = luisavm::Assembler().AssembleString(opt.input_file, buf.str(), mp);
+        data = luisavm::Assembler().AssembleString(opt.input_file, buf.str());
     } catch(runtime_error& e) {
         cerr << e.what() << "\n";
         return EXIT_FAILURE;
     }
 
     // store binary
-    ofstream output(opt.output_file, ios::out | ios::binary);
+    ofstream output(opt.output_file, ios::out);
     if(!output.is_open()) {
         cerr << "Could not open file " + opt.output_file + "\n";
         return EXIT_FAILURE;
     }
-    output.write(reinterpret_cast<const char*>(&data[0]), data.size());
+    output << data;
     output.close();
-
-    // store map
-    if(opt.map_file != "") {
-        ofstream output(opt.map_file);
-        if(!output.is_open()) {
-            cerr << "Could not open file " + opt.map_file + "\n";
-            return EXIT_FAILURE;
-        }
-        output.write(mp.c_str(), mp.size());
-        output.close();
-    }
-
 }
