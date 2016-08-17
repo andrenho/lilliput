@@ -14,8 +14,12 @@ public:
     DebuggerCPU(class LuisaVM& comp, Video& video) : DebuggerScreen(video), _comp(comp) {}
 
     void Update() override;
+    void Keypressed(Keyboard::KeyPress const& kp) override;
 
 private:
+    void MoveTop(int rel);
+    void CenterInScreen();
+
     void DrawInstructions() const;
     uint8_t InstructionSize(uint32_t addr) const;
     string Instruction(uint32_t addr) const;

@@ -6,6 +6,8 @@
 
 namespace luisavm {
 
+// {{{ DRAW
+
 void DebuggerCPU::Update() {
     _video.ClearScreen(0);
     
@@ -50,6 +52,76 @@ void DebuggerCPU::DrawInstructions() const
         addr += InstructionSize(addr);
     }
 }
+
+// }}}
+
+// {{{ EVENTS
+
+void DebuggerCPU::Keypressed(Keyboard::KeyPress const& kp)
+{
+    switch(kp.key) {
+        case DOWN:
+            MoveTop(1);
+            break;
+        case UP:
+            MoveTop(-1);
+            break;
+        case PGDOWN:
+            MoveTop(19);
+            break;
+        case PGUP:
+            MoveTop(-19);
+            break;
+        case HOME:
+            _top_addr = 0x0;
+            dirty = true;
+            break;
+        case 's':
+            _comp.cpu().Step();
+            CenterInScreen();
+            break;
+    }
+}
+
+
+void DebuggerCPU::CenterInScreen()
+{
+    uint32_t addr = _top_addr;
+    for(uint32_t y=0; y<19; ++y) {
+        addr += InstructionSize(addr);
+    }
+    uint32_t pc = _comp.cpu().PC;
+    if(pc < _top_addr || pc >= addr) {
+        _top_addr = pc;
+    }
+    dirty = true;
+}
+
+
+void DebuggerCPU::MoveTop(int rel)
+{
+    if(rel > 0) {
+        for(int i=0; i<rel; ++i) {
+            _top_addr += InstructionSize(_top_addr);
+        }
+    } else if(rel < 0) {
+        for(int i=0; i<-rel; ++i) {
+            uint32_t addr = 0;
+            uint32_t last_addr = 0;
+            for(uint32_t i=_code_start; ; ++i) {
+                if(addr >= _top_addr) {
+                    _top_addr = last_addr;
+                    break;
+                }
+                last_addr = addr;
+                addr += InstructionSize(addr);
+            }
+        }
+    }
+    dirty = true;
+}
+
+// }}}
 
 // {{{ INSTRUCTIONS
 
@@ -358,8 +430,6 @@ uint8_t DebuggerCPU::InstructionSize(uint32_t addr) const
     }
 }
 
-// }}}
-
 const vector<string> DebuggerCPU::_regs = {
     "A", "B", "C", "D", "E", "F", "G", "H", 
     "I", "J", "K", "L", "FP", "SP", "PC", "FL"
@@ -368,5 +438,7 @@ const vector<string> DebuggerCPU::_regs = {
 const vector<string> DebuggerCPU::_flags = {
     "Y", "V", "Z", "S", "G", "L",
 };
+
+// }}}
 
 }  // namespace luisavm
