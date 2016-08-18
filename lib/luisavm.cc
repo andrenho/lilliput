@@ -1,7 +1,9 @@
 #include "luisavm.hh"
 
+#include <cstdlib>
 #include <exception>
 #include <fstream>
+#include <iostream>  // TODO
 using namespace std;
 
 #include "debugger.hh"
@@ -109,24 +111,37 @@ void LuisaVM::Set32(uint32_t pos, uint32_t data)
 void
 LuisaVM::LoadROM(string const& rom_filename)
 {
-    ifstream ifs(rom_filename, ios::binary|ios::ate);
-    ifstream::pos_type pos = ifs.tellg();
-    if(pos < 0) {
+    ios::sync_with_stdio(false);
+
+    ifstream ifs(rom_filename);
+    ifstream::pos_type ps = ifs.tellg();
+    if(ps < 0) {
         throw runtime_error("Error reading file " + rom_filename);
     }
 
     string s1, s2;
-    size_t sz;
-    ifs >> s1 >> s2 >> sz >> "\n";
 
-    /*
-    if(static_cast<size_t>(pos) >= PhysicalMemory().size()) {
-        throw runtime_error("Memory is too small to accomodate such a large ROM.");
+    // header
+    size_t sz;
+    ifs >> s1 >> s2 >> sz; /* >> "\n"; */
+    if(ifs.fail() || s1 != "**" || s2 != "binary") {
+        throw runtime_error("Invalid file format");
     }
 
-    ifs.seekg(0, ios::beg);
-    ifs.read(reinterpret_cast<char*>(&PhysicalMemory()[0]), pos);
-    */
+    // binary
+    uint32_t pos = 0;
+    while(ifs >> s1 && s1 != "**") {
+        if(s1.size() % 2 != 0) {
+            throw runtime_error("Invalid file format (hex not paired)");
+        }
+        for(size_t i=0; i < s1.size(); i += 2) {
+            uint8_t n = stoi(s1.substr(i, 2), nullptr, 16);
+            if(pos >= _physical_memory.size()) {
+                throw runtime_error("Memory is too small to accomodate such a large ROM.");
+            }
+            _physical_memory[pos++] = n;
+        }
+    }
 
     // TODO - load map
 }

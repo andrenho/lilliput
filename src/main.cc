@@ -114,7 +114,7 @@ private:
     void LoadROM() 
     {
         if(opt.rom_file != "") {
-            comp.LoadROM(opt.rom_file, opt.map_file);
+            comp.LoadROM(opt.rom_file);
         }
     }
 
