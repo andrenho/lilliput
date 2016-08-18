@@ -22,6 +22,7 @@ public:
 
     void Reset();
     void Step();  // TODO - time
+    void StepDevices();
 
     uint8_t  Get(uint32_t pos) const;
     void     Set(uint32_t pos, uint8_t data);
@@ -33,12 +34,8 @@ public:
     vector<uint8_t>& PhysicalMemory() { return _physical_memory; }
 
     void LoadROM(string const& rom_filename, string const& map_filename);
-    
-    template<typename D, typename ...Args>
-    D& AddDevice(Args&&... args) {
-        _devices.push_back(make_unique<D>(args...));
-        return *static_cast<D*>(_devices.back().get());
-    }
+
+    Video& AddVideo(Video::Callbacks const& cb);
 
     static const uint32_t COMMAND_POS = 0xFFFF0000;
 
@@ -47,6 +44,14 @@ public:
 private:
     vector<unique_ptr<Device>> _devices;
     vector<uint8_t> _physical_memory;
+
+    Debugger* _debugger = nullptr;
+    
+    template<typename D, typename ...Args>
+    D& AddDevice(Args&&... args) {
+        _devices.push_back(make_unique<D>(args...));
+        return *static_cast<D*>(_devices.back().get());
+    }
 };
 
 void run_tests();

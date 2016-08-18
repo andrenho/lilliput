@@ -24,6 +24,15 @@ void LuisaVM::Reset()
 
 void LuisaVM::Step() 
 {
+    if(_debugger && _debugger->Active) {
+        _debugger->Step();
+    } else {
+        StepDevices();
+    }
+}
+
+void LuisaVM::StepDevices() 
+{
     for(auto& dev: _devices) {
         dev->Step();
     }
@@ -109,6 +118,17 @@ LuisaVM::LoadROM(string const& rom_filename, string const& map_filename)
     ifs.read(reinterpret_cast<char*>(&PhysicalMemory()[0]), pos);
 
     // TODO - load map
+}
+
+// }}}
+
+// {{{ device management
+
+Video& LuisaVM::AddVideo(Video::Callbacks const& cb)
+{
+    Video& video = AddDevice<Video>(cb);
+    _debugger = &AddDevice<Debugger>(video);
+    return video;
 }
 
 // }}}

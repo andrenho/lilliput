@@ -104,6 +104,8 @@ public:
             if(GetEvents() == false) {
                 active = false;
             }
+            comp.Step();
+            SDL_Delay(1);
         }
     }
 
@@ -225,9 +227,7 @@ private:
 
         // }}}
 
-        luisavm::Video& video = comp.AddDevice<luisavm::Video>(cb);
-        comp.AddDevice<luisavm::Debugger>(video);
-        return video;
+        return comp.AddVideo(cb);
     }
 
 

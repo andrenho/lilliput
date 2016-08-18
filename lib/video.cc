@@ -91,4 +91,19 @@ Video::LoadCharSprite(char c, uint8_t fg) const
     return idx;
 }
 
+int 
+Video::Print(uint16_t x, uint16_t y, uint8_t fg, uint8_t bg, string const& str) const
+{
+    int count = 0;
+    for(char c: str) {
+        DrawChar(c, x++, y, fg, bg);
+        if(x == COLUMNS) {
+            break;
+        }
+        ++count;
+    }
+    return count;
+}
+
+
 }  // namespace luisavm
