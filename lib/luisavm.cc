@@ -4,12 +4,15 @@
 #include <fstream>
 using namespace std;
 
+#include "debugger.hh"
+
 namespace luisavm {
 
 LuisaVM::LuisaVM(uint32_t physical_memory_size)
 {
     _physical_memory.resize(physical_memory_size, 0);
-    _devices.push_back(make_unique<CPU>(*this));
+    AddDevice<CPU>(*this);
+    AddDevice<Keyboard>();
 }
 
 // {{{ step/reset
@@ -24,6 +27,15 @@ void LuisaVM::Reset()
 
 void LuisaVM::Step() 
 {
+    if(_debugger != nullptr && _debugger->Active) {
+        _debugger->Step();
+    } else {
+        StepDevices();
+    }
+}
+
+void LuisaVM::StepDevices() 
+{
     for(auto& dev: _devices) {
         dev->Step();
     }
@@ -37,11 +49,13 @@ uint8_t LuisaVM::Get(uint32_t pos) const
 {
     if(pos < _physical_memory.size()) {
         return _physical_memory.at(pos);
-    } else if(pos < COMMAND_POS) {
+    } 
+    
+    if(pos < COMMAND_POS) {
         return 0;
-    } else {
-        throw logic_error("not implemented");
     }
+
+    throw logic_error("not implemented");
 }
 
 
@@ -109,6 +123,33 @@ LuisaVM::LoadROM(string const& rom_filename, string const& map_filename)
     ifs.read(reinterpret_cast<char*>(&PhysicalMemory()[0]), pos);
 
     // TODO - load map
+}
+
+// }}}
+
+// {{{ device management
+
+Video& LuisaVM::AddVideo(Video::Callbacks const& cb)
+{
+    Video& video = AddDevice<Video>(cb);
+    _debugger = &AddDevice<Debugger>(*this, video);
+    return video;
+}
+
+// }}}
+
+// {{{ user events
+
+void 
+LuisaVM::RegisterKeyEvent(Keyboard::KeyPress const& kp)
+{
+    if(_debugger != nullptr && _debugger->Active) {
+        if(kp.state == PRESSED) {
+            _debugger->Keypressed(kp);
+        }
+    } else {
+        keyboard().Queue.push_back(kp);
+    }
 }
 
 // }}}

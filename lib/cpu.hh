@@ -14,17 +14,15 @@ enum Flag { Y, V, Z, S, GT, LT };
 
 class CPU : public Device {
 public:
-    CPU(class LuisaVM& comp) : comp(comp) {}
+    explicit CPU(class LuisaVM& comp) : comp(comp) {}
     void Reset() override;
     void Step() override;
 
     bool Flag(enum Flag f) const;
     void setFlag(enum Flag f, bool value);
 
-private:
     array<uint32_t, 16> Register = {{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}};
 
-public:
     uint32_t& A = Register[0];
     uint32_t& B = Register[1];
     // {{{ other registers ...

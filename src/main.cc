@@ -101,9 +101,11 @@ public:
     {
         bool active = true;
         while(active) {
-            if(GetEvents() == false) {
+            if(!GetEvents()) {
                 active = false;
             }
+            comp.Step();
+            SDL_Delay(1);
         }
     }
 
@@ -127,13 +129,13 @@ private:
         window = SDL_CreateWindow("luisavm " VERSION, 
                 SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
                 (WIDTH + (2*BORDER)) * zoom, (HEIGHT + (2 * BORDER)) * zoom, 0);
-        if(!window) {
+        if(window == nullptr) {
             cerr << "SDL_CreateWindow error: " << SDL_GetError() << "\n";
             exit(EXIT_FAILURE);
         }
 
         ren = SDL_CreateRenderer(window, -1, SDL_RENDERER_TARGETTEXTURE);
-        if(!ren) {
+        if(ren == nullptr) {
             cerr << "SDL_CreateRenderer error: " << SDL_GetError() << "\n";
             exit(EXIT_FAILURE);
         }
@@ -188,10 +190,10 @@ private:
                     uint8_t idx = data[x+(y*w)];
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wcast-align"
-                    Uint32* target = (Uint32*)((Uint8*)sf->pixels + (y * (size_t)sf->pitch) + (x * 4));
+                    Uint32* target = reinterpret_cast<Uint32*>(reinterpret_cast<Uint8*>(sf->pixels) + (y * static_cast<size_t>(sf->pitch)) + (x * 4));
 #pragma GCC diagnostic pop
                     if(idx != 0xFF) {
-                        *target = ((Uint32)pal[idx].r << 24) | ((Uint32)pal[idx].g << 16) | ((Uint32)pal[idx].b << 8) | 0xFF;
+                        *target = (static_cast<Uint32>(pal[idx].r) << 24) | (static_cast<Uint32>(pal[idx].g) << 16) | (static_cast<Uint32>(pal[idx].b) << 8) | 0xFF;
                     } else {
                         *target = 0x00000000;
                     }
@@ -208,31 +210,46 @@ private:
         auto draw_sprite = [&](uint32_t sprite_idx, uint16_t pos_x, uint16_t pos_y) {
             Uint32 format;
             int access, w, h;
-            SDL_QueryTexture(sprites.at(sprite_idx-1), &format, &access, &w, &h);
-            SDL_Rect r = { (pos_x+BORDER) * zoom, (pos_y+BORDER) * zoom, w * zoom, h * zoom };
-            SDL_RenderCopy(ren, sprites.at(sprite_idx-1), nullptr, &r);
+            if(sprite_idx != 0 && sprite_idx <= sprites.size()) {
+                SDL_QueryTexture(sprites.at(sprite_idx-1), &format, &access, &w, &h);
+                SDL_Rect r = { (pos_x+BORDER) * zoom, (pos_y+BORDER) * zoom, w * zoom, h * zoom };
+                SDL_RenderCopy(ren, sprites.at(sprite_idx-1), nullptr, &r);
+            }
+        };
+
+        auto sprite_size = [&](uint32_t sprite_idx, uint16_t& w, uint16_t& h) {
+            Uint32 format;
+            int access, _w, _h;
+            if(sprite_idx != 0 && sprite_idx <= sprites.size()) {
+                SDL_QueryTexture(sprites.at(sprite_idx-1), &format, &access, &_w, &_h);
+                w = static_cast<uint16_t>(_w);
+                h = static_cast<uint16_t>(_h);
+            } else {
+                w = h = 0;
+            }
         };
 
         auto update_screen = [&]() {
             SDL_RenderPresent(ren);
         };
+
 #pragma GCC diagnostic pop
 
         luisavm::Video::Callbacks cb { 
             setpal, clrscr, change_border_color, upload_sprite, draw_sprite,
-            update_screen
+            sprite_size, update_screen
         };
 
         // }}}
 
-        return comp.AddDevice<luisavm::Video>(cb);
+        return comp.AddVideo(cb);
     }
 
 
     bool GetEvents()
     {
         SDL_Event e;
-        while(SDL_PollEvent(&e)) {
+        while(SDL_PollEvent(&e) != 0) {
             switch(e.type) {
                 case SDL_QUIT:
                     return false;
@@ -264,6 +281,7 @@ private:
                             case SDLK_RIGHT:    key = luisavm::RIGHT;  break;
                             case SDLK_UP:       key = luisavm::UP;     break;
                             case SDLK_DOWN:     key = luisavm::DOWN;   break;
+                            case SDLK_RETURN:   key = luisavm::ENTER;  break;
                             case SDLK_LSHIFT: case SDLK_RSHIFT: key = 0; mod = luisavm::SHIFT; break;
                             case SDLK_LCTRL:  case SDLK_RCTRL:  key = 0; mod = luisavm::CONTROL; break;
                             case SDLK_LALT:   case SDLK_RALT:   key = 0; mod = luisavm::ALT; break;
@@ -272,16 +290,15 @@ private:
                         if(key >= 0x40000000) {
                             break;
                         }
-                        if(e.key.keysym.mod & KMOD_CTRL)  mod |= luisavm::CONTROL;
-                        if(e.key.keysym.mod & KMOD_SHIFT) mod |= luisavm::SHIFT;
-                        if(e.key.keysym.mod & KMOD_ALT)   mod |= luisavm::ALT;
-                        /*
-                        if(e.key.state == SDL_PRESSED) {
-                            lvm_keypressed(comp, key, mod);
-                        } else {
-                            lvm_keyreleased(comp, key, mod);
-                        }
-                        */
+                        if((e.key.keysym.mod & KMOD_CTRL) != 0)  { mod |= luisavm::CONTROL; }
+                        if((e.key.keysym.mod & KMOD_SHIFT) != 0) { mod |= luisavm::SHIFT; }
+                        if((e.key.keysym.mod & KMOD_ALT) != 0)   { mod |= luisavm::ALT; }
+                        luisavm::KeyState ks = (e.key.state == SDL_PRESSED) ? luisavm::PRESSED : luisavm::RELEASED;
+                        comp.RegisterKeyEvent({ 
+                            key, 
+                            static_cast<luisavm::KeyboardModifier>(mod), 
+                            ks 
+                        });
                     }
                     break;
                 // }}}
@@ -299,8 +316,8 @@ private:
     luisavm::LuisaVM comp;
 
     double               zoom = 2;
-    SDL_Window*          window = NULL;
-    SDL_Renderer*        ren = NULL;
+    SDL_Window*          window = nullptr;
+    SDL_Renderer*        ren = nullptr;
     SDL_Color            pal[256] = {};
     vector<SDL_Texture*> sprites;
 };

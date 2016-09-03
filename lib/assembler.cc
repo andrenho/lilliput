@@ -19,7 +19,7 @@ namespace luisavm {
 
 string Assembler::Preprocess(string const& filename, string const& code) const
 {
-    static regex import(R"(^%import\s+(.*))", regex_constants::icase);
+    static regex import(R"(^%import\s+(.*))", regex_constants::icase);  // NOLINT
     smatch match;
 
     string line;
@@ -48,7 +48,7 @@ string Assembler::Preprocess(string const& filename, string const& code) const
 
 void Assembler::RemoveComments(string& line) const
 {
-    static regex comment(R"(^(.*?)\s*[^\\];.*$)");
+    static regex comment(R"(^(.*?)\s*[^\\];.*$)");  // NOLINT
     smatch match;
 
     if(!line.empty() && line[0] == ';') {
@@ -61,16 +61,15 @@ void Assembler::RemoveComments(string& line) const
 
 Assembler::Pos Assembler::ExtractPos(string& line) const
 {
-    static regex fl(R"(^<([^:]+):(\d+)>\s*(.*?)\s*$)");
+    static regex fl(R"(^<([^:]+):(\d+)>\s*(.*?)\s*$)");  // NOLINT
     smatch match;
 
     if(regex_search(line, match, fl)) {
         Pos pos = { match.str(1), static_cast<size_t>(stoll(match.str(2))) };
         line = match.str(3);
         return pos;
-    } else {
-        throw logic_error("Invalid preprocessed line");
     }
+    throw logic_error("Invalid preprocessed line");
 }
 
 
@@ -111,8 +110,8 @@ void Assembler::ReplaceConstants(string& line) const
 
 void Assembler::ExtractLabel(string& line)
 {
-    static regex label(R"(^\s*(\.?[a-z_]\w*)\s*:(.*)$)", regex_constants::icase),
-                 lbl_remove(R"(^\s*(\.?[a-z_]\w*)\s*:\s*)", regex_constants::icase);
+    static regex label(R"(^\s*(\.?[a-z_]\w*)\s*:(.*)$)", regex_constants::icase),       // NOLINT
+                 lbl_remove(R"(^\s*(\.?[a-z_]\w*)\s*:\s*)", regex_constants::icase);    // NOLINT
     smatch match;
 
     if(regex_search(line, match, label)) {
@@ -175,7 +174,7 @@ void Assembler::ReplaceLabels()
 
 void Assembler::Data(string const& sz, string const& data)
 {
-    static regex dt(R"(([^\s,]+))");
+    static regex dt(R"(([^\s,]+))");  // NOLINT
 
     auto end = sregex_token_iterator();
     for(sregex_token_iterator i(data.begin(), data.end(), dt, 1); i != end; ++i) {
@@ -239,7 +238,7 @@ void Assembler::Ascii(bool zero, string const& data)
 
 void Assembler::Instruction(string const& inst, string const& pars, Pos const& pos)
 {
-    static regex rpar(R"(([^,]+),?\s*)");
+    static regex rpar(R"(([^,]+),?\s*)");  // NOLINT
     
     // find parameters
     vector<string> spar;
@@ -316,8 +315,8 @@ Assembler::Parameter Assembler::ParseParameter(string const& par)
     transform(par.begin(), par.end(), back_inserter(lpar), ::tolower);
     
     smatch match;
-    static regex indreg(R"(\[([a-z][a-z]?)\])"),
-                 indv32(R"(\[([xb\A-Za-z0-9]+)\])");
+    static regex indreg(R"(\[([a-z][a-z]?)\])"),       // NOLINT
+                 indv32(R"(\[([xb\A-Za-z0-9]+)\])");   // NOLINT
 
     static map<string, uint8_t> reg = {
         {"a",0}, {"b",1}, {"c",2}, {"d",3}, {"e",4}, {"f",5}, {"g",6}, {"h",7}, 
@@ -327,39 +326,37 @@ Assembler::Parameter Assembler::ParseParameter(string const& par)
     // register?
     if(reg.find(lpar) != reg.end()) {
         return { REG, reg.at(lpar) };
+    }
+    
     // indirect register?
-    } else if(regex_match(lpar, match, indreg)) {
-        try {
+    if(regex_match(lpar, match, indreg)) {
+        try {   // NOLINT
             return { INDREG, reg.at(match.str(1)) };
-        } catch(out_of_range&) {
+        } catch(out_of_range const&) {
             throw runtime_error("Invalid register " + match.str(1));
         }
     }
 
     // indirect value?
     if(regex_match(lpar, match, indv32)) {
-        try {
+        try {   // NOLINT
             uint32_t value = static_cast<uint32_t>(stoll(match.str(1), nullptr, 0));
             return { INDV32, value };
-        } catch(invalid_argument&) {
+        } catch(invalid_argument const&) {
             throw runtime_error("Invalid indirect value " + par);
         }
     }
 
     // value?
-    try {
+    try {   // NOLINT
         uint32_t value = static_cast<uint32_t>(stoll(lpar, nullptr, 0));
-        if(value <= 0xFF) {
-            return { V8, value };
-        } else if(value <= 0xFFFF) {
-            return { V16, value };
-        } else if(value <= 0xFFFFFFFF) {
-            return { V32, value };
-        }
+        if(value <= 0xFF) { return { V8, value }; } 
+        if(value <= 0xFFFF) { return { V16, value }; } 
+        if(value <= 0xFFFFFFFF) { return { V32, value }; }
     // label?
     } catch(invalid_argument&) {
         Parameter p = { V32, 0 };
-        p.label = (par[0] == '.') ? _current_label + "@" + par : par;
+        p.label = (par[0] == '.') ? (_current_label + "@" + par) : par;   // NOLINT
         return p;
     }
 
@@ -405,12 +402,12 @@ string Assembler::CreateMap() const
 vector<uint8_t> Assembler::AssembleString(string const& filename, string const& code, string& mp)
 {
     smatch match;
-    static regex define(R"(^%define\s+([A-Za-z_][\w_]*)\s+([^\s]+)$)", regex_constants::icase),
-                 section(R"(^section\s+(\.[a-z]+)$)", regex_constants::icase),
-                 data(R"(^\.d([bwd])\s+(.+)$)", regex_constants::icase),
-                 bss(R"(^\.res([bwd])\s+([xbA-Za-z0-9]+)$)", regex_constants::icase),
-                 ascii(R"(^\.ascii(z?)\s+(.+)$)", regex_constants::icase),
-                 inst(R"(^([\w\.]+)(?:\s+(.+)?)?$)", regex_constants::icase);
+    static regex define(R"(^%define\s+([A-Za-z_][\w_]*)\s+([^\s]+)$)", regex_constants::icase),     // NOLINT
+                 section(R"(^section\s+(\.[a-z]+)$)", regex_constants::icase),                      // NOLINT
+                 data(R"(^\.d([bwd])\s+(.+)$)", regex_constants::icase),                            // NOLINT
+                 bss(R"(^\.res([bwd])\s+([xbA-Za-z0-9]+)$)", regex_constants::icase),               // NOLINT
+                 ascii(R"(^\.ascii(z?)\s+(.+)$)", regex_constants::icase),                          // NOLINT
+                 inst(R"(^([\w\.]+)(?:\s+(.+)?)?$)", regex_constants::icase);                       // NOLINT
 
     // parse code
     string line;

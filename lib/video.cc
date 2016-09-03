@@ -35,9 +35,9 @@ Video::Video(Callbacks const& cb) : cb(cb)
     // initialize palette
     for(uint8_t i=0; i<255; ++i) {
         cb.setpal(i, 
-            (uint8_t)(default_palette[i] >> 16),
-            (uint8_t)((default_palette[i] >> 8) & 0xFF),
-            (uint8_t)(default_palette[i] & 0xFF));
+            static_cast<uint8_t>(default_palette[i] >> 16),
+            static_cast<uint8_t>((default_palette[i] >> 8) & 0xFF),
+            static_cast<uint8_t>(default_palette[i] & 0xFF));
     }
 
     // initialize screen
@@ -65,6 +65,41 @@ Video::DrawChar(char c, uint16_t x, uint16_t y, uint8_t fg, uint8_t bg) const
 }
 
 
+void 
+Video::DrawBox(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2, uint8_t fg, uint8_t bg, bool clear, bool shadow) const
+{
+    DrawChar(218, x1, y1, fg, bg);
+    DrawChar(191, x2, y1, fg, bg);
+    DrawChar(217, x2, y2, fg, bg);
+    DrawChar(192, x1, y2, fg, bg);
+    for(uint16_t x=x1+1; x<x2; ++x) {
+        DrawChar(196, x, y1, fg, bg);
+        DrawChar(196, x, y2, fg, bg);
+    }
+    for(uint16_t y=y1+1; y<y2; ++y) {
+        DrawChar(179, x1, y, fg, bg);
+        DrawChar(179, x2, y, fg, bg);
+    }
+
+    if(clear) {
+        for(uint16_t x=x1+1; x<x2; ++x) {
+            for(uint16_t y=y1+1; y<y2; ++y) {
+                DrawChar(' ', x, y, fg, bg);
+            }
+        }
+    }
+
+    if(shadow) {
+        for(uint16_t x=x1+1; x<=(x2+1); ++x) {
+            DrawChar(176, x, y2+1, fg, bg);
+        }
+        for(uint16_t y=y1+1; y<=(y2+1); ++y) {
+            DrawChar(176, x2+1, y, fg, bg);
+        }
+    }
+}
+
+
 uint32_t
 Video::LoadCharSprite(char c, uint8_t fg) const
 {
@@ -75,14 +110,14 @@ Video::LoadCharSprite(char c, uint8_t fg) const
     }
 
     array<uint8_t, CHAR_W * CHAR_H> data;
-    size_t sx = (size_t)((static_cast<uint8_t>(c) / 16) * CHAR_W),
-           sy = (size_t)((static_cast<uint8_t>(c) % 16) * CHAR_H);
+    size_t sx = (static_cast<uint8_t>(c) / 16) * CHAR_W,
+           sy = (static_cast<uint8_t>(c) % 16) * CHAR_H;
     int i = 0;
     for(size_t y = sy; y < (sy + CHAR_H); ++y) {
         for(size_t x = sx; x < (sx + CHAR_W); ++x) {
             size_t f = x + (y * font_width);
             uint8_t bit = ((font_bits[f/8]) >> (f % 8)) & 1;
-            data[i++] = (bit ? fg : TRANSPARENT);
+            data[i++] = (bit != 0u ? fg : TRANSPARENT);
         }
     }
 
@@ -90,5 +125,20 @@ Video::LoadCharSprite(char c, uint8_t fg) const
     _char_sprite[key] = idx;
     return idx;
 }
+
+int 
+Video::Print(uint16_t x, uint16_t y, uint8_t fg, uint8_t bg, string const& str) const
+{
+    int count = 0;
+    for(char c: str) {
+        DrawChar(c, x++, y, fg, bg);
+        if(x == COLUMNS) {
+            break;
+        }
+        ++count;
+    }
+    return count;
+}
+
 
 }  // namespace luisavm

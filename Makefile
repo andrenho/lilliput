@@ -2,7 +2,9 @@ VERSION = 0.2
 
 VPATH := src lib
 
-OBJS_LIB := luisavm.o cpu.o video.o test.o assembler.o
+OBJS_LIB := luisavm.o cpu.o video.o test.o assembler.o \
+	debugger.o debuggerhelp.o debuggermemory.o debuggerkeyboard.o \
+	debuggernotimplemented.o debuggervideo.o debuggercpu.o
 
 .DEFAULT_GOAL := release
 
@@ -147,7 +149,7 @@ gen-suppressions: debug
 	sed -i -e '/^==.*$$/d' build/luisavm.supp
 
 lint:
-	clang-tidy lib/*.hh lib/*.cc src/*.cc "-checks=*,-google-build-using-namespace,-google-readability-todo,-cppcoreguidelines-pro-type-reinterpret-cast,-cppcoreguidelines-pro-bounds-array-to-pointer-decay,-cppcoreguidelines-pro-type-const-cast,-cert-err52-cpp,-cppcoreguidelines-pro-bounds-pointer-arithmetic,-cppcoreguidelines-pro-type-union-access,-cppcoreguidelines-pro-bounds-constant-array-index,-clang-analyzer-alpha.core.CastToStruct" -- -I. -Ilib --std=c++14 -DVERSION=\"$(VERSION)\"
+	clang-tidy lib/*.hh lib/*.cc src/*.cc "-checks=*,-google-build-using-namespace,-google-readability-todo,-cppcoreguidelines-pro-type-reinterpret-cast,-cppcoreguidelines-pro-bounds-array-to-pointer-decay,-cppcoreguidelines-pro-type-const-cast,-cert-err52-cpp,-cppcoreguidelines-pro-bounds-pointer-arithmetic,-cppcoreguidelines-pro-type-union-access,-cppcoreguidelines-pro-bounds-constant-array-index,-clang-analyzer-alpha.core.CastToStruct,-cppcoreguidelines-pro-type-vararg" -- -I. -Ilib --std=c++14 -DVERSION=\"$(VERSION)\"
 
 clean:
 	rm -f luisavm libluisavm.so *.o *.d

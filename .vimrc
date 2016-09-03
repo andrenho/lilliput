@@ -12,7 +12,7 @@ set makeprg=clear\ \&\&\ make
 nnoremap <Leader>T :!clear && make test<cr>
 nnoremap <Leader>y :!clear && ./las -t<cr>
 nnoremap <Leader>C :make! clean<cr>
-nnoremap <Leader>r :!clear && make debug && ./luisavm -M map test.bin<cr>
+nnoremap <Leader>r :!clear && make debug && ./luisavm<cr>
 nnoremap <Leader>G :!git commit -a && git push<CR>
 
 " open all files
@@ -31,6 +31,7 @@ map <Leader>c   :b lib/cpu.cc<CR>
 map <Leader>v   :b lib/video.cc<CR>
 map <Leader>d   :b lib/debugger.cc<CR>
 map <Leader>a   :b lib/assembler.cc<CR>
+map <Leader>k   :b lib/keyboard.cc<CR>
 map <Leader>t   :b lib/test.cc<CR>
 map <Leader>M   :b Makefile<CR>
 map <Leader>V   :b .vimrc<CR>

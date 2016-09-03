@@ -8,8 +8,8 @@
 using namespace std;
 
 #include "assembler.hh"
-#include "device.hh"
 #include "cpu.hh"
+#include "device.hh"
 #include "keyboard.hh"
 #include "video.hh"
 
@@ -21,6 +21,7 @@ public:
 
     void Reset();
     void Step();  // TODO - time
+    void StepDevices();
 
     uint8_t  Get(uint32_t pos) const;
     void     Set(uint32_t pos, uint8_t data);
@@ -32,20 +33,27 @@ public:
     vector<uint8_t>& PhysicalMemory() { return _physical_memory; }
 
     void LoadROM(string const& rom_filename, string const& map_filename);
+
+    Video& AddVideo(Video::Callbacks const& cb);
+
+    void RegisterKeyEvent(Keyboard::KeyPress const& kp);
+
+    static const uint32_t COMMAND_POS = 0xFFFF0000;
+
+    CPU&      cpu() const      { return *dynamic_cast<CPU*>(_devices[0].get()); }
+    Keyboard& keyboard() const { return *dynamic_cast<Keyboard*>(_devices[1].get()); }
+
+private:
+    vector<unique_ptr<Device>> _devices;
+    vector<uint8_t> _physical_memory;
+
+    class Debugger* _debugger = nullptr;
     
     template<typename D, typename ...Args>
     D& AddDevice(Args&&... args) {
         _devices.push_back(make_unique<D>(args...));
         return *static_cast<D*>(_devices.back().get());
     }
-
-    static const uint32_t COMMAND_POS = 0xFFFF0000;
-
-    CPU& cpu() const { return *static_cast<CPU*>(_devices[0].get()); }
-
-private:
-    vector<unique_ptr<Device>> _devices;
-    vector<uint8_t> _physical_memory;
 };
 
 void run_tests();

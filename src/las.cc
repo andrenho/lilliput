@@ -91,7 +91,7 @@ int main(int argc, char* argv[])
     // assemble
     string mp;
     vector<uint8_t> data;
-    try {
+    try {  // NOLINT
         data = luisavm::Assembler().AssembleString(opt.input_file, buf.str(), mp);
     } catch(runtime_error& e) {
         cerr << e.what() << "\n";
