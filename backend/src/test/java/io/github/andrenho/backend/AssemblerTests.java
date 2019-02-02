@@ -13,7 +13,7 @@ public class AssemblerTests {
     @Test
     public void testSimple() {
         assertEquals(Assembler.compile(
-                ".section text  \n" +
+               ".SECTION text  \n" +
                 "   nop     ; this is a comment"),
                 new CompiledCode(
                         new ArrayList<Byte>(Arrays.asList((byte)0x7b))));
