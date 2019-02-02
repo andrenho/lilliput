@@ -1,8 +1,6 @@
 package io.github.andrenho.backend.assembler;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 public class CompiledCode {
     public CompiledCode() {
@@ -47,10 +45,6 @@ public class CompiledCode {
         this.unresolved_symbols = unresolved_symbols;
     }
 
-    private List<Byte>        code;
-    private Map<String, Long> symbols;
-    private Map<String, Long> unresolved_symbols;
-
     @Override
     public String toString() {
         return "CompiledCode{" +
@@ -74,4 +68,9 @@ public class CompiledCode {
     public int hashCode() {
         return Objects.hash(getCode(), getSymbols(), getUnresolved_symbols());
     }
+
+    private List<Byte>        code = new ArrayList<>();
+    private Map<String, Long> symbols = new HashMap<>();
+    private Map<String, Long> unresolved_symbols = new HashMap<>();
+
 }
