@@ -1,2 +1,0 @@
--Wunsafe-loop-optimizations -Wzero-as-null-pointer-constant -Wuseless-cast
--Wlogical-op -Wnull-dereference -Wmisleading-indentation
