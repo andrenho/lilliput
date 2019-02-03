@@ -17,7 +17,7 @@ public class AssemblerController {
     private AssemblerService service;
 
     @PostMapping(value = "/request", produces = MediaType.APPLICATION_JSON_VALUE)
-    public long createRequest(@RequestParam("sources") String[] sources) {
+    public long createRequest(@RequestBody String[] sources) {
         return service.createRequest(sources);
     }
 
@@ -36,7 +36,7 @@ public class AssemblerController {
         return service.requestError(id);
     }
 
-    @GetMapping(value = "/request/{id}")
+    @DeleteMapping(value = "/request/{id}")
     public void deleteRequest(@PathVariable long id) {
         service.removeRequest(id);
     }
