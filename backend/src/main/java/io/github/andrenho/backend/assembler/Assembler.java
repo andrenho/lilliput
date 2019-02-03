@@ -3,15 +3,15 @@ package io.github.andrenho.backend.assembler;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.Scanner;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class Assembler {
 
-    static String comment = "(\\s*;.*)?";
-    static private Pattern p_section = Pattern.compile("\\.SECTION\\s+(\\w+)" + comment),
-                           p_commands = Pattern.compile("(\\w[\\w\\d]*:)?\\s*(.+?)[(\\s*;.*)?|$]"),
+    static private Pattern p_section = Pattern.compile("\\.SECTION\\s+(\\w+)"),
+                           p_commands = Pattern.compile("(\\w[\\w\\d]*:)?\\s*(.+)"),
                            p_command = Pattern.compile("(\\w[\\w\\d]+)(?:\\s+(.+?)\\s*(?:,\\s*(.+?))?)?");
 
 
@@ -28,6 +28,9 @@ public class Assembler {
         while (scan.hasNextLine()) {
             // read line
             String line = scan.nextLine();
+
+            // remove comments
+            line = removeComments(line);
             line = line.trim();
 
             // skip empty lines
@@ -58,6 +61,24 @@ public class Assembler {
         return cc;
     }
 
+    private static String removeComments(String line) {
+        Character quote = null;
+        for (int i = 0; i < line.length(); ++i) {
+            if (quote != null) {
+                if (line.charAt(i) == quote)
+                    quote = null;
+            } else {
+                // TODO: skip '\'
+                char c = line.charAt(i);
+                if (c == '"' || c == '\'')
+                    quote = c;
+                else if (c == ';')
+                    return line.substring(0, i-1);
+            }
+        }
+        return line;
+    }
+
     private static long parseTextSection(String line, CompiledCode cc, int nline, long npos) throws CompilationError {
         Matcher m_text = p_commands.matcher(line);
         if (!m_text.find())
@@ -81,33 +102,13 @@ public class Assembler {
 
         String cmd = m_cmd.group(1).toLowerCase();
         Parameter op1 = null, op2 = null;
-        if (m_cmd.groupCount() > 1)
+        if (m_cmd.groupCount() > 2 && m_cmd.group(2) != null)
             op1 = new Parameter(m_cmd.group(2), cc, nline);
-        if (m_cmd.groupCount() > 2)
+        if (m_cmd.groupCount() > 3 && m_cmd.group(3) != null)
             op2 = new Parameter(m_cmd.group(3), cc, nline);
 
         int before = cc.getCode().size();
-
-        switch (cmd) {
-            case "nop":
-                cc.getCode().add((byte) 0x7B);
-                break;
-            case "pop":
-                if (op2 == null) {
-                    if (op1.type == ParameterType.Register)
-                        cc.getCode().add((byte) 0x75);
-                    else if (op1.type == ParameterType.V8)
-                        cc.getCode().add((byte) 0x76);
-                    else if (op1.type == ParameterType.V16)
-                        cc.getCode().add((byte) 0x77);
-                    else
-                        throw new CompilationError("Invalid parameter for 'pop' in line " + nline);
-                    cc.getCode().addAll(op1.bytes);
-                }
-            default:
-                throw new CompilationError("Invalid command '" + cmd + "' in line " + nline);
-        }
-
+        cc.getCode().addAll(Commands.find(cmd, op1, op2, nline));
         return npos + cc.getCode().size() - before;
     }
 }

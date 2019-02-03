@@ -27,7 +27,7 @@ class Parameter {
                 throw new CompilationError("Number " + p + " too large in line " + nline);
             }
         } catch (NumberFormatException e) {
-            throw new Error("Not implemented");
+            throw new Error("Not implemented: " + p);
         }
     }
 
@@ -37,8 +37,15 @@ class Parameter {
             this.bytes.add((byte) b);
     }
 
-    ParameterType type;
-    List<Byte> bytes = new ArrayList<>();
-}
+    public ParameterType getType() {
+        return type;
+    }
 
+    public List<Byte> getBytes() {
+        return bytes;
+    }
+
+    private ParameterType type;
+    private List<Byte> bytes = new ArrayList<>();
+}
 
