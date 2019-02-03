@@ -29,15 +29,22 @@ class Parameter {
         p = p.toLowerCase();
         try {
             long value;
+            // TODO - negative hex?
             if (p.startsWith("0x"))
-                value = Long.parseLong(p.substring(2), 16);
+                value = Long.parseLong(p.substring(2).replace("_", ""), 16);
             else if (p.startsWith("0b"))
-                value = Long.parseLong(p.substring(2), 2);
+                value = Long.parseLong(p.substring(2).replace("_", ""), 2);
             else if (p.startsWith("0"))
-                value = Long.parseLong(p.substring(1), 8);
+                value = Long.parseLong(p.substring(1).replace("_", ""), 8);
             else
-                value = Long.parseLong(p);
-            if (value <= 0xFF) {
+                value = Long.parseLong(p.replace("_", ""));
+            if (value < 0) {
+                type = ParameterType.V32;
+                bytes.add((byte) (value & 0xFF));
+                bytes.add((byte) ((value >> 8) & 0xFF));
+                bytes.add((byte) ((value >> 16) & 0xFF));
+                bytes.add((byte) (value >> 24));
+            } else if (value <= 0xFF) {
                 type = ParameterType.V8;
                 bytes.add((byte) value);
             } else if (value <= 0xFFFF) {

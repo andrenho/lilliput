@@ -60,7 +60,6 @@ class AssemblerTests {
         testCommand("movb A, [0x1000]", 0x06, 0x00, 0x00, 0x10, 0x00, 0x00);
     }
 
-    /*
     @Test
     public void testUseful() throws CompilationError {
         assertEquals(Assembler.compile(
@@ -82,7 +81,20 @@ class AssemblerTests {
                         0x5D, 0x42, 0x00, 0x00, 0x00,
                         0x74)));
     }
-    */
+
+    @Test
+    public void numericRepresentation() throws CompilationError {
+        assertEquals(Assembler.compile(
+                ".SECTION text\n" +
+                "mov     A, 42\n" +
+                "        mov     A, 0x42\n" +
+                "        mov     A, 0b1010_1111\n" +
+                "        mov     A, -42"), new CompiledCode(bytes(
+                0x02, 0x00, 0x2A,
+                0x02, 0x00, 0x42,
+                0x02, 0x00, 0xAF,
+                0x04, 0x00, 0xD6, 0xFF, 0xFF, 0xFF)));
+    }
 
     // see https://github.com/andrenho/luisavm_old/blob/gh-pages/tools/assembler
 }
