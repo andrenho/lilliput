@@ -11,8 +11,8 @@ import java.util.regex.Pattern;
 public class Assembler {
 
     static private Pattern p_section = Pattern.compile("^\\.SECTION\\s+(\\w+)$"),
-                           p_commands = Pattern.compile("^(\\w[\\w\\d]*:)?\\s*(.+)$"),
-                           p_command = Pattern.compile("^(\\w[\\w\\d]+)(?:\\s+(.+?)\\s*(?:,\\s*(.+?))?)?$");
+                           p_commands = Pattern.compile("^(\\w[\\w\\d\\.]*:)?\\s*(.+)$"),
+                           p_command = Pattern.compile("^(\\w[\\w\\d\\.]+)(?:\\s+(.+?)\\s*(?:,\\s*(.+?))?)?$");
 
 
     enum Section { None, Text }

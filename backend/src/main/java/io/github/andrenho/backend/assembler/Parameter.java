@@ -3,9 +3,27 @@ package io.github.andrenho.backend.assembler;
 import java.util.ArrayList;
 import java.util.List;
 
-enum ParameterType { Register, V8, V16, V32, IndirectRegister, IndirectAddress }
+enum ParameterType {
+    Register, V8, V16, V32, IndirectRegister, IndirectAddress;
+
+    public boolean isImmediate() {
+        return this == V8 || this == V16 || this == V32;
+    }
+
+    public ParameterType promote() {
+        return (this == V8 || this == V16) ? V32 : this;
+    }
+}
 
 class Parameter {
+
+    @Override
+    public String toString() {
+        return "Parameter{" +
+                "type=" + type +
+                ", bytes=" + bytes +
+                '}';
+    }
 
     public Parameter(String p, CompiledCode cc, int nline) throws CompilationError {
         p = p.toLowerCase();
@@ -26,8 +44,8 @@ class Parameter {
                 type = ParameterType.V16;
                 bytes.add((byte) (value & 0xFF));
                 bytes.add((byte) (value >> 8));
-            } else if (value <= 0xFFFFFFFF) {
-                type = ParameterType.V16;
+            } else if (value <= 0xFFFFFFFFL) {
+                type = ParameterType.V32;
                 bytes.add((byte) (value & 0xFF));
                 bytes.add((byte) ((value >> 8) & 0xFF));
                 bytes.add((byte) ((value >> 16) & 0xFF));
@@ -39,16 +57,43 @@ class Parameter {
             if (p.length() == 1 && p.charAt(0) >= 'a' && p.charAt(0) <= 'l') {
                 type = ParameterType.Register;
                 bytes.add((byte) (p.charAt(0) - 'a'));
+            } else if (p.length() >= 3 && p.charAt(0) == '[' && p.charAt(p.length() - 1) == ']') {
+                Parameter pi = new Parameter(p.substring(1, p.length() - 1), cc, nline);
+                if (pi.type == ParameterType.Register) {
+                    type = ParameterType.IndirectRegister;
+                    bytes.addAll(pi.getBytes());
+                } else if (pi.type.isImmediate()) {
+                    type = ParameterType.IndirectAddress;
+                    bytes.addAll(pi.promoteToV32().getBytes());
+                } else {
+                    throw new CompilationError("Invalid indirect parameter in line " + nline);
+                }
             } else {
-                throw new Error("Not implemented: " + p);
+                throw new CompilationError("Invalid parameter in line " + nline);
             }
         }
     }
 
-    public Parameter(ParameterType type, short... bytes) {
-        this.type = type;
-        for (short b : bytes)
-            this.bytes.add((byte) b);
+    public Parameter promoteToV32() {
+        List<Byte> bytes = new ArrayList<>();
+        switch (type) {
+            case V8:
+                bytes.add(this.bytes.get(0));
+                bytes.add((byte) 0);
+                bytes.add((byte) 0);
+                bytes.add((byte) 0);
+                return new Parameter(ParameterType.V32, bytes);
+            case V16:
+                bytes.add(this.bytes.get(0));
+                bytes.add(this.bytes.get(1));
+                bytes.add((byte) 0);
+                bytes.add((byte) 0);
+                return new Parameter(ParameterType.V32, bytes);
+            case V32:
+                return this;
+            default:
+                throw new RuntimeException("Invalid value.");
+        }
     }
 
     public ParameterType getType() {
@@ -57,6 +102,11 @@ class Parameter {
 
     public List<Byte> getBytes() {
         return bytes;
+    }
+
+    private Parameter(ParameterType type, List<Byte> bytes) {
+        this.type = type;
+        this.bytes = bytes;
     }
 
     private ParameterType type;
