@@ -3,24 +3,24 @@ package io.github.andrenho.backend.assembler;
 import java.util.*;
 
 class Command {
-    public Command(String name) {
+    Command(String name) {
         this.name = name;
     }
 
-    public Command(String name, ParameterType par1) {
+    Command(String name, ParameterType par1) {
         this.name = name;
         this.par1 = par1;
     }
 
-    public Command(String name, ParameterType par1, ParameterType par2) {
+    Command(String name, ParameterType par1, ParameterType par2) {
         this.name = name;
         this.par1 = par1;
         this.par2 = par2;
     }
 
-    String        name;
-    ParameterType par1;
-    ParameterType par2;
+    private final String        name;
+    private ParameterType par1;
+    private ParameterType par2;
 
     @Override
     public boolean equals(Object o) {
@@ -38,8 +38,8 @@ class Command {
     }
 }
 
-public class Commands {
-    private static Map<Command, Byte> commands = new HashMap<>();
+class Commands {
+    private static final Map<Command, Byte> commands = new HashMap<>();
 
     static {
         // movement
@@ -191,13 +191,14 @@ public class Commands {
         commands.put(new Command("nop"), (byte) 0x7B);
     }
 
-    public static List<Byte> find(String command, Parameter p1, Parameter p2, int nline) throws CompilationError {
+    static List<Byte> find(String command, Parameter p1, Parameter p2, int nline) throws CompilationError {
         List<Byte> r = new ArrayList<>();
         Byte b = commands.get(new Command(command, (p1 != null) ? p1.getType() : null, (p2 != null) ? p2.getType() : null));
 
         if (b == null) { // not found, try to promote it
             if (p2 != null && p2.getType().isImmediate()) {
                 p2 = p2.promoteToV32();
+                assert p1 != null;
                 b = commands.get(new Command(command, p1.getType(), p2.getType()));
             }
             if (b == null && p1 != null && p1.getType().isImmediate()) {

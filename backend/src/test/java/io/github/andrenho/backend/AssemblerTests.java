@@ -1,16 +1,16 @@
 package io.github.andrenho.backend;
 
-import java.lang.reflect.Array;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 import io.github.andrenho.backend.assembler.Assembler;
 import io.github.andrenho.backend.assembler.CompilationError;
 import io.github.andrenho.backend.assembler.CompiledCode;
 import org.junit.jupiter.api.Test;
+
+import java.util.ArrayList;
+import java.util.List;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class AssemblerTests {
+class AssemblerTests {
 
     private List<Byte> bytes(int... values) {
         ArrayList<Byte> r = new ArrayList<>();
@@ -28,7 +28,7 @@ public class AssemblerTests {
     }
 
     @Test
-    public void testSimple() throws CompilationError {
+    void testSimple() throws CompilationError {
         assertEquals(Assembler.compile(
                 ".SECTION text  \n" +
                         "   nop     ; this is a comment"),
@@ -36,7 +36,7 @@ public class AssemblerTests {
     }
 
     @Test
-    public void testValidCommands() throws CompilationError {
+    void testValidCommands() throws CompilationError {
         testCommand("pop 2", 0x76, 0x2);
         testCommand("mov A, 0xABCD", 0x03, 0x00, 0xCD, 0xAB);
         testCommand("mov A, B", 0x01, 0x00, 0x01);
@@ -54,7 +54,7 @@ public class AssemblerTests {
     }
 
     @Test
-    public void testPromotion() throws CompilationError {
+    void testPromotion() throws CompilationError {
         testCommand("movd [A], 0x1", 0x1E, 0x00, 0x01, 0x00, 0x00, 0x00);
         testCommand("bz 0x12", 0x5D, 0x12, 0x00, 0x00, 0x00);
         testCommand("movb A, [0x1000]", 0x06, 0x00, 0x00, 0x10, 0x00, 0x00);

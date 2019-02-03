@@ -3,46 +3,23 @@ package io.github.andrenho.backend.assembler;
 import java.util.*;
 
 public class CompiledCode {
-    public CompiledCode() {
+    CompiledCode() {
     }
 
     public CompiledCode(List<Byte> code) {
         this.code = code;
     }
 
-    public CompiledCode(List<Byte> code, Map<String, Long> symbols) {
-        this.code = code;
-        this.symbols = symbols;
-    }
-
-    public CompiledCode(List<Byte> code, Map<String, Long> symbols, Map<String, Long> unresolved_symbols) {
-        this.code = code;
-        this.symbols = symbols;
-        this.unresolved_symbols = unresolved_symbols;
-    }
-
     public List<Byte> getCode() {
         return code;
     }
 
-    public void setCode(List<Byte> code) {
-        this.code = code;
-    }
-
-    public Map<String, Long> getSymbols() {
+    Map<String, Long> getSymbols() {
         return symbols;
     }
 
-    public void setSymbols(Map<String, Long> symbols) {
-        this.symbols = symbols;
-    }
-
-    public Map<String, Long> getUnresolved_symbols() {
+    private Map<String, Long> getUnresolved_symbols() {
         return unresolved_symbols;
-    }
-
-    public void setUnresolved_symbols(Map<String, Long> unresolved_symbols) {
-        this.unresolved_symbols = unresolved_symbols;
     }
 
     @Override

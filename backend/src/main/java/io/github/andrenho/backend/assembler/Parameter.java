@@ -25,7 +25,7 @@ class Parameter {
                 '}';
     }
 
-    public Parameter(String p, CompiledCode cc, int nline) throws CompilationError {
+    Parameter(String p, CompiledCode cc, int nline) throws CompilationError {
         p = p.toLowerCase();
         try {
             long value;
@@ -74,7 +74,7 @@ class Parameter {
         }
     }
 
-    public Parameter promoteToV32() {
+    Parameter promoteToV32() {
         List<Byte> bytes = new ArrayList<>();
         switch (type) {
             case V8:
@@ -96,14 +96,15 @@ class Parameter {
         }
     }
 
-    public ParameterType getType() {
+    ParameterType getType() {
         return type;
     }
 
-    public List<Byte> getBytes() {
+    List<Byte> getBytes() {
         return bytes;
     }
 
+    @SuppressWarnings("SameParameterValue")
     private Parameter(ParameterType type, List<Byte> bytes) {
         this.type = type;
         this.bytes = bytes;

@@ -1,19 +1,15 @@
 package io.github.andrenho.backend.assembler;
 
 import java.io.StringReader;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
 import java.util.Scanner;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class Assembler {
 
-    static private Pattern p_section = Pattern.compile("^\\.SECTION\\s+(\\w+)$"),
-                           p_commands = Pattern.compile("^(\\w[\\w\\d\\.]*:)?\\s*(.+)$"),
-                           p_command = Pattern.compile("^(\\w[\\w\\d\\.]+)(?:\\s+(.+?)\\s*(?:,\\s*(.+?))?)?$");
-
+    static private final Pattern p_section = Pattern.compile("^\\.SECTION\\s+(\\w+)$"),
+                                 p_commands = Pattern.compile("^(\\w[\\w\\d.]*:)?\\s*(.+)$"),
+                                 p_command = Pattern.compile("^(\\w[\\w\\d.]+)(?:\\s+(.+?)\\s*(?:,\\s*(.+?))?)?$");
 
     enum Section { None, Text }
 
@@ -40,6 +36,7 @@ public class Assembler {
             // match section
             Matcher m_section = p_section.matcher(line);
             if (m_section.find()) {
+                //noinspection SwitchStatementWithTooFewBranches
                 switch (m_section.group(1).toLowerCase()) {
                     case "text":
                         section = Section.Text;

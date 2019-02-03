@@ -1,5 +1,6 @@
 package io.github.andrenho.backend.assembler;
 
+@SuppressWarnings({"WeakerAccess", "unused"})
 public class CompilationError extends Exception {
     public CompilationError() {
         super();
