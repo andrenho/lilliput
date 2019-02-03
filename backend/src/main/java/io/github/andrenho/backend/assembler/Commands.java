@@ -42,6 +42,7 @@ public class Commands {
     private static Map<Command, Byte> commands = new HashMap<>();
 
     static {
+        commands.put(new Command("mov", ParameterType.Register, ParameterType.V16), (byte) 0x3);
         commands.put(new Command("pop", ParameterType.Register), (byte) 0x75);
         commands.put(new Command("pop", ParameterType.V8), (byte) 0x76);
         commands.put(new Command("pop", ParameterType.V16), (byte) 0x77);

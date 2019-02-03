@@ -10,9 +10,9 @@ import java.util.regex.Pattern;
 
 public class Assembler {
 
-    static private Pattern p_section = Pattern.compile("\\.SECTION\\s+(\\w+)"),
-                           p_commands = Pattern.compile("(\\w[\\w\\d]*:)?\\s*(.+)"),
-                           p_command = Pattern.compile("(\\w[\\w\\d]+)(?:\\s+(.+?)\\s*(?:,\\s*(.+?))?)?");
+    static private Pattern p_section = Pattern.compile("^\\.SECTION\\s+(\\w+)$"),
+                           p_commands = Pattern.compile("^(\\w[\\w\\d]*:)?\\s*(.+)$"),
+                           p_command = Pattern.compile("^(\\w[\\w\\d]+)(?:\\s+(.+?)\\s*(?:,\\s*(.+?))?)?$");
 
 
     enum Section { None, Text }
@@ -100,11 +100,18 @@ public class Assembler {
         if (!m_cmd.find())
             throw new CompilationError("Invalid command in line " + nline);
 
+        /*
+        System.out.println(command);
+        for (int i=0; i<=m_cmd.groupCount(); ++i) {
+            System.out.println(i + ": " + m_cmd.group(i));
+        }
+        */
+
         String cmd = m_cmd.group(1).toLowerCase();
         Parameter op1 = null, op2 = null;
-        if (m_cmd.groupCount() > 2 && m_cmd.group(2) != null)
+        if (m_cmd.group(2) != null)
             op1 = new Parameter(m_cmd.group(2), cc, nline);
-        if (m_cmd.groupCount() > 3 && m_cmd.group(3) != null)
+        if (m_cmd.group(3) != null)
             op2 = new Parameter(m_cmd.group(3), cc, nline);
 
         int before = cc.getCode().size();

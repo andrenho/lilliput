@@ -38,8 +38,8 @@ public class AssemblerTests {
     @Test
     public void testValidCommands() throws CompilationError {
         testCommand("pop 2", 0x76, 0x2);
-        /*
         testCommand("mov A, 0xABCD", 0x03, 0x00, 0xCD, 0xAB);
+        /*
         testCommand("mov A, B", 0x01, 0x00, 0x01);
         testCommand("movb [A], 0x42", 0x0C, 0x00, 0x42);
         testCommand("movw [0x42], K", 0x25, 0x42, 0x00, 0x00, 0x00, 0x0A);
